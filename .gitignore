@@ -1,3 +1,4 @@
 # Visual Studio cache
 .vs/
 *.vsidx
+front-end/node_modules/
