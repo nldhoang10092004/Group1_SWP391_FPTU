@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\LearnCSharp\\EnglishMaster\\EMT_API\\EMT_API\\EMT_API.csproj": {}
+    "D:\\LearnCSharp\\backend\\EMT_API\\EMT_API\\EMT_API.csproj": {}
   },
   "projects": {
-    "D:\\LearnCSharp\\EnglishMaster\\EMT_API\\EMT_API\\EMT_API.csproj": {
+    "D:\\LearnCSharp\\backend\\EMT_API\\EMT_API\\EMT_API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\LearnCSharp\\EnglishMaster\\EMT_API\\EMT_API\\EMT_API.csproj",
+        "projectUniqueName": "D:\\LearnCSharp\\backend\\EMT_API\\EMT_API\\EMT_API.csproj",
         "projectName": "EMT_API",
-        "projectPath": "D:\\LearnCSharp\\EnglishMaster\\EMT_API\\EMT_API\\EMT_API.csproj",
+        "projectPath": "D:\\LearnCSharp\\backend\\EMT_API\\EMT_API\\EMT_API.csproj",
         "packagesPath": "C:\\Users\\LOQ\\.nuget\\packages\\",
-        "outputPath": "D:\\LearnCSharp\\EnglishMaster\\EMT_API\\EMT_API\\obj\\",
+        "outputPath": "D:\\LearnCSharp\\backend\\EMT_API\\EMT_API\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
