@@ -1,6 +1,6 @@
 .profile-page {
   min-height: 100vh;
-  background: linear-gradient(to bottom right, #e6f0ff, #f8e8ff);;
+  background: linear-gradient(to bottom right, #e6f0ff, #f8e8ff);
   padding: 20px 0;
 }
 
@@ -104,7 +104,7 @@
       opacity: 0;
       transition: opacity 0.3s ease;
       color: white;
-      font-size: 0.9rem;
+      font-size: 1.2rem;
       font-weight: 500;
     }
     
@@ -117,6 +117,127 @@
       .avatar-overlay {
         opacity: 1;
       }
+    }
+  }
+}
+
+// Avatar Modal Styles
+.avatar-modal {
+  .modal-dialog {
+    max-width: 500px;
+  }
+
+  .modal-content {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+
+    .modal-title {
+      font-weight: 700;
+      color: #2c3e50;
+      font-size: 1.3rem;
+    }
+
+    .btn-close {
+      padding: 0.5rem;
+      margin: 0;
+    }
+  }
+
+  .modal-body {
+    padding: 2rem;
+  }
+
+  .current-avatar {
+    .modal-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .avatar-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem 0;
+
+    .option-item {
+      .upload-option,
+      .remove-option {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1rem 1.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+
+        &:hover {
+          border-color: #000;
+          background: #000;
+          color: white;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .option-icon {
+          font-size: 1.1rem;
+        }
+      }
+
+      .remove-option {
+        border-color: #dc3545;
+        background: #fff5f5;
+        color: #dc3545;
+
+        &:hover {
+          border-color: #dc3545;
+          background: #dc3545;
+          color: white;
+        }
+      }
+    }
+  }
+
+  .upload-info {
+    background: rgba(108, 117, 125, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: left;
+
+    small {
+      line-height: 1.6;
+    }
+  }
+
+  .modal-footer {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    gap: 1rem;
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
     }
   }
 }
@@ -245,7 +366,6 @@
   }
 }
 
-
 .achievement-item {
   border: none;
   border-radius: 12px;
@@ -289,7 +409,6 @@
     font-weight: 500;
   }
 }
-
 
 .settings-card {
   .form-label {
@@ -372,5 +491,27 @@
   .btn-black {
     width: 100%;
     margin-bottom: 1rem;
+  }
+
+  // Avatar Modal Mobile Responsive
+  .avatar-modal {
+    .modal-dialog {
+      margin: 1rem;
+      max-width: calc(100% - 2rem);
+    }
+
+    .avatar-options {
+      .option-item {
+        .upload-option,
+        .remove-option {
+          padding: 0.75rem 1rem;
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
   }
 }
