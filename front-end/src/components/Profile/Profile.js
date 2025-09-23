@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
-import { FaCog, FaLock } from "react-icons/fa";
+import { Container, Row, Col, Card, Button, Form, Modal } from "react-bootstrap";
+import { FaCog, FaLock, FaCamera, FaTrash, FaUpload } from "react-icons/fa";
 import { getUser, updateUser, changePassword } from "../../api/userAPI";
 import "./Profile.scss";
 
@@ -10,6 +10,7 @@ const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const userId = 123;
 
   useEffect(() => {
@@ -42,9 +43,18 @@ const Profile = () => {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const reader = new FileReader();
-      reader.onload = (event) => setSelectedImage(event.target.result);
+      reader.onload = (event) => {
+        setSelectedImage(event.target.result);
+        setShowAvatarModal(false);
+      };
       reader.readAsDataURL(e.target.files[0]);
     }
+  };
+
+  const handleRemoveAvatar = () => {
+    setSelectedImage(null);
+    setUser({...user, avatar: "/default-avatar.png"});
+    setShowAvatarModal(false);
   };
 
   const handleSaveProfile = async () => {
@@ -83,22 +93,18 @@ const Profile = () => {
             <Card className="profile-card mb-4">
               <Card.Body className="text-center">
                 <div className="avatar-section mb-3">
-                  <div className="avatar-wrapper">
+                  <div 
+                    className="avatar-wrapper"
+                    onClick={() => setShowAvatarModal(true)}
+                  >
                     <img
                       src={selectedImage || user.avatar}
                       alt="Avatar"
                       className="profile-avatar"
                     />
-                    <label htmlFor="avatar-upload" className="avatar-overlay">
-                      <span>Thay đổi</span>
-                    </label>
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      style={{ display: "none" }}
-                    />
+                    <div className="avatar-overlay">
+                      <FaCamera />
+                    </div>
                   </div>
                 </div>
 
@@ -108,7 +114,6 @@ const Profile = () => {
             </Card>
           </Col>
 
-          
           <Col md={8}>
             <Card className="settings-card">
               <Card.Body>
@@ -209,6 +214,68 @@ const Profile = () => {
           </Col>
         </Row>
       </Container>
+
+      {/* Avatar Modal */}
+      <Modal show={showAvatarModal} onHide={() => setShowAvatarModal(false)} centered className="avatar-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>Thay đổi ảnh đại diện</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center">
+          <div className="current-avatar mb-4">
+            <img
+              src={selectedImage || user.avatar}
+              alt="Current Avatar"
+              className="modal-avatar"
+            />
+          </div>
+          
+          <p className="text-muted mb-4">
+            Chọn một ảnh mới để cập nhật ảnh đại diện của bạn. Ảnh sẽ được tự động cắt và lưu như hình.
+          </p>
+
+          <div className="avatar-options">
+            <div className="option-item">
+              <label htmlFor="avatar-upload" className="upload-option">
+                <FaUpload className="option-icon" />
+                <span>Chọn ảnh từ thiết bị</span>
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={{ display: "none" }}
+              />
+            </div>
+
+            <div className="option-item">
+              <button 
+                className="remove-option"
+                onClick={handleRemoveAvatar}
+              >
+                <FaTrash className="option-icon" />
+                <span>Xóa avatar hiện tại</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="upload-info mt-4">
+            <small className="text-muted">
+              • Định dạng hỗ trợ: JPG, PNG, GIF<br/>
+              • Kích thước tối đa: 5MB<br/>
+              • Khuyến nghị: Ảnh vuông, tỷ lệ thích 200x200 pixel
+            </small>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAvatarModal(false)}>
+            Hủy
+          </Button>
+          <Button variant="dark" className="btn-black">
+            Cập nhật
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
