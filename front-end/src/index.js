@@ -5,7 +5,6 @@ import App from './App';
 import HomePage from './components/Home/HomePage';
 import Home from './components/Home/Home'; 
 import User from './components/User/User';
-import Login from './components/Auth/Login';
 import ForgotPass from "./components/Password/Forgotpass";
 import ResetPassword from "./components/Password/ResetPassword";
 import Profile from "./components/Profile/Profile"
@@ -23,7 +22,6 @@ root.render(
         <Route path="profile" element={<Profile />} />
       </Route>
 
-      <Route path="/login" element={<Login />} />
     </Routes>
   </BrowserRouter>
 );
