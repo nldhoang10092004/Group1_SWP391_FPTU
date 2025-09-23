@@ -99,32 +99,29 @@ const Header = () => {
   };
 
   const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await loginApi(email, password);
-      const loggedUser = response.data.user || {
-        email,
-        role: response.data.role || "student"
-      };
+  e.preventDefault();
+  try {
+    const response = await loginApi(email, password);
+    const userData = response.data;
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(loggedUser));
-      setUser(loggedUser);
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
 
-      setLoginMessage("Đăng nhập thành công!");
-      setTimeout(() => {
-        resetLoginForm();
-        setShowAuthModal(false);
-        if (loggedUser.role === "student") navigate("/home");
-        else if (loggedUser.role === "teacher") navigate("/dashboard");
-        else navigate("/");
-      }, 1500);
-    } catch (error) {
-      setLoginErrorMessage(error.response?.data?.message || "Đăng nhập thất bại");
-    }
-  };
+    setLoginMessage("Đăng nhập thành công!");
+    setTimeout(() => {
+      resetLoginForm();
+      setShowAuthModal(false);
+      if (userData.role === "student") navigate("/home");
+      else if (userData.role === "admin") navigate("/dashboard");
+      else navigate("/");
+    }, 1500);
+  } catch (error) {
+    setLoginErrorMessage(error.response?.data || "Đăng nhập thất bại");
+  }
+};
 
-  const handleRegisterSubmit = async (e) => {
+
+const handleRegisterSubmit = async (e) => {
   e.preventDefault();
 
   if (registerPassword !== registerConfirmPassword) {
@@ -133,23 +130,17 @@ const Header = () => {
   }
 
   try {
-    const res = await registerApi(registerName, registerEmail, registerPassword, accountType);
-
-    if (res.data?.user) {
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setUser(res.data.user);
-    }
-
+    await registerApi(registerName, registerEmail, registerPassword);
     setRegisterMessage("Đăng ký thành công! Vui lòng đăng nhập.");
     setTimeout(() => {
       resetRegisterForm();
       setActiveTab("login");
     }, 2000);
   } catch (error) {
-    setRegisterErrorMessage(error.response?.data?.message || "Đăng ký thất bại");
+    setRegisterErrorMessage(error.response?.data || "Đăng ký thất bại");
   }
 };
+
 
 
   const handleDemoStudent = () => {
@@ -211,7 +202,6 @@ const Header = () => {
         </Container>
       </Navbar>
 
-      {/* Modal */}
       <Modal show={showAuthModal} onHide={() => setShowAuthModal(false)} centered className="auth-modal" size="md">
         <Modal.Header closeButton className="px-3 py-2">
           <Modal.Title className="fs-6">English Master Hub</Modal.Title>
@@ -278,28 +268,6 @@ const Header = () => {
               </Form>
             ) : (
               <Form onSubmit={handleRegisterSubmit}>
-                <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Loại tài khoản</Form.Label>
-                  <div className="d-flex gap-2">
-                    <div className={`account-type-card ${accountType === 'student' ? 'active' : ''}`} onClick={() => setAccountType('student')}>
-                      <span className="account-type-icon">📚</span>
-                      <div className="account-type-content">
-                        <div className="account-type-title small">Học viên</div>
-                        <div className="account-type-desc extra-small">Học tiếng Anh</div>
-                      </div>
-                      {accountType === 'student' && <span className="account-type-check">✓</span>}
-                    </div>
-                    <div className={`account-type-card ${accountType === 'teacher' ? 'active' : ''}`} onClick={() => setAccountType('teacher')}>
-                      <span className="account-type-icon">👨‍🏫</span>
-                      <div className="account-type-content">
-                        <div className="account-type-title small">Giảng viên</div>
-                        <div className="account-type-desc extra-small">Dạy tiếng Anh</div>
-                      </div>
-                      {accountType === 'teacher' && <span className="account-type-check">✓</span>}
-                    </div>
-                  </div>
-                </Form.Group>
-
                 <Form.Group className="mb-2">
                   <Form.Label className="small mb-1">Họ và tên</Form.Label>
                   <Form.Control 
