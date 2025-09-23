@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:3003/api/";
+const API_BASE_URL = "http://localhost:5293/api/";
 
 export const getUser = async (id) => {
   try {
@@ -34,3 +34,4 @@ export const changePassword = async (id, currentPassword, newPassword) => {
     throw error;
   }
 };
+

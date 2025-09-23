@@ -1,4 +1,13 @@
 ﻿namespace EMT_API.DTOs.Auth
 {
-    public record AuthResponse(int AccountID, string Email, string Username, string Role, string Status);
+    /// <summary>
+    /// Dữ liệu trả về sau khi login/register thành công
+    /// </summary>
+    public record AuthResponse(
+        int AccountID,
+        string Email,
+        string Username,
+        string Role,
+        string Status
+    );
 }

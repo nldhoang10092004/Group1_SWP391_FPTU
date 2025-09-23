@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ZSGVWkEx0eI=",
+  "dgSpecHash": "u+a0XCcK0Zw=",
   "success": true,
-  "projectFilePath": "D:\\LearnCSharp\\backend\\EMT_API\\EMT_API\\EMT_API.csproj",
+  "projectFilePath": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API\\EMT_API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\LOQ\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\LOQ\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
