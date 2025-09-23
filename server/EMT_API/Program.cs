@@ -13,6 +13,8 @@ namespace EMT_API
             // Add services to the container.
 
             builder.Services.AddControllers();
+            builder.Services.AddAuthentication().AddBearerToken();
+            builder.Services.AddAuthorization();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -28,11 +30,13 @@ namespace EMT_API
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseHttpsRedirection();
+
             }
 
-            app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            app.UseAuthorization(); //Giai ma token & gan user
+            app.UseAuthorization(); //Kiem tra quyen truy cap
 
 
             app.MapControllers();
