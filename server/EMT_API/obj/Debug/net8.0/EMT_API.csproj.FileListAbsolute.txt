@@ -341,3 +341,7 @@ D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API\obj\Debug\net8.0\refint
 D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API\obj\Debug\net8.0\EMT_API.pdb
 D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API\obj\Debug\net8.0\EMT_API.genruntimeconfig.cache
 D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API\obj\Debug\net8.0\ref\EMT_API.dll
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.Abstractions.dll
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API\bin\Debug\net8.0\Microsoft.Extensions.Hosting.Abstractions.dll
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API\bin\Debug\net8.0\Microsoft.Extensions.WebEncoders.dll

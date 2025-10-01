@@ -1,5 +1,9 @@
 ﻿using EMT_API.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace EMT_API
 {
@@ -13,6 +17,27 @@ namespace EMT_API
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            //builder.Services.AddAuthentication(options =>
+            //{
+            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            //}
+            // ).AddJwtBearer(options =>
+            // {
+            //     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            //     {
+            //         ValidateIssuer = true,
+            //         ValidateAudience = true,
+            //         ValidateLifetime = true,
+            //         ValidateIssuerSigningKey = true,
+            //         ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            //         ValidAudience = builder.Configuration["Jwt:Audience"],
+            //         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            //     };
+            // });
+
+
 
             // DbContext
             builder.Services.AddDbContext<EMTDbContext>(options =>
@@ -45,7 +70,14 @@ namespace EMT_API
 
             // Để ngoài block Dev để redirect HTTPS ổn định (FE gọi https)
             app.UseHttpsRedirection();
-
+            app.UseStaticFiles();
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "avatars")
+    ),
+                RequestPath = "/avatars"
+            });
             // ===== THỨ TỰ QUAN TRỌNG =====
             app.UseRouting();        // 1) Routing
             app.UseCors(MyCors);     // 2) CORS nằm giữa Routing và MapControllers
