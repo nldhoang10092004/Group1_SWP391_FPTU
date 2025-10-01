@@ -1,4 +1,17 @@
-# Visual Studio cache
-.vs/
-*.vsidx
-front-end/node_modules/
+# Node.js
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.vite/
+
+# .NET
+server/EMT_API/bin/
+server/EMT_API/obj/
+server/EMT_API/wwwroot/avatars/
+
+# Common
+*.log
+*.user
+*.DS_Store
+.vscode/
+.idea/
