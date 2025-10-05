@@ -1,4 +1,5 @@
 ﻿using EMT_API.Data;
+using EMT_API.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -54,6 +55,10 @@ namespace EMT_API
                     .AllowCredentials()
                 );
             });
+
+            //Gmail Setting
+            builder.Services.Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.AddSingleton<EmailSender>(); // hoặc AddScoped cũng được
 
             // Nếu bạn dùng auth thật, mở hai dòng này (và config scheme)
             // builder.Services.AddAuthentication(/*...*/);
