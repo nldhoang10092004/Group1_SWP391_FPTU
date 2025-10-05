@@ -15,3 +15,11 @@ server/EMT_API/wwwroot/avatars/
 *.DS_Store
 .vscode/
 .idea/
+
+# Visual Studio cache
+.vs/
+*.vscode/
+*.user
+*.suo
+*.db
+*.opendb

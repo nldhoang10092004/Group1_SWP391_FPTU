@@ -2,12 +2,13 @@
 using EMT_API.DTOs.Auth;               // Dùng các DTO cho Auth (RegisterRequest, LoginRequest, ... )
 using EMT_API.Models;                  // Dùng các model thực thể (Account, UserDetail, ...)
 using EMT_API.Security;                // Dùng lớp bảo mật (PasswordHasher, ResetPasswordTokenService)
+using EMT_API.Utils;
 using Microsoft.AspNetCore.Mvc;        // Dùng MVC attributes/controller base (ApiController, ControllerBase, ActionResult)
 using Microsoft.EntityFrameworkCore;   // Dùng EF Core (DbContext, truy vấn async như AnyAsync/FirstOrDefaultAsync)
+using Microsoft.IdentityModel.Tokens;  // (Cho TokenValidationParameters/SigningCredentials, nếu ký/verify JWT)
 using System.IdentityModel.Tokens.Jwt; // (Ở đây chưa phát JWT login, nhưng dùng cho reset token service nếu cần)
 using System.Security.Claims;          // (Cho claims JWT nếu cần)
 using System.Text;                     // (Cho Encoding, nếu ký JWT)
-using Microsoft.IdentityModel.Tokens;  // (Cho TokenValidationParameters/SigningCredentials, nếu ký/verify JWT)
 using System.Web;                      // (Không cần trong ASP.NET Core trừ khi bạn dùng HttpUtility; ở dưới dùng Uri.EscapeDataString)
 namespace EMT_API.Controllers;         // Khai báo namespace chứa controller
 
@@ -83,7 +84,7 @@ public class AuthController : ControllerBase
     public IActionResult Logout() => Ok(new { message = "Logged out (client side)." }); // Trả message (FE tự xóa token/cookie)
 
     [HttpPost("forgot-password")]              // POST /api/auth/forgot-password
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req, [FromServices] IConfiguration cfg)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req, [FromServices] IConfiguration cfg, [FromServices] EmailSender mailer)
     {
         // Luôn trả 200 để không lộ email có tồn tại hay không
         var acc = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == req.Email); // Tìm account theo email
@@ -94,6 +95,20 @@ public class AuthController : ControllerBase
 
         // Tạo link (FE của bạn sẽ có trang nhập mật khẩu mới, nhận token từ query)
         var link = $"{cfg["FrontendBaseUrl"]}/reset-password?token={Uri.EscapeDataString(token)}"; // Dựng URL tới FE, escape token
+
+        // Gửi email (HTML)
+        var subject = "Reset mật khẩu tài khoản EMT";
+
+        var html = EmailTemplate.BuildResetPasswordEmail(acc.Username ?? acc.Email, link);
+        try
+        {
+            await mailer.SendEmailAsync(acc.Email!, "Đặt lại mật khẩu tài khoản EMT", html);
+        }
+        catch
+        {
+            // Không lộ lỗi SMTP ra ngoài; vẫn trả 200 để không bị dò email
+            // TODO: _logger.LogError(ex, "Failed to send reset email to {Email}", acc.Email);
+        }
 
         // TODO: Gửi email cho user với link này.
         // Tạm thời DEV: trả link ra để bạn copy test (xóa khi lên prod)
