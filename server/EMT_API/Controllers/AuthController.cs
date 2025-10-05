@@ -1,89 +1,200 @@
-﻿using EMT_API.Data;                     // Dùng namespace chứa DbContext (EMTDbContext) và các cấu hình dữ liệu
-using EMT_API.DTOs.Auth;               // Dùng các DTO cho Auth (RegisterRequest, LoginRequest, ... )
-using EMT_API.Models;                  // Dùng các model thực thể (Account, UserDetail, ...)
-using EMT_API.Security;                // Dùng lớp bảo mật (PasswordHasher, ResetPasswordTokenService)
+﻿using EMT_API.Data;                     // DbContext
+using EMT_API.DTOs.Auth;               // AuthResponse, RegisterRequest, LoginRequest
+using EMT_API.Models;                  // Account, UserDetail
+using EMT_API.Security;                // PasswordHasher, ResetPasswordTokenService
 using EMT_API.Utils;
-using Microsoft.AspNetCore.Mvc;        // Dùng MVC attributes/controller base (ApiController, ControllerBase, ActionResult)
-using Microsoft.EntityFrameworkCore;   // Dùng EF Core (DbContext, truy vấn async như AnyAsync/FirstOrDefaultAsync)
-using Microsoft.IdentityModel.Tokens;  // (Cho TokenValidationParameters/SigningCredentials, nếu ký/verify JWT)
-using System.IdentityModel.Tokens.Jwt; // (Ở đây chưa phát JWT login, nhưng dùng cho reset token service nếu cần)
-using System.Security.Claims;          // (Cho claims JWT nếu cần)
-using System.Text;                     // (Cho Encoding, nếu ký JWT)
-using System.Web;                      // (Không cần trong ASP.NET Core trừ khi bạn dùng HttpUtility; ở dưới dùng Uri.EscapeDataString)
-namespace EMT_API.Controllers;         // Khai báo namespace chứa controller
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
-[ApiController]                        // Đánh dấu đây là API controller (tự bind, auto 400 nếu ModelState invalid—nếu bật)
-[Route("api/auth")]                    // Route gốc cho controller: /api/auth/*
+namespace EMT_API.Controllers;
+
+[ApiController]
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly EMTDbContext _db;             // Inject DbContext để truy cập DB
-    public AuthController(EMTDbContext db) => _db = db; // Constructor injection, gán vào field _db
+    private readonly EMTDbContext _db;
+    private readonly ITokenService _tokens;
+    private readonly IConfiguration _cfg;
 
-    [HttpPost("register")]                          // POST /api/auth/register
+    public AuthController(EMTDbContext db, ITokenService tokens, IConfiguration cfg)
+    {
+        _db = db;
+        _tokens = tokens;
+        _cfg = cfg;
+    }
+
+    // ---------------------------
+    // REGISTER
+    // ---------------------------
+    [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest req)
     {
-        // 1) Kiểm tra trùng email/username (DB của bạn đã có Unique Index, nhưng check sớm để trả lỗi đẹp)
-        if (await _db.Accounts.AnyAsync(a => a.Email == req.Email))        // Query: có account nào trùng email không?
-            return Conflict("Email đã tồn tại.");                          // 409 Conflict nếu trùng
-        if (await _db.Accounts.AnyAsync(a => a.Username == req.Username))  // Query: có account nào trùng username không?
-            return Conflict("Username đã tồn tại.");                       // 409 Conflict nếu trùng
+        // 1) Check trùng
+        if (await _db.Accounts.AnyAsync(a => a.Email == req.Email))
+            return Conflict("Email đã tồn tại.");
+        if (await _db.Accounts.AnyAsync(a => a.Username == req.Username))
+            return Conflict("Username đã tồn tại.");
 
         // 2) Hash mật khẩu
-        var hashed = PasswordHasher.Hash(req.Password); // Băm mật khẩu (không lưu plaintext)
+        var hashed = PasswordHasher.Hash(req.Password);
 
-        // 3) Tạo Account
+        // 3) Tạo account
         var acc = new Account
         {
-            Email = req.Email,                 // Gán email từ request
-            Username = req.Username,           // Gán username từ request
-            Hashpass = hashed,                 // Lưu hash mật khẩu
-            CreateAt = DateTime.UtcNow,        // Thời điểm tạo (UTC)
-            Status = "ACTIVE",                 // Trạng thái tài khoản (mặc định ACTIVE)
-            Role = "STUDENT"                   // Vai trò mặc định (có thể đổi theo luồng)
+            Email = req.Email,
+            Username = req.Username,
+            Hashpass = hashed,
+            CreateAt = DateTime.UtcNow,
+            Status = "ACTIVE",
+            Role = "STUDENT"
         };
-        _db.Accounts.Add(acc);                 // Track entity mới
-        await _db.SaveChangesAsync();          // Lưu vào DB, sinh AccountID
+        _db.Accounts.Add(acc);
+        await _db.SaveChangesAsync();
 
-        // (Tùy chọn) Tạo UserDetail rỗng
-        if (await _db.UserDetails.FindAsync(acc.AccountID) is null) // Nếu chưa có UserDetail cùng key
+        // (tuỳ chọn) Tạo UserDetail rỗng nếu chưa có
+        if (await _db.UserDetails.FindAsync(acc.AccountID) is null)
         {
-            _db.UserDetails.Add(new UserDetail
-            {
-                AccountID = acc.AccountID      // Dùng AccountID làm khóa/khóa ngoại
-            });
-            await _db.SaveChangesAsync();      // Lưu UserDetail
+            _db.UserDetails.Add(new UserDetail { AccountID = acc.AccountID });
+            await _db.SaveChangesAsync();
         }
 
-        var resp = new AuthResponse(acc.AccountID, acc.Email, acc.Username, acc.Role, acc.Status); // Tạo DTO trả về
-        return CreatedAtAction(nameof(Register), resp); // 201 Created + payload (không có Location hữu ích)
+        // 4) Cấp token ngay sau register (giữ API nhất quán với AuthResponse rút gọn)
+        var access = _tokens.CreateAccessToken(acc, acc.RefreshTokenVersion);
+        var (rt, exp) = _tokens.CreateRefreshToken();
+
+        acc.RefreshTokenHash = _tokens.HashRefreshToken(rt);
+        acc.RefreshTokenExpiresAt = exp.UtcDateTime;
+        acc.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        SetRefreshCookie(rt, exp);
+
+        return CreatedAtAction(nameof(Register),
+            new AuthResponse(
+                AccountID: acc.AccountID,
+                AccessToken: access,
+                ExpiresIn: int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60
+            ));
     }
 
-    [HttpPost("login")]                         // POST /api/auth/login
+    // ---------------------------
+    // LOGIN
+    // ---------------------------
+    [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest req)
     {
-        // Cho phép login bằng Email hoặc Username
-        var acc = await _db.Accounts
-            .FirstOrDefaultAsync(a => a.Email == req.EmailOrUsername || a.Username == req.EmailOrUsername); // Tìm theo email/username
+        var user = await _db.Accounts
+            .FirstOrDefaultAsync(a => a.Email == req.EmailOrUsername || a.Username == req.EmailOrUsername);
+        if (user is null) return Unauthorized("Email/username không đúng.");
 
-        if (acc is null || string.IsNullOrEmpty(acc.Hashpass)) // Không tồn tại hoặc không có hash (tài khoản lỗi)
-            return Unauthorized("Sai thông tin đăng nhập.");   // 401 Unauthorized (không tiết lộ cụ thể)
+        if (!PasswordHasher.Verify(req.Password, user.Hashpass))
+            return Unauthorized("Mật khẩu không đúng.");
 
-        var ok = PasswordHasher.Verify(req.Password, acc.Hashpass); // So sánh mật khẩu nhập với hash trong DB
-        if (!ok) return Unauthorized("Sai thông tin đăng nhập.");   // Sai pass → 401
+        var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
+        var (rt, exp) = _tokens.CreateRefreshToken();
 
-        // Update LastLoginAt
-        acc.LastLoginAt = DateTime.UtcNow;     // Cập nhật lần đăng nhập gần nhất
-        await _db.SaveChangesAsync();          // Lưu vào DB
+        user.RefreshTokenHash = _tokens.HashRefreshToken(rt);
+        user.RefreshTokenExpiresAt = exp.UtcDateTime;
+        user.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
 
-        var resp = new AuthResponse(acc.AccountID, acc.Email, acc.Username, acc.Role, acc.Status); // DTO kết quả login
-        return Ok(resp);                       // 200 OK (chưa phát JWT trong bản này)
+        SetRefreshCookie(rt, exp);
+
+        return Ok(new AuthResponse(
+            AccountID: user.AccountID,
+            AccessToken: access,
+            ExpiresIn: int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60
+        ));
     }
 
-    // Với bản tối giản không có phiên → logout là no-op
-    [HttpPost("logout")]                       // POST /api/auth/logout
-    public IActionResult Logout() => Ok(new { message = "Logged out (client side)." }); // Trả message (FE tự xóa token/cookie)
+    // ---------------------------
+    // REFRESH TOKEN (xoay vòng)
+    // ---------------------------
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthResponse>> Refresh()
+    {
+        var rt = Request.Cookies["emt_rt"];
+        if (string.IsNullOrEmpty(rt)) return Unauthorized("Missing refresh token.");
 
-    [HttpPost("forgot-password")]              // POST /api/auth/forgot-password
+        // FE gửi kèm access token cũ (có thể hết hạn) ở header Authorization
+        var bearer = Request.Headers.Authorization.ToString();
+        var accessOld = bearer?.StartsWith("Bearer ") == true ? bearer["Bearer ".Length..] : null;
+        if (string.IsNullOrEmpty(accessOld)) return Unauthorized("Missing access token.");
+
+        var principal = _tokens.ValidateExpiredAccessToken(accessOld);
+        var sub = principal?.FindFirstValue(ClaimTypes.NameIdentifier)
+                  ?? principal?.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        if (!int.TryParse(sub, out var uid)) return Unauthorized("Cannot identify user.");
+
+        var user = await _db.Accounts.FindAsync(uid);
+        if (user is null) return Unauthorized();
+
+        // Hết hạn -> buộc login lại
+        if (user.RefreshTokenExpiresAt is null || user.RefreshTokenExpiresAt <= DateTime.UtcNow)
+        {
+            ClearRefreshCookie();
+            user.RefreshTokenHash = null;
+            await _db.SaveChangesAsync();
+            return Unauthorized("Refresh token expired.");
+        }
+
+        // So khớp hash
+        var incomingHash = _tokens.HashRefreshToken(rt);
+        if (!string.Equals(incomingHash, user.RefreshTokenHash, StringComparison.Ordinal))
+        {
+            // Phát hiện reuse -> revoke toàn bộ session đang sống: bump version
+            user.RefreshTokenVersion += 1;
+            user.RefreshTokenHash = null;
+            user.RefreshTokenExpiresAt = null;
+            await _db.SaveChangesAsync();
+            ClearRefreshCookie();
+            return Unauthorized("Refresh token reuse detected.");
+        }
+
+        // Hợp lệ -> phát cặp mới + xoay vòng
+        var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
+        var (newRt, newExp) = _tokens.CreateRefreshToken();
+        user.RefreshTokenHash = _tokens.HashRefreshToken(newRt);
+        user.RefreshTokenExpiresAt = newExp.UtcDateTime;
+        await _db.SaveChangesAsync();
+
+        SetRefreshCookie(newRt, newExp);
+
+        return Ok(new AuthResponse(
+            AccountID: user.AccountID,
+            AccessToken: access,
+            ExpiresIn: int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60
+        ));
+    }
+
+    // ---------------------------
+    // LOGOUT
+    // ---------------------------
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var uid = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _db.Accounts.FindAsync(uid);
+        if (user != null)
+        {
+            user.RefreshTokenHash = null;
+            user.RefreshTokenExpiresAt = null;
+            await _db.SaveChangesAsync();
+        }
+        ClearRefreshCookie();
+        return Ok();
+    }
+
+    // ---------------------------
+    // FORGOT PASSWORD (GIỮ NGUYÊN)
+    // ---------------------------
+    [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req, [FromServices] IConfiguration cfg, [FromServices] EmailSender mailer)
     {
         // Luôn trả 200 để không lộ email có tồn tại hay không
@@ -115,7 +226,10 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Reset link generated.", resetLink = link }); // 200 + link (chỉ dùng DEV)
     }
 
-    [HttpPost("reset-password")]               // POST /api/auth/reset-password
+    // ---------------------------
+    // RESET PASSWORD (GIỮ NGUYÊN)
+    // ---------------------------
+    [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req, [FromServices] IConfiguration cfg)
     {
         if (string.IsNullOrWhiteSpace(req.NewPassword) || req.NewPassword != req.ConfirmNewPassword) // Kiểm tra 2 ô mật khẩu
@@ -139,4 +253,27 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Đổi mật khẩu thành công." }); // 200 OK
     }
 
-} // Kết thúc AuthController
+    // ---------------------------
+    // Helpers (cookie)
+    // ---------------------------
+    private void SetRefreshCookie(string rt, DateTimeOffset exp)
+    {
+        Response.Cookies.Append("emt_rt", rt, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,              // Bật HTTPS ở môi trường thật
+            SameSite = SameSiteMode.Strict,
+            Expires = exp
+        });
+    }
+
+    private void ClearRefreshCookie()
+    {
+        Response.Cookies.Delete("emt_rt", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict
+        });
+    }
+}

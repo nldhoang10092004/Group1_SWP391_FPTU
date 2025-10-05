@@ -1,4 +1,5 @@
 ﻿using EMT_API.Data;
+using EMT_API.Security; // để dùng TokenService
 using EMT_API.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -14,41 +15,47 @@ namespace EMT_API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services
+            // ===== Add Core Services =====
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            //builder.Services.AddAuthentication(options =>
-            //{
-            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            //}
-            // ).AddJwtBearer(options =>
-            // {
-            //     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-            //     {
-            //         ValidateIssuer = true,
-            //         ValidateAudience = true,
-            //         ValidateLifetime = true,
-            //         ValidateIssuerSigningKey = true,
-            //         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            //         ValidAudience = builder.Configuration["Jwt:Audience"],
-            //         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-            //     };
-            // });
-
-
-
-            // DbContext
+            // ===== Database =====
             builder.Services.AddDbContext<EMTDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // ===== JWT Authentication =====
+            var jwt = builder.Configuration.GetSection("Jwt");
+            var key = Encoding.UTF8.GetBytes(jwt["Key"]!);
+
+            builder.Services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwt["Issuer"],
+                        ValidAudience = jwt["Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ClockSkew = TimeSpan.FromSeconds(30)
+                    };
+                });
+
+            builder.Services.AddAuthorization();
+
+            // ===== Token Service (tạo access/refresh token) =====
+            builder.Services.AddSingleton<ITokenService, TokenService>();
+            builder.Services.AddHttpContextAccessor();
 
             // ===== CORS =====
             const string MyCors = "_myCors";
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy(MyCors, p => p
+                options.AddPolicy(MyCors, policy => policy
                     .WithOrigins("http://localhost:3000", "https://localhost:3000")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
@@ -56,42 +63,37 @@ namespace EMT_API
                 );
             });
 
-            //Gmail Setting
+            // ===== Email Sender =====
             builder.Services.Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"));
-            builder.Services.AddSingleton<EmailSender>(); // hoặc AddScoped cũng được
-
-            // Nếu bạn dùng auth thật, mở hai dòng này (và config scheme)
-            // builder.Services.AddAuthentication(/*...*/);
-            // builder.Services.AddAuthorization();
+            builder.Services.AddSingleton<EmailSender>();
 
             var app = builder.Build();
 
-            // Swagger chỉ cho môi trường Dev
+            // ===== Swagger =====
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            // Để ngoài block Dev để redirect HTTPS ổn định (FE gọi https)
+            // ===== Middlewares =====
             app.UseHttpsRedirection();
+
             app.UseStaticFiles();
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "avatars")
-    ),
+                    Path.Combine(Directory.GetCurrentDirectory(), "avatars")),
                 RequestPath = "/avatars"
             });
-            // ===== THỨ TỰ QUAN TRỌNG =====
-            app.UseRouting();        // 1) Routing
-            app.UseCors(MyCors);     // 2) CORS nằm giữa Routing và MapControllers
 
-            // Nếu có auth:
-            // app.UseAuthentication(); // 3) AuthN trước
-            app.UseAuthorization();   // 4) AuthZ sau
+            app.UseRouting();
+            app.UseCors(MyCors);
 
-            app.MapControllers();     // 5) Map endpoints
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapControllers();
 
             app.Run();
         }
