@@ -1,28 +1,30 @@
 ﻿using EMT_API.Data;
-using EMT_API.Models;
 using EMT_API.DTOs.Admin;
+using EMT_API.DTOs.Auth;
+using EMT_API.Models;
+using EMT_API.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static EMT_API.Controllers.AuthController;
-using EMT_API.Security;
-using EMT_API.DTOs.Auth;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EMT_API.Controllers.Admin;
 [ApiController]
 [Route("api/admin/users")]
-[AdminOnly]
+//[AdminOnly]
 public class UserManagementController : ControllerBase
 {
-    private readonly EMTDbContext _db;
+    private readonly EMTDbContext _db;  
     public UserManagementController(EMTDbContext db) => _db = db;
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AuthResponse>>> GetAllUser()
+    public async Task<IActionResult> GetAllUser()
     {
         var users = await _db.Accounts
-            .Select(a => new AuthResponse(a.AccountID, a.Email, a.Username, a.Role, a.Status))
+            .Select(a => new { name = a.AccountID, email = a.Email, username = a.Username, role = a.Role, status = a.Status })
             .ToListAsync();
-        return Ok(users);
+        var returnWrapper = new { data = users };
+        return Ok(returnWrapper);
     }
 
     [HttpPost]
