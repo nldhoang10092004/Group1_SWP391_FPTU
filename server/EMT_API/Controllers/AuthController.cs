@@ -64,7 +64,7 @@ public class AuthController : ControllerBase
         }
 
         // 4) Cấp token ngay sau register (giữ API nhất quán với AuthResponse rút gọn)
-        var access = _tokens.CreateAccessTokenAsync(acc, acc.RefreshTokenVersion);
+        var access = _tokens.CreateAccessToken(acc, acc.RefreshTokenVersion);
         var (rt, exp) = _tokens.CreateRefreshToken();
 
         acc.RefreshTokenHash = _tokens.HashRefreshToken(rt);
@@ -115,7 +115,7 @@ public class AuthController : ControllerBase
         }
 
         // 4) Cấp token ngay sau register (giữ API nhất quán với AuthResponse rút gọn)
-        var access = _tokens.CreateAccessTokenAsync(acc, acc.RefreshTokenVersion);
+        var access = _tokens.CreateAccessToken(acc, acc.RefreshTokenVersion);
         var (rt, exp) = _tokens.CreateRefreshToken();
 
         acc.RefreshTokenHash = _tokens.HashRefreshToken(rt);
@@ -146,7 +146,7 @@ public class AuthController : ControllerBase
         if (!PasswordHasher.Verify(req.Password, user.Hashpass))
             return Unauthorized("Mật khẩu không đúng.");
 
-        var access = _tokens.CreateAccessTokenAsync(user, user.RefreshTokenVersion);
+        var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
         var (rt, exp) = _tokens.CreateRefreshToken();
 
         user.RefreshTokenHash = _tokens.HashRefreshToken(rt);
@@ -208,7 +208,7 @@ public class AuthController : ControllerBase
         }
 
         // Hợp lệ -> phát cặp mới + xoay vòng
-        var access = _tokens.CreateAccessTokenAsync(user, user.RefreshTokenVersion);
+        var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
         var (newRt, newExp) = _tokens.CreateRefreshToken();
         user.RefreshTokenHash = _tokens.HashRefreshToken(newRt);
         user.RefreshTokenExpiresAt = newExp.UtcDateTime;

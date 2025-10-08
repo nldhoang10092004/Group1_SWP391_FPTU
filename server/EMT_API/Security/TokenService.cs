@@ -11,7 +11,7 @@ namespace EMT_API.Security;
 
 public interface ITokenService
 {
-    Task<string> CreateAccessTokenAsync(Account acc, int version);
+    string CreateAccessToken(Account acc, int version);
     (string token, DateTimeOffset exp) CreateRefreshToken();
     string HashRefreshToken(string token);
 
@@ -29,16 +29,14 @@ public sealed class TokenService : ITokenService
     private readonly EMTDbContext _db;
 
 
-    public TokenService(IConfiguration cfg, EMTDbContext db)
+    public TokenService(IConfiguration cfg)
     {
         _cfg = cfg;
         _key = Encoding.UTF8.GetBytes(_cfg["Jwt:Key"]!);
-        _db = db;
     }
 
-    public async Task<string> CreateAccessTokenAsync(Account acc, int version)
+    public string CreateAccessToken(Account acc, int version)
     {
-        bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, acc.AccountID);
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, acc.AccountID.ToString()),
