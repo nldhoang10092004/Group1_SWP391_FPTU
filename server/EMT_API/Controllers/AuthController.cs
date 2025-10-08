@@ -64,7 +64,58 @@ public class AuthController : ControllerBase
         }
 
         // 4) Cấp token ngay sau register (giữ API nhất quán với AuthResponse rút gọn)
-        var access = _tokens.CreateAccessToken(acc, acc.RefreshTokenVersion);
+        var access = _tokens.CreateAccessTokenAsync(acc, acc.RefreshTokenVersion);
+        var (rt, exp) = _tokens.CreateRefreshToken();
+
+        acc.RefreshTokenHash = _tokens.HashRefreshToken(rt);
+        acc.RefreshTokenExpiresAt = exp.UtcDateTime;
+        acc.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        SetRefreshCookie(rt, exp);
+
+        return CreatedAtAction(nameof(Register),
+            new AuthResponse(
+                AccountID: acc.AccountID,
+                AccessToken: access,
+                ExpiresIn: int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60
+            ));
+    }
+
+    [HttpPost("registerTeacher")]
+    public async Task<ActionResult<AuthResponse>> RegisterTeacher([FromBody] RegisterRequest req)
+    {
+        // 1) Check trùng
+        if (await _db.Accounts.AnyAsync(a => a.Email == req.Email))
+            return Conflict("Email đã tồn tại.");
+        if (await _db.Accounts.AnyAsync(a => a.Username == req.Username))
+            return Conflict("Username đã tồn tại.");
+
+        // 2) Hash mật khẩu
+        var hashed = PasswordHasher.Hash(req.Password);
+
+        // 3) Tạo account
+        var acc = new Account
+        {
+            Email = req.Email,
+            Username = req.Username,
+            Hashpass = hashed,
+            CreateAt = DateTime.UtcNow,
+            Status = "ACTIVE",
+            Role = "TEACHER"
+        };
+        _db.Accounts.Add(acc);
+        await _db.SaveChangesAsync();
+
+        // (tuỳ chọn) Tạo UserDetail rỗng nếu chưa có
+        if (await _db.UserDetails.FindAsync(acc.AccountID) is null)
+        {
+            _db.UserDetails.Add(new UserDetail { AccountID = acc.AccountID });
+            await _db.SaveChangesAsync();
+        }
+
+        // 4) Cấp token ngay sau register (giữ API nhất quán với AuthResponse rút gọn)
+        var access = _tokens.CreateAccessTokenAsync(acc, acc.RefreshTokenVersion);
         var (rt, exp) = _tokens.CreateRefreshToken();
 
         acc.RefreshTokenHash = _tokens.HashRefreshToken(rt);
@@ -95,7 +146,7 @@ public class AuthController : ControllerBase
         if (!PasswordHasher.Verify(req.Password, user.Hashpass))
             return Unauthorized("Mật khẩu không đúng.");
 
-        var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
+        var access = _tokens.CreateAccessTokenAsync(user, user.RefreshTokenVersion);
         var (rt, exp) = _tokens.CreateRefreshToken();
 
         user.RefreshTokenHash = _tokens.HashRefreshToken(rt);
@@ -157,7 +208,7 @@ public class AuthController : ControllerBase
         }
 
         // Hợp lệ -> phát cặp mới + xoay vòng
-        var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
+        var access = _tokens.CreateAccessTokenAsync(user, user.RefreshTokenVersion);
         var (newRt, newExp) = _tokens.CreateRefreshToken();
         user.RefreshTokenHash = _tokens.HashRefreshToken(newRt);
         user.RefreshTokenExpiresAt = newExp.UtcDateTime;
