@@ -11,7 +11,7 @@ namespace EMT_API.Security;
 
 public interface ITokenService
 {
-    string CreateAccessTokenAsync(Account acc, int version);
+    Task<string> CreateAccessTokenAsync(Account acc, int version);
     (string token, DateTimeOffset exp) CreateRefreshToken();
     string HashRefreshToken(string token);
 
