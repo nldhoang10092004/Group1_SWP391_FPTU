@@ -1,0 +1,80 @@
+.student-dashboard {
+  background: #f8f9fa;
+  min-height: 100vh;
+
+  h1 {
+    color: #000;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
+
+    h3 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: #666;
+      margin: 0;
+    }
+  }
+
+  .goal-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    h5 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+  }
+
+  .course-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .course-level {
+      .badge {
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .achievement-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #000;
+
+    h5 {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+  }
+}

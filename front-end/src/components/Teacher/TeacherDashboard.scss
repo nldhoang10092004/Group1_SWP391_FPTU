@@ -1,0 +1,102 @@
+.teacher-dashboard {
+  background: #f8f9fa;
+  min-height: 100vh;
+
+  h1 {
+    color: #000;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.8;
+    }
+
+    h3 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.9);
+      margin: 0;
+      font-size: 0.95rem;
+    }
+  }
+
+  .courses-card,
+  .info-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    h4,
+    h5 {
+      font-weight: 600;
+      color: #000;
+    }
+
+    .table {
+      margin-bottom: 0;
+
+      th {
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+      }
+
+      td {
+        vertical-align: middle;
+      }
+    }
+  }
+
+  .info-card {
+    .info-item {
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e9ecef;
+
+      &:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: #666;
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-dashboard {
+    .stat-card {
+      margin-bottom: 1rem;
+
+      h3 {
+        font-size: 2rem;
+      }
+    }
+  }
+}

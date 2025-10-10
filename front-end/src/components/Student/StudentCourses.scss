@@ -1,0 +1,68 @@
+.student-courses {
+  background: #f8f9fa;
+  min-height: 100vh;
+
+  h1 {
+    color: #000;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .level-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .course-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .course-header {
+      display: flex;
+      align-items: center;
+
+      .level-badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+      }
+    }
+
+    .course-title {
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: #000;
+      margin-bottom: 1rem;
+    }
+
+    .course-description {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .teacher-info {
+      padding: 0.5rem 0;
+      border-top: 1px solid #e9ecef;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .student-courses {
+    .level-filter {
+      Button {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+      }
+    }
+  }
+}
