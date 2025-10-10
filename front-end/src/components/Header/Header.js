@@ -111,7 +111,8 @@ const Header = () => {
     setTimeout(() => {
       resetLoginForm();
       setShowAuthModal(false);
-      if (userData.role === "student") navigate("/home");
+      if (userData.role === "student") navigate("/student/dashboard");
+      else if (userData.role === "teacher") navigate("/teacher/dashboard");
       else if (userData.role === "admin") navigate("/dashboard");
       else navigate("/");
     }, 1500);
@@ -174,28 +175,44 @@ const handleRegisterSubmit = async (e) => {
                   <button className='btn-signup' onClick={() => { handleAuthClick(); setActiveTab("register"); resetLoginForm(); }}>Sign Up</button>
                 </>
               ) : (
-                <Dropdown align="end">
-                  <Dropdown.Toggle
-                    variant="light"
-                    id="dropdown-user"
-                    className="d-flex align-items-center"
-                    style={{ border: 'none', background: 'transparent', padding: 0 }}
-                  >
-                    <img
-                      src={user.avatar || "/default-avatar.png"}
-                      alt="avatar"
-                      style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "8px" }}
-                    />
-                    <span>{user.name || user.email}</span>
-                  </Dropdown.Toggle>
+                <>
+                  {/* Navigation links based on role */}
+                  {user.role === "student" && (
+                    <>
+                      <Nav.Link onClick={() => navigate("/student/dashboard")}>Dashboard</Nav.Link>
+                      <Nav.Link onClick={() => navigate("/student/courses")}>Khóa học</Nav.Link>
+                    </>
+                  )}
+                  {user.role === "teacher" && (
+                    <>
+                      <Nav.Link onClick={() => navigate("/teacher/dashboard")}>Dashboard</Nav.Link>
+                      <Nav.Link onClick={() => navigate("/teacher/courses/manage")}>Quản lý khóa học</Nav.Link>
+                    </>
+                  )}
+                  
+                  <Dropdown align="end">
+                    <Dropdown.Toggle
+                      variant="light"
+                      id="dropdown-user"
+                      className="d-flex align-items-center"
+                      style={{ border: 'none', background: 'transparent', padding: 0 }}
+                    >
+                      <img
+                        src={user.avatar || "/default-avatar.png"}
+                        alt="avatar"
+                        style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "8px" }}
+                      />
+                      <span>{user.name || user.email}</span>
+                    </Dropdown.Toggle>
 
-                  <Dropdown.Menu>
-                    <Dropdown.Item onClick={() => navigate("/profile")}>View Profile</Dropdown.Item>
-                    <Dropdown.Item onClick={() => navigate("/settings")}>Settings</Dropdown.Item>
-                    <Dropdown.Divider />
-                    <Dropdown.Item className="text-danger" onClick={handleLogout}>Logout</Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown>
+                    <Dropdown.Menu>
+                      <Dropdown.Item onClick={() => navigate("/profile")}>View Profile</Dropdown.Item>
+                      <Dropdown.Item onClick={() => navigate("/settings")}>Settings</Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item className="text-danger" onClick={handleLogout}>Logout</Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </>
               )}
             </Nav>
           </Navbar.Collapse>
