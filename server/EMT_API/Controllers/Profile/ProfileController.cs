@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;        // Dùng MVC attributes/controller base (
 using Microsoft.EntityFrameworkCore;   // Dùng EF Core (DbContext, truy vấn async như AnyAsync/FirstOrDefaultAsync)
 using System.IO;
 using System.Linq;
-namespace EMT_API.Controllers
+namespace EMT_API.Controllers.Profile
 {
     [ApiController]                        // Đánh dấu đây là API controller (tự bind, auto 400 nếu ModelState invalid—nếu bật)
     [Route("api/user/profile")]

@@ -11,7 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace EMT_API.Controllers;
+namespace EMT_API.Controllers.Auth;
 
 [ApiController]
 [Route("api/auth")]

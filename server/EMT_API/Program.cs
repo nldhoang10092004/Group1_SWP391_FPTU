@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using System.Text;
 
 namespace EMT_API
@@ -45,7 +46,18 @@ namespace EMT_API
                     };
                 });
 
+            // 🔐 Thêm Authorization + Policy “AdminOnly”
+            builder.Services.AddAuthorization(opt =>
+            {
+                // Map Role claim (phòng trường hợp bạn dùng "role" hay "roles")
+                opt.AddPolicy("AdminOnly", policy =>
+                    policy.RequireAuthenticatedUser()
+                          .RequireClaim(ClaimTypes.Role, "ADMIN"));
+            });
+
             builder.Services.AddAuthorization();
+
+
 
             // ===== Token Service (tạo access/refresh token) =====
             builder.Services.AddSingleton<ITokenService, TokenService>();

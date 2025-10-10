@@ -3,15 +3,16 @@ using EMT_API.DTOs.Admin;
 using EMT_API.DTOs.Auth;
 using EMT_API.Models;
 using EMT_API.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static EMT_API.Controllers.AuthController;
+using static EMT_API.Controllers.Auth.AuthController;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EMT_API.Controllers.Admin;
 [ApiController]
 [Route("api/admin/users")]
-//[AdminOnly]
+[Authorize(Roles = "ADMIN")]
 public class UserManagementController : ControllerBase
 {
     private readonly EMTDbContext _db;  
