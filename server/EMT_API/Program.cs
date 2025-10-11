@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 
@@ -19,7 +21,48 @@ namespace EMT_API
             // ===== Add Core Services =====
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                // 🧩 1. Thông tin mô tả API
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "EMT API",
+                    Version = "v1",
+                    Description = "English Mastery Training API"
+                });
+
+                // 🧩 2. Định nghĩa security scheme Bearer
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Nhập **Bearer {access_token}** vào đây",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                // 🧩 3. Áp dụng scheme cho tất cả endpoint
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+                // (tuỳ chọn) Nếu bạn muốn Swagger đọc XML comment từ code
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                    c.IncludeXmlComments(xmlPath);
+            });
 
             // ===== Database =====
             builder.Services.AddDbContext<EMTDbContext>(options =>

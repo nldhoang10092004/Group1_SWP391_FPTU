@@ -2,14 +2,17 @@
 using EMT_API.DTOs.Profile;
 using EMT_API.Models;                  // Dùng các model thực thể (Account, UserDetail, ...)
 using EMT_API.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;        // Dùng MVC attributes/controller base (ApiController, ControllerBase, ActionResult)
 using Microsoft.EntityFrameworkCore;   // Dùng EF Core (DbContext, truy vấn async như AnyAsync/FirstOrDefaultAsync)
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 namespace EMT_API.Controllers.Profile
 {
     [ApiController]                        // Đánh dấu đây là API controller (tự bind, auto 400 nếu ModelState invalid—nếu bật)
     [Route("api/user/profile")]
+    [Authorize]
     public class ProfileController : ControllerBase
     {
         private readonly EMTDbContext _db;
@@ -18,9 +21,10 @@ namespace EMT_API.Controllers.Profile
             _db = db;
         }
 
-        [HttpGet("{userId:int}/detail")]
-        public async Task<ActionResult> GetDetail([FromRoute] int userId)
+        [HttpGet("detail")]
+        public async Task<ActionResult> GetDetail()
         {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var detail = await _db.UserDetails.FirstOrDefaultAsync(x => x.AccountID == userId);
             if (detail == null) return NotFound("Account not found");
 
@@ -34,9 +38,11 @@ namespace EMT_API.Controllers.Profile
             });
         }
 
-        [HttpGet("{userId:int}/avatar")]
-        public async Task<ActionResult> GetAvatar([FromRoute] int userId)
+        [HttpGet("avatar")]
+        public async Task<ActionResult> GetAvatar()
         {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
             var detail = await _db.UserDetails.FirstOrDefaultAsync(x => x.AccountID == userId);
             if (detail == null) return NotFound("User not found");
 
@@ -50,9 +56,11 @@ namespace EMT_API.Controllers.Profile
             });
         }
 
-        [HttpPut("{userId:int}/detail")]
-        public async Task<ActionResult> UpdateDetail([FromRoute] int userId, [FromBody] UpdateUserDetailRequest req)
+        [HttpPut("detail")]
+        public async Task<ActionResult> UpdateDetail([FromBody] UpdateUserDetailRequest req)
         {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
             var detail = await _db.UserDetails.FirstOrDefaultAsync(x => x.AccountID == userId);
             if (detail == null) return NotFound("Account not found");
             if (!string.IsNullOrWhiteSpace(req.FullName)) detail.FullName = req.FullName;
@@ -63,13 +71,15 @@ namespace EMT_API.Controllers.Profile
             return Ok(new { message = "Update profile successfully" });
 
         }
-        [HttpPut("{userId:int}/avatar")]
+        [HttpPut("avatar")]
         [RequestSizeLimit(5 * 1024 * 1024)]
         [Consumes("multipart/form-data")] // <-- bắt buộc cho Swagger hiển thị upload
         public async Task<ActionResult> ChangeAvatar(
-    [FromRoute] int userId,
+
     [FromForm] AvatarUploadRequest req)  // <-- bọc IFormFile trong model
         {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
             var detail = await _db.UserDetails.FirstOrDefaultAsync(x => x.AccountID == userId);
             if (detail == null) return NotFound("User not found");
 
@@ -106,14 +116,16 @@ namespace EMT_API.Controllers.Profile
 
             detail.AvatarURL = $"/avatars/{fileName}";
             await _db.SaveChangesAsync();
+            return Ok(new { message = "Avatar updated", avatarUrl = $"{Request.Scheme}://{Request.Host}/avatars/{fileName}" });
 
-            return Ok(new { message = "Avatar updated.", avatarUrl = detail.AvatarURL });
         }
 
         // 3) Change password by userId (không JWT)
-        [HttpPut("{userId:int}/password")]
-        public async Task<ActionResult> ChangePassword([FromRoute] int userId, [FromBody] ChangePasswordRequest req)
+        [HttpPut("password")]
+        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequest req)
         {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
             if (req.NewPassword != req.ConfirmNewPassword)
                 return BadRequest("New password and confirm do not match.");
 
