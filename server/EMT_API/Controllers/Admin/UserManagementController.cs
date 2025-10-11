@@ -75,5 +75,60 @@ public class UserManagementController : ControllerBase
 
         return Ok(new { message = "Account is activate!" });
     }
+    [HttpPut("{id}")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> UpdateUserAccount(int id, [FromBody] UpdateUserAccountRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var user = await _db.Accounts.FindAsync(id);
+        if (user == null)
+            return NotFound($"User với ID {id} không tồn tại.");
+
+        // Cập nhật những trường được gửi lên (nếu không null hoặc không rỗng)
+        if (!string.IsNullOrEmpty(request.Role))
+            user.Role = request.Role;
+        if (!string.IsNullOrEmpty(request.Status))
+            user.Status = request.Status;
+        if (!string.IsNullOrEmpty(request.FullName))
+            user.Username = request.FullName;
+        // Thêm cập nhật cho các trường khác nếu có
+
+        await _db.SaveChangesAsync();
+        return Ok(user);
+    }
+    [HttpGet("search")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> SearchUsers([FromQuery] string? q, [FromQuery] string? role, [FromQuery] string? status)
+    {
+        var query = _db.Accounts.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(q))
+            query = query.Where(u => u.Username.Contains(q) || u.Username.Contains(q));
+
+        if (!string.IsNullOrWhiteSpace(role))
+            query = query.Where(u => u.Role == role);
+
+        if (!string.IsNullOrWhiteSpace(status))
+            query = query.Where(u => u.Status == status);
+
+        var results = await query.ToListAsync();
+
+        return Ok(results);
+    }
+    [HttpPost("assign-role")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> AssignUserRole([FromBody] AssignRoleRequest request)
+    {
+        var user = await _db.Accounts.FindAsync(request.UserId);
+        if (user == null)
+            return NotFound(new { message = "User not found" });
+
+        user.Role = request.Role;
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Role updated successfully." });
+    }
 }
 
