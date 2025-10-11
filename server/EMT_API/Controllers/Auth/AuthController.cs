@@ -107,12 +107,10 @@ public class AuthController : ControllerBase
         _db.Accounts.Add(acc);
         await _db.SaveChangesAsync();
 
-        // (tuỳ chọn) Tạo UserDetail rỗng nếu chưa có
-        if (await _db.UserDetails.FindAsync(acc.AccountID) is null)
-        {
-            _db.UserDetails.Add(new UserDetail { AccountID = acc.AccountID });
-            await _db.SaveChangesAsync();
-        }
+
+        _db.UserDetails.Add(new UserDetail { AccountID = acc.AccountID });
+        _db.Teachers.Add(new Teacher { TeacherID = acc.AccountID });
+        await _db.SaveChangesAsync();
 
         // 4) Cấp token ngay sau register (giữ API nhất quán với AuthResponse rút gọn)
         var access = _tokens.CreateAccessToken(acc, acc.RefreshTokenVersion);
