@@ -45,6 +45,7 @@ Dự án tập trung phát triển một **Minimum Viable Product (MVP)** với 
 
 ### 🔐 Xác thực & Phân quyền
 - Đăng ký/Đăng nhập với JWT Authentication
+- Tích hợp Google OAuth 2.0 để đăng nhập nhanh
 - Phân quyền 3 loại người dùng: Student, Teacher, Admin
 - Quản lý profile người dùng
 - Quên mật khẩu & Reset password qua email
@@ -83,16 +84,23 @@ Dự án tập trung phát triển một **Minimum Viable Product (MVP)** với 
 - **React Router** 7.9.1 - Routing
 - **Bootstrap** 5.3.8 & React-Bootstrap 2.10.10 - UI components
 - **Material-UI** 7.3.2 - Additional UI components
+- **React Icons** 5.5.0 - Icon library
+- **Google OAuth** 0.12.2 - Google authentication
 - **Axios** 1.12.2 - HTTP client
 - **SASS** 1.92.1 - CSS preprocessor
 - **JWT Decode** 4.0.0 - Token handling
 
 ### Backend
 - **ASP.NET Core** 8.0 - Web API framework
-- **Entity Framework Core** - ORM
+- **Entity Framework Core** 9.0.9 - ORM
 - **SQL Server** - Database
-- **JWT Bearer** - Authentication
-- **Swagger** - API documentation
+- **JWT Bearer** 8.0.20 - Authentication
+- **Swagger** 6.6.2 - API documentation
+
+### Mock API (Development)
+- **Express.js** 5.1.0 - Mock authentication server
+- **CORS** 2.8.5 - Cross-origin resource sharing
+- **Body Parser** 2.2.0 - Request body parsing
 
 ### DevOps & Tools
 - **Docker** - Containerization
@@ -163,6 +171,26 @@ dotnet run
 Backend sẽ chạy tại: `https://localhost:7010`
 Swagger UI: `https://localhost:7010/swagger`
 
+### Chạy Mock API (Development - Optional)
+
+Để phát triển và test frontend mà không cần backend chính, bạn có thể chạy mock API:
+
+```bash
+cd front-end/login-api
+
+# Install dependencies (lần đầu tiên)
+npm install
+
+# Start mock server
+node server.js
+```
+
+Mock API sẽ chạy tại: `http://localhost:3003`
+
+**Tài khoản demo trong Mock API:**
+- Học viên: `students@gmail.com` / `1234567890`
+- Admin: `admin@gmail.com` / `admin123`
+
 ### Chạy Frontend
 
 ```bash
@@ -188,6 +216,9 @@ Group1_SWP391_FPTU/
 │   │   │   └── Password/   # Password management
 │   │   ├── styles/         # CSS/SASS files
 │   │   └── App.js          # Main app component
+│   ├── login-api/           # Mock authentication API (development)
+│   │   ├── server.js       # Express mock server
+│   │   └── package.json    # Mock API dependencies
 │   └── package.json         # NPM dependencies
 │
 ├── server/                    # ASP.NET Core backend
@@ -195,6 +226,7 @@ Group1_SWP391_FPTU/
 │   │   ├── Controllers/     # API controllers
 │   │   │   ├── Auth/       # Authentication
 │   │   │   ├── Admin/      # Admin endpoints
+│   │   │   ├── Public/     # Public endpoints
 │   │   │   └── Profile/    # Profile management
 │   │   ├── Models/         # Data models
 │   │   ├── Data/           # DbContext
