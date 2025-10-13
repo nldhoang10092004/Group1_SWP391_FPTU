@@ -1,4 +1,5 @@
 ﻿using EMT_API.Data;
+using EMT_API.Middlewares;
 using EMT_API.Security; // để dùng TokenService
 using EMT_API.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -98,6 +99,14 @@ namespace EMT_API
                           .RequireClaim(ClaimTypes.Role, "ADMIN"));
             });
 
+            builder.Services.AddAuthorization(opt =>
+            {
+                // Map Role claim (phòng trường hợp bạn dùng "role" hay "roles")
+                opt.AddPolicy("TeacherOnly", policy =>
+                    policy.RequireAuthenticatedUser()
+                          .RequireClaim(ClaimTypes.Role, "TEACHER"));
+            });
+
             builder.Services.AddAuthorization();
 
 
@@ -147,7 +156,7 @@ namespace EMT_API
 
             app.UseAuthentication();
             app.UseAuthorization();
-
+            app.UseMiddleware<RequestLoggingMiddleware>();
             app.MapControllers();
 
             app.Run();
