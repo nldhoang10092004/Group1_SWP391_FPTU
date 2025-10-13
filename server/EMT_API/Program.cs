@@ -109,7 +109,8 @@ namespace EMT_API
 
             builder.Services.AddAuthorization();
 
-
+            builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<IOtpService, OtpService>();
 
             // ===== Token Service (tạo access/refresh token) =====
             builder.Services.AddSingleton<ITokenService, TokenService>();
