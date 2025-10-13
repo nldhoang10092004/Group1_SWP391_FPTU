@@ -32,8 +32,25 @@ public class AuthController : ControllerBase
     // REGISTER
     // ---------------------------
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest req)
+    public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest req, [FromServices] IOtpService otpSvc)
     {
+        // ✅ Kiểm tra đầu vào cơ bản
+        if (string.IsNullOrWhiteSpace(req.Email) ||
+            string.IsNullOrWhiteSpace(req.Username) ||
+            string.IsNullOrWhiteSpace(req.Password) ||
+            string.IsNullOrWhiteSpace(req.ConfirmPassword) ||
+            string.IsNullOrWhiteSpace(req.Otp))
+        {
+            return BadRequest("Vui lòng nhập đầy đủ thông tin.");
+        }
+
+        // ✅ Kiểm tra mật khẩu xác nhận
+        if (req.Password != req.ConfirmPassword)
+            return BadRequest("Mật khẩu xác nhận không khớp.");
+        // 0️⃣ Kiểm tra OTP trước
+        if (!otpSvc.Verify(req.Email, req.Otp))
+            return Unauthorized("OTP không hợp lệ hoặc đã hết hạn.");
+
         // 1) Check trùng
         if (await _db.Accounts.AnyAsync(a => a.Email == req.Email))
             return Conflict("Email đã tồn tại.");
@@ -131,6 +148,27 @@ public class AuthController : ControllerBase
             ));
     }
 
+    [HttpPost("send-otp")]
+    public async Task<IActionResult> SendOtp(
+    [FromBody] SendOtpRequest req,
+    [FromServices] IOtpService otpSvc,
+    [FromServices] EmailSender mailer)
+    {
+        try
+        {
+            var otp = otpSvc.Generate(req.Email);
+            var html = $"<h3>Mã OTP của bạn là <b>{otp}</b></h3><p>Hết hạn sau 5 phút.</p>";
+
+            await mailer.SendEmailAsync(req.Email, "Xác thực tài khoản EMT", html);
+            return Ok(new { message = "Đã gửi OTP tới email." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+
     // ---------------------------
     // LOGIN
     // ---------------------------
@@ -221,9 +259,6 @@ public class AuthController : ControllerBase
         ));
     }
 
-    // ---------------------------
-    // LOGOUT
-    // ---------------------------
     [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
@@ -240,9 +275,6 @@ public class AuthController : ControllerBase
         return Ok();
     }
 
-    // ---------------------------
-    // FORGOT PASSWORD (GIỮ NGUYÊN)
-    // ---------------------------
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req, [FromServices] IConfiguration cfg, [FromServices] EmailSender mailer)
     {
@@ -270,14 +302,9 @@ public class AuthController : ControllerBase
             // TODO: _logger.LogError(ex, "Failed to send reset email to {Email}", acc.Email);
         }
 
-        // TODO: Gửi email cho user với link này.
-        // Tạm thời DEV: trả link ra để bạn copy test (xóa khi lên prod)
         return Ok(new { message = "Reset link generated.", resetLink = link }); // 200 + link (chỉ dùng DEV)
     }
 
-    // ---------------------------
-    // RESET PASSWORD (GIỮ NGUYÊN)
-    // ---------------------------
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req, [FromServices] IConfiguration cfg)
     {

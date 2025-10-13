@@ -8,6 +8,7 @@ namespace EMT_API.Controllers.Public
 {
     [ApiController]
     [Route("api/public/plan")]
+    // ADMIN, STUDENT, TEACHER
     public class PlanController : ControllerBase
     {
         private readonly EMTDbContext _db;
