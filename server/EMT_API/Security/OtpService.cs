@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
-
+using System.Security.Cryptography;
 namespace EMT_API.Security
 {
     public class OtpService : IOtpService
@@ -20,7 +20,10 @@ namespace EMT_API.Security
                     throw new InvalidOperationException("Vui lòng chờ 60 giây trước khi gửi lại OTP.");
                 } 
             }
-            var otp = new Random().Next(100_000, 999_999).ToString();
+            var bytes = new byte[4];
+            RandomNumberGenerator.Fill(bytes);
+            var otp = (BitConverter.ToUInt32(bytes, 0) % 900000 + 100000).ToString();
+           
             _cache.Set($"otp:{email}", otp, _ttl);
             _cache.Set(lastKey, DateTime.UtcNow, _ttl);
             return otp;
