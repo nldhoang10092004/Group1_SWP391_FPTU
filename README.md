@@ -228,6 +228,18 @@ Group1_SWP391_FPTU/
    - **Teacher** → Quản lý khóa học
    - **Admin** → Admin panel
 
+#### Tài khoản demo
+
+Để dùng thử hệ thống, bạn có thể sử dụng các tài khoản demo sau:
+
+- **Học viên (Student)**
+  - Email: `students@gmail.com`
+  - Password: `1234567890`
+
+- **Giảng viên (Teacher)**
+  - Email: `teacher@emt.com`
+  - Password: `password123`
+
 ### Học viên (Student)
 
 - Xem danh sách khóa học theo cấp độ
@@ -255,8 +267,9 @@ Group1_SWP391_FPTU/
 ### Authentication Endpoints
 
 ```
-POST /api/auth/register       # Đăng ký tài khoản
-POST /api/auth/login          # Đăng nhập
+POST /api/auth/register        # Đăng ký tài khoản học viên
+POST /api/auth/registerTeacher # Đăng ký tài khoản giảng viên
+POST /api/auth/login           # Đăng nhập
 POST /api/auth/forgot-password # Quên mật khẩu
 POST /api/auth/reset-password  # Reset mật khẩu
 POST /api/auth/refresh-token   # Refresh JWT token
@@ -268,6 +281,14 @@ POST /api/auth/refresh-token   # Refresh JWT token
 GET  /api/profile             # Lấy thông tin profile
 PUT  /api/profile             # Cập nhật profile
 POST /api/profile/avatar      # Upload avatar
+```
+
+### Public Endpoints
+
+```
+GET /api/public/course        # Lấy danh sách khóa học
+GET /api/public/course/{id}   # Lấy chi tiết khóa học
+GET /api/public/plan          # Lấy danh sách gói đăng ký
 ```
 
 ### Admin Endpoints
