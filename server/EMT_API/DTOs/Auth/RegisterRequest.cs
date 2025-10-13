@@ -1,5 +1,3 @@
-﻿using System.ComponentModel.DataAnnotations;
-
 namespace EMT_API.DTOs.Auth;
 
 public class RegisterRequest
