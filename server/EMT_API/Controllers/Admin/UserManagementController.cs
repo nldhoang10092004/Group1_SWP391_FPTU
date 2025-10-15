@@ -27,13 +27,13 @@ public class UserManagementController : ControllerBase
         var returnWrapper = new { data = users };
         return Ok(returnWrapper);
     }
-    //Chỉ hiển thị các tài khoản có role = CUSTOMER
-    [HttpGet("customers")]
+    //Chỉ hiển thị các tài khoản có role = STUDENT
+    [HttpGet("students")]
     [Authorize(Roles = "ADMIN")]
-    public async Task<IActionResult> GetAllCustomers()
+    public async Task<IActionResult> GetAllStudents()
     {
         var customers = await _db.Accounts
-            .Where(a => a.Role == "CUSTOMER")
+            .Where(a => a.Role == "STUDENT")
             .Select(a => new DisplayUserResponse
             {
                 AccountID = a.AccountID,
