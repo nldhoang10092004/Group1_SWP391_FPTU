@@ -29,62 +29,79 @@ public class PaymentController : ControllerBase
         return Ok(new { checkoutUrl = url });
     }
 
-    // Webhook callback từ PayOS
     [HttpPost("webhook")]
+    [AllowAnonymous]
     public async Task<IActionResult> Webhook([FromBody] JsonElement body)
     {
-        var orderId = body.GetProperty("orderCode").GetInt32();
-        var status = body.GetProperty("status").GetString();
-        var uniqueKey = body.GetProperty("id").GetString(); // event id unique
-
-        // Chống xử lý trùng
-        if (await _db.WebhookEvents.AnyAsync(w => w.UniqueKey == uniqueKey))
-            return Ok();
-
-        var evt = new WebhookEvent
+        try
         {
-            OrderID = orderId,
-            UniqueKey = uniqueKey!,
-            Payload = body.ToString()
-        };
-        _db.WebhookEvents.Add(evt);
+            if (!body.TryGetProperty("data", out var dataElem))
+                return BadRequest("Invalid payload: missing data");
 
-        var order = await _db.PaymentOrders.FindAsync(orderId);
-        if (order == null) return Ok();
+            var orderId = dataElem.GetProperty("orderCode").GetInt32();
 
-        switch (status)
-        {
-            case "PAID":
-                order.Status = "PAID";
-                order.PaidAt = DateTime.UtcNow;
+            // ✅ Đọc code thay vì status
+            var code = dataElem.TryGetProperty("code", out var codeElem)
+                ? codeElem.GetString()
+                : "UNKNOWN";
+            var desc = dataElem.TryGetProperty("desc", out var descElem)
+                ? descElem.GetString()
+                : "";
 
-                var plan = await _db.SubscriptionPlans.FindAsync(order.PlanID);
-                if (plan != null)
-                {
-                    _db.UserMemberships.Add(new UserMembership
+            string status = code switch
+            {
+                "00" => "PAID",
+                _ => "FAILED"
+            };
+
+            // Ghi log webhook
+            _db.WebhookEvents.Add(new WebhookEvent
+            {
+                OrderID = orderId,
+                UniqueKey = Guid.NewGuid().ToString(),
+                Payload = body.ToString(),
+                ReceivedAt = DateTime.UtcNow
+            });
+
+            var order = await _db.PaymentOrders.FindAsync(orderId);
+            if (order == null) return Ok();
+
+            switch (status)
+            {
+                case "PAID":
+                    order.Status = "PAID";
+                    order.PaidAt = DateTime.UtcNow;
+
+                    var plan = await _db.SubscriptionPlans.FindAsync(order.PlanID);
+                    if (plan != null)
                     {
-                        UserID = order.BuyerID,
-                        PlanID = plan.PlanID,
-                        StartsAt = DateTime.UtcNow,
-                        EndsAt = DateTime.UtcNow.AddDays(plan.DurationDays),
-                        Status = "ACTIVE"
-                    });
-                }
-                break;
+                        _db.UserMemberships.Add(new UserMembership
+                        {
+                            UserID = order.BuyerID,
+                            PlanID = plan.PlanID,
+                            StartsAt = DateTime.UtcNow,
+                            EndsAt = DateTime.UtcNow.AddDays(plan.DurationDays),
+                            Status = "ACTIVE"
+                        });
+                    }
+                    break;
 
-            case "CANCELED":
-            case "FAILED":
-                order.Status = "CANCELED";
-                break;
+                case "FAILED":
+                    order.Status = "CANCELED";
+                    break;
+            }
 
-            default:
-                // Có thể log thêm cho debug
-                order.Status = "PENDING";
-                break;
+            await _db.SaveChangesAsync();
+            Console.WriteLine($"✅ Webhook xử lý thành công cho order {orderId} - {status}");
+            return Ok();
         }
-
-        await _db.SaveChangesAsync();
-        return Ok();
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Webhook error: {ex.Message}");
+            return Ok();
+        }
     }
+
+
 
 }

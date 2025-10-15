@@ -98,5 +98,14 @@ namespace EMT_API.Services
             using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
             return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(data))).ToLower();
         }
+
+        public string GetChecksumKey() => _cfg["PayOS:ChecksumKey"] ?? string.Empty;
+
+        public string ComputeSignature(string data, string key)
+        {
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
+            return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(data))).ToLower();
+        }
+
     }
 }
