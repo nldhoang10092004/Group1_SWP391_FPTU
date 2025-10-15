@@ -27,6 +27,45 @@ public class UserManagementController : ControllerBase
         var returnWrapper = new { data = users };
         return Ok(returnWrapper);
     }
+    //Chỉ hiển thị các tài khoản có role = CUSTOMER
+    [HttpGet("customers")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> GetAllCustomers()
+    {
+        var customers = await _db.Accounts
+            .Where(a => a.Role == "CUSTOMER")
+            .Select(a => new DisplayUserResponse
+            {
+                AccountID = a.AccountID,
+                Username = a.Username,
+                Email = a.Email,
+                Role = a.Role,
+                Status = a.Status
+            })
+            .ToListAsync();
+
+        return Ok(customers);
+    }
+
+    //Chỉ hiển thị các tài khoản có role = TEACHER
+    [HttpGet("teachers")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> GetAllTeachers()
+    {
+        var teachers = await _db.Accounts
+            .Where(a => a.Role == "TEACHER")
+            .Select(a => new DisplayUserResponse
+            {
+                AccountID = a.AccountID,
+                Username = a.Username,
+                Email = a.Email,
+                Role = a.Role,
+                Status = a.Status
+            })
+            .ToListAsync();
+
+        return Ok(teachers);
+    }
 
     [HttpPost]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest req)
@@ -50,6 +89,7 @@ public class UserManagementController : ControllerBase
     }
 
     [HttpPut("{id}/lock")]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> LockUser(int id)
     {
         var acc = await _db.Accounts.FindAsync(id);
@@ -64,6 +104,7 @@ public class UserManagementController : ControllerBase
     }
 
     [HttpPut("{id}/unlock")]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> UnlockUser(int id)
     {
         var acc = await _db.Accounts.FindAsync(id);
@@ -130,5 +171,6 @@ public class UserManagementController : ControllerBase
 
         return Ok(new { message = "Role updated successfully." });
     }
+
 }
 
