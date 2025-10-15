@@ -1,6 +1,7 @@
 ﻿using EMT_API.Data;
 using EMT_API.Middlewares;
 using EMT_API.Security; // để dùng TokenService
+using EMT_API.Services;
 using EMT_API.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -107,6 +108,14 @@ namespace EMT_API
                           .RequireClaim(ClaimTypes.Role, "TEACHER"));
             });
 
+            builder.Services.AddAuthorization(opt =>
+            {
+                // Map Role claim (phòng trường hợp bạn dùng "role" hay "roles")
+                opt.AddPolicy("StudentOnly", policy =>
+                    policy.RequireAuthenticatedUser()
+                          .RequireClaim(ClaimTypes.Role, "STUDENT"));
+            });
+
             builder.Services.AddAuthorization();
 
             builder.Services.AddMemoryCache();
@@ -115,6 +124,10 @@ namespace EMT_API
             // ===== Token Service (tạo access/refresh token) =====
             builder.Services.AddSingleton<ITokenService, TokenService>();
             builder.Services.AddHttpContextAccessor();
+
+            // Payment Service
+            builder.Services.AddHttpClient<PayOSService>();
+            builder.Services.AddScoped<PayOSService>();
 
             // ===== CORS =====
             const string MyCors = "_myCors";
