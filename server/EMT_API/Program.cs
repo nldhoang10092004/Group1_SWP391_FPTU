@@ -131,15 +131,21 @@ namespace EMT_API
 
             // ===== CORS =====
             const string MyCors = "_myCors";
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy(MyCors, policy => policy
-                    .WithOrigins("http://localhost:3000", "https://localhost:3000")
+                    .WithOrigins(
+                        "http://localhost:3000",
+                        "https://localhost:3000",
+                        "http://localhost:3002",             // 👈 thêm FE port
+                        "https://beerier-superlogically-maxwell.ngrok-free.dev" // 👈 và cả domain ngrok
+                    )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowCredentials()
-                );
+                    .AllowCredentials());
             });
+
 
             // ===== Email Sender =====
             builder.Services.Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"));
