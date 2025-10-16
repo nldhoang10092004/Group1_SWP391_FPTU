@@ -1,0 +1,265 @@
+.writing-page {
+  background: linear-gradient(to bottom right, #eef3ff, #fff);
+  min-height: 100vh;
+  padding: 2rem 3rem;
+  font-family: "Inter", sans-serif;
+  color: #333;
+}
+
+/* Header */
+.writing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+
+  p {
+    color: #666;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .ielts-btn {
+      background: #7b61ff;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .close-btn {
+      background: #f3f4f6;
+      border: none;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+  }
+}
+
+/* Progress bar */
+.progress-container {
+  background: #e5e7eb;
+  border-radius: 20px;
+  height: 6px;
+  width: 100%;
+  position: relative;
+  margin-bottom: 2rem;
+
+  .progress-bar {
+    height: 100%;
+    background: #7b61ff;
+    border-radius: 20px;
+    transition: width 0.3s;
+  }
+
+  span {
+    position: absolute;
+    right: 0;
+    top: 10px;
+    font-size: 0.9rem;
+    color: #777;
+  }
+}
+
+/* Layout */
+.writing-main {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1.2fr;
+  gap: 1.5rem;
+}
+
+/* Left section */
+.info-box, .tips-box {
+  background: white;
+  border-radius: 16px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+}
+
+.info-box h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-right: 0.4rem;
+}
+
+.easy {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.small {
+  background: #f3f4f6;
+}
+
+.info-stats {
+  margin: 0.8rem 0;
+  color: #444;
+}
+
+.task-box {
+  background: #f3f8ff;
+  border-radius: 8px;
+  padding: 0.8rem;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.tips-box ul {
+  list-style-type: none;
+  padding-left: 0;
+  li {
+    border-left: 2px solid #7b61ff;
+    padding-left: 0.6rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Center section */
+.writing-area {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.writing-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.writing-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+
+  .btn-outline,
+  .btn-primary {
+    border: 2px solid #000;
+    border-radius: 10px;
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .btn-outline {
+    background: #fff;
+    color: #000;
+
+    &:hover {
+      background: #000;
+      color: #fff;
+    }
+  }
+
+  .btn-primary {
+    background: #000;
+    color: #fff;
+
+    &:hover {
+      background: #333;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+textarea {
+  width: 100%;
+  min-height: 250px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1rem;
+  resize: none;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: #7b61ff;
+    box-shadow: 0 0 0 2px rgba(123, 97, 255, 0.2);
+  }
+}
+
+.submit-btn {
+  background: #7b61ff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.4rem;
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:hover {
+    background: #6b54f8;
+  }
+}
+
+/* Right section */
+.criteria-box, .progress-box {
+  background: white;
+  border-radius: 16px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+}
+
+.criteria-box ul, .progress-box ul {
+  list-style: none;
+  padding: 0;
+}
+
+.criteria-box li {
+  margin-bottom: 0.8rem;
+
+  p {
+    font-size: 0.9rem;
+    color: #666;
+  }
+}
+
+.progress-box li {
+  background: #f9fafb;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #444;
+
+  &.active {
+    border-left: 4px solid #7b61ff;
+    background: #eef2ff;
+  }
+}

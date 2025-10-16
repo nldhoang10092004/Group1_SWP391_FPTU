@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EMT_API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7cfd1778ef0badccf8abfebaf3f4ba6dbf9a36f8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5e802f031e0de7b81e1ab357915bc6571ae67789")]
 [assembly: System.Reflection.AssemblyProductAttribute("EMT_API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EMT_API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

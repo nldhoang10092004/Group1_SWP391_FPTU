@@ -1,0 +1,11 @@
+bin/
+obj/
+wwwroot/avatars/
+appsettings.*.json
+# Visual Studio cache
+.vs/
+*.vscode/
+*.user
+*.suo
+*.db
+*.opendb

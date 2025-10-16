@@ -1,0 +1,91 @@
+.create-lesson-container {
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  padding: 40px;
+  background: linear-gradient(to bottom right, #e6f0ff, #f8e8ff);
+
+  h3 {
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  p {
+    margin: 0;
+    color: #555;
+  }
+
+  .btn-dark {
+    background: #000;
+    border: none;
+    border-radius: 10px;
+    font-weight: 500;
+
+    &:hover {
+      background: #333;
+    }
+  }
+
+  .btn-outline-dark {
+    border: 1px solid #000;
+    border-radius: 10px;
+    font-weight: 500;
+    color: #000;
+
+    &:hover {
+      background: #000;
+      color: #fff;
+    }
+  }
+
+  .card {
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+
+    h5, h6 {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    p.text-muted {
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+  }
+
+  form {
+    label {
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    input, select, textarea {
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+
+      &:focus {
+        border-color: #000;
+        box-shadow: 0 0 0 0.1rem rgba(0,0,0,0.25);
+      }
+    }
+  }
+
+  ul {
+    padding-left: 20px;
+    font-size: 14px;
+    color: #444;
+
+    li {
+      margin-bottom: 8px;
+    }
+  }
+}

@@ -1,50 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import { Modal, Button, Form, Dropdown } from "react-bootstrap";
-import { styled, alpha } from '@mui/material/styles';
-import InputBase from '@mui/material/InputBase';
-import SearchIcon from '@mui/icons-material/Search';
+import { styled, alpha } from "@mui/material/styles";
+import InputBase from "@mui/material/InputBase";
+import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
-import { loginApi, registerApi } from "../../api/auth";
-import './Header.scss';
+import { loginApi, registerApi } from "../../middleware/auth";
+import { sendOtpApi } from "../../middleware/auth";
+import "./Header.scss";
 
-const Search = styled('div')(({ theme }) => ({
-  position: 'relative',
+const Search = styled("div")(({ theme }) => ({
+  position: "relative",
   borderRadius: theme.shape.borderRadius,
   backgroundColor: alpha(theme.palette.common.white, 0.15),
-  '&:hover': {
+  "&:hover": {
     backgroundColor: alpha(theme.palette.common.white, 0.25),
   },
   marginRight: theme.spacing(2),
   marginLeft: 0,
-  width: '100%',
-  [theme.breakpoints.up('sm')]: {
+  width: "100%",
+  [theme.breakpoints.up("sm")]: {
     marginLeft: theme.spacing(3),
-    width: 'auto',
+    width: "auto",
   },
 }));
 
-const SearchIconWrapper = styled('div')(({ theme }) => ({
+const SearchIconWrapper = styled("div")(({ theme }) => ({
   padding: theme.spacing(0, 2),
-  height: '100%',
-  position: 'absolute',
-  pointerEvents: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  height: "100%",
+  position: "absolute",
+  pointerEvents: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 }));
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  '& .MuiInputBase-input': {
+  color: "inherit",
+  "& .MuiInputBase-input": {
     padding: theme.spacing(1, 1, 1, 0),
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create('width'),
-    width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
+    transition: theme.transitions.create("width"),
+    width: "100%",
+    [theme.breakpoints.up("md")]: {
+      width: "20ch",
     },
   },
 }));
@@ -66,11 +67,33 @@ const Header = () => {
   const [accountType, setAccountType] = useState("student");
   const [registerMessage, setRegisterMessage] = useState("");
   const [registerErrorMessage, setRegisterErrorMessage] = useState("");
-
+  const [otpMessage, setOtpMessage] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [registerOtp, setRegisterOtp] = useState("");
+  const [isOtpValid, setIsOtpValid] = useState(false);
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem("user");
+      if (!savedUser || savedUser === "undefined" || savedUser === "null") return null;
+      return JSON.parse(savedUser);
+    } catch {
+      return null;
+    }
   });
+
+
+  useEffect(() => {
+    const openAuthModal = (e) => {
+      const tab = e.detail?.tab || "login";
+      setActiveTab(tab);
+      setShowAuthModal(true);
+    };
+
+    window.addEventListener("openAuthModal", openAuthModal);
+    return () => {
+      window.removeEventListener("openAuthModal", openAuthModal);
+    };
+  }, []);
 
   const resetLoginForm = () => {
     setEmail("");
@@ -96,61 +119,99 @@ const Header = () => {
     localStorage.removeItem("user");
     setUser(null);
     navigate("/");
+    window.location.reload();
   };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await loginApi(email, password);
-      const loggedUser = response.data.user || {
-        email,
-        role: response.data.role || "student"
-      };
+      console.log("Login API response:", response.data);
 
-      localStorage.setItem("token", response.data.token);
+      const { accountID, accessToken, expiresIn } = response.data;
+
+      if (!accessToken) {
+        throw new Error("AccessToken missing in response");
+      }
+
+      const loggedUser = { accountID, accessToken, expiresIn };
       localStorage.setItem("user", JSON.stringify(loggedUser));
-      setUser(loggedUser);
+      localStorage.setItem("accessToken", accessToken);
 
+      setUser(loggedUser);
       setLoginMessage("Đăng nhập thành công!");
+
       setTimeout(() => {
         resetLoginForm();
         setShowAuthModal(false);
-        if (loggedUser.role === "student") navigate("/home");
-        else if (loggedUser.role === "teacher") navigate("/dashboard");
-        else navigate("/");
+        navigate("/home");
       }, 1500);
+
     } catch (error) {
-      setLoginErrorMessage(error.response?.data?.message || "Đăng nhập thất bại");
+      console.error("Login error:", error);
+      setLoginErrorMessage(
+        error.response?.data?.message || error.message || "Đăng nhập thất bại"
+      );
     }
   };
 
+
   const handleRegisterSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (registerPassword !== registerConfirmPassword) {
-    setRegisterErrorMessage("Mật khẩu xác nhận không khớp");
-    return;
-  }
-
-  try {
-    const res = await registerApi(registerName, registerEmail, registerPassword, accountType);
-
-    if (res.data?.user) {
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setUser(res.data.user);
+    // Kiểm tra OTP có nhập chưa
+    if (!registerOtp) {
+      setRegisterErrorMessage("Vui lòng nhập OTP");
+      return;
     }
 
-    setRegisterMessage("Đăng ký thành công! Vui lòng đăng nhập.");
-    setTimeout(() => {
-      resetRegisterForm();
-      setActiveTab("login");
-    }, 2000);
-  } catch (error) {
-    setRegisterErrorMessage(error.response?.data?.message || "Đăng ký thất bại");
-  }
-};
+    try {
+      // Gọi API đăng ký
+      const response = await registerApi({
+        email: registerEmail,
+        username: registerName,
+        password: registerPassword,
+        confirmPassword: registerConfirmPassword,
+        otp: registerOtp
+      });
 
+
+      const { accountID, accessToken, expiresIn } = response.data;
+
+
+      const registeredUser = { accountID, accessToken, expiresIn };
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("user", JSON.stringify(registeredUser));
+
+      setUser(registeredUser);
+      setRegisterMessage("Đăng ký thành công!");
+
+      setTimeout(() => {
+        resetRegisterForm();
+        setShowAuthModal(false);
+        navigate("/home");
+      }, 1500);
+    } catch (error) {
+      setRegisterErrorMessage(
+        error.response?.data?.message || "Đăng ký thất bại"
+      );
+    }
+  };
+  const handleSendOtp = async () => {
+    if (!registerEmail) {
+      setOtpError("Vui lòng nhập email trước khi gửi OTP");
+      return;
+    }
+    try {
+      const res = await sendOtpApi(registerEmail);
+      setOtpMessage("OTP đã được gửi đến email của bạn!");
+      setOtpError("");
+      console.log("OTP:", res.data.otp); // debug OTP
+    } catch (error) {
+      setOtpError(error.response?.data?.message || "Gửi OTP thất bại");
+      setOtpMessage("");
+    }
+  };
 
   const handleDemoStudent = () => {
     setEmail("students@gmail.com");
@@ -164,7 +225,7 @@ const Header = () => {
 
   return (
     <>
-      <Navbar expand="lg" className="bg-body-tertiary">
+      <Navbar expand="lg" className="auth-">
         <Container>
           <Navbar.Brand href="/">EnglishMaster</Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -173,14 +234,35 @@ const Header = () => {
               <SearchIconWrapper>
                 <SearchIcon />
               </SearchIconWrapper>
-              <StyledInputBase placeholder="Search…" inputProps={{ 'aria-label': 'search' }} />
+              <StyledInputBase
+                placeholder="Search…"
+                inputProps={{ "aria-label": "search" }}
+              />
             </Search>
 
             <Nav className="ms-auto">
               {!user ? (
                 <>
-                  <button className='btn-login me-2' onClick={() => { handleAuthClick(); setActiveTab("login"); resetRegisterForm(); }}>Login</button>
-                  <button className='btn-signup' onClick={() => { handleAuthClick(); setActiveTab("register"); resetLoginForm(); }}>Sign Up</button>
+                  <button
+                    className="btn-login me-2"
+                    onClick={() => {
+                      handleAuthClick();
+                      setActiveTab("login");
+                      resetRegisterForm();
+                    }}
+                  >
+                    Login
+                  </button>
+                  <button
+                    className="btn-signup"
+                    onClick={() => {
+                      handleAuthClick();
+                      setActiveTab("register");
+                      resetLoginForm();
+                    }}
+                  >
+                    Sign Up
+                  </button>
                 </>
               ) : (
                 <Dropdown align="end">
@@ -188,21 +270,39 @@ const Header = () => {
                     variant="light"
                     id="dropdown-user"
                     className="d-flex align-items-center"
-                    style={{ border: 'none', background: 'transparent', padding: 0 }}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      padding: 0,
+                    }}
                   >
                     <img
                       src={user.avatar || "/default-avatar.png"}
                       alt="avatar"
-                      style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "8px" }}
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        marginRight: "8px",
+                      }}
                     />
                     <span>{user.name || user.email}</span>
                   </Dropdown.Toggle>
 
                   <Dropdown.Menu>
-                    <Dropdown.Item onClick={() => navigate("/profile")}>View Profile</Dropdown.Item>
-                    <Dropdown.Item onClick={() => navigate("/settings")}>Settings</Dropdown.Item>
+                    <Dropdown.Item onClick={() => navigate("/profile")}>
+                      View Profile
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => navigate("/profile")}>
+                      Settings
+                    </Dropdown.Item>
                     <Dropdown.Divider />
-                    <Dropdown.Item className="text-danger" onClick={handleLogout}>Logout</Dropdown.Item>
+                    <Dropdown.Item
+                      className="text-danger"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
               )}
@@ -212,141 +312,210 @@ const Header = () => {
       </Navbar>
 
       {/* Modal */}
-      <Modal show={showAuthModal} onHide={() => setShowAuthModal(false)} centered className="auth-modal" size="md">
+      <Modal
+        show={showAuthModal}
+        onHide={() => setShowAuthModal(false)}
+        centered
+        className="auth-modal"
+        size="md"
+      >
         <Modal.Header closeButton className="px-3 py-2">
           <Modal.Title className="fs-6">English Master Hub</Modal.Title>
         </Modal.Header>
         <Modal.Body className="p-3">
-          <p className="text-center mb-3 small">Đăng nhập hoặc tạo tài khoản để bắt đầu hành trình học tiếng Anh</p>
+          <p className="text-center mb-3 small">
+            Đăng nhập hoặc tạo tài khoản để bắt đầu hành trình học tiếng Anh
+          </p>
 
           <div className="auth-tabs-nav mb-3">
-            <button className={`tab-nav-btn ${activeTab === 'login' ? 'active' : ''}`} onClick={() => setActiveTab('login')}>
+            <button
+              className={`tab-nav-btn ${activeTab === "login" ? "active" : ""
+                }`}
+              onClick={() => setActiveTab("login")}
+            >
               Đăng nhập
             </button>
-            <button className={`tab-nav-btn ${activeTab === 'register' ? 'active' : ''}`} onClick={() => setActiveTab('register')}>
+            <button
+              className={`tab-nav-btn ${activeTab === "register" ? "active" : ""
+                }`}
+              onClick={() => setActiveTab("register")}
+            >
               Đăng ký
             </button>
           </div>
 
           <div className="auth-tab-content">
-            {activeTab === 'login' ? (
+            {activeTab === "login" ? (
+              // LOGIN FORM
               <Form onSubmit={handleLoginSubmit}>
                 <Form.Group className="mb-2">
                   <Form.Label className="small mb-1">Email</Form.Label>
-                  <Form.Control 
-                    type="email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    required 
+                  <Form.Control
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     size="sm"
                   />
                 </Form.Group>
 
                 <Form.Group className="mb-2">
                   <Form.Label className="small mb-1">Mật khẩu</Form.Label>
-                  <Form.Control 
-                    type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required 
+                  <Form.Control
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                     size="sm"
                   />
                 </Form.Group>
 
                 <div className="mb-2 text-end">
-                  <a href="/forgotpassword" className="text-muted small">Quên mật khẩu?</a>
+                  <a
+                    href="/forgotpassword"
+                    className="text-muted small"
+                  >
+                    Quên mật khẩu?
+                  </a>
                 </div>
 
                 <div className="demo-accounts mb-3 py-2">
                   <p className="text-center mb-1 small">Tài khoản demo:</p>
                   <div className="d-flex justify-content-center gap-2">
-                    <Button variant="outline-dark" size="sm" onClick={handleDemoStudent}>Học viên</Button>
-                    <Button variant="outline-dark" size="sm" onClick={handleDemoTeacher}>Giảng viên</Button>
+                    <Button
+                      variant="outline-dark"
+                      size="sm"
+                      onClick={handleDemoStudent}
+                    >
+                      Học viên
+                    </Button>
+                    <Button
+                      variant="outline-dark"
+                      size="sm"
+                      onClick={handleDemoTeacher}
+                    >
+                      Giảng viên
+                    </Button>
                   </div>
                 </div>
 
-                <Button variant="dark" type="submit" className="w-100 mb-2 py-1">Đăng nhập</Button>
+                <Button variant="dark" type="submit" className="w-100 mb-2 py-1">
+                  Đăng nhập
+                </Button>
 
                 <div className="text-center mb-2">
-                  <Button variant="outline-danger" className="w-100 py-1" size="sm">
+                  <Button
+                    variant="outline-danger"
+                    className="w-100 py-1"
+                    size="sm"
+                  >
                     Đăng nhập bằng Google
                   </Button>
                 </div>
 
-                {loginMessage && <div className="alert alert-success py-1 small mb-2">{loginMessage}</div>}
-                {loginErrorMessage && <div className="alert alert-danger py-1 small mb-2">{loginErrorMessage}</div>}
+                {loginMessage && (
+                  <div className="alert alert-success py-1 small mb-2">
+                    {loginMessage}
+                  </div>
+                )}
+                {loginErrorMessage && (
+                  <div className="alert alert-danger py-1 small mb-2">
+                    {loginErrorMessage}
+                  </div>
+                )}
               </Form>
             ) : (
               <Form onSubmit={handleRegisterSubmit}>
                 <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Loại tài khoản</Form.Label>
-                  <div className="d-flex gap-2">
-                    <div className={`account-type-card ${accountType === 'student' ? 'active' : ''}`} onClick={() => setAccountType('student')}>
-                      <span className="account-type-icon">📚</span>
-                      <div className="account-type-content">
-                        <div className="account-type-title small">Học viên</div>
-                        <div className="account-type-desc extra-small">Học tiếng Anh</div>
-                      </div>
-                      {accountType === 'student' && <span className="account-type-check">✓</span>}
-                    </div>
-                    <div className={`account-type-card ${accountType === 'teacher' ? 'active' : ''}`} onClick={() => setAccountType('teacher')}>
-                      <span className="account-type-icon">👨‍🏫</span>
-                      <div className="account-type-content">
-                        <div className="account-type-title small">Giảng viên</div>
-                        <div className="account-type-desc extra-small">Dạy tiếng Anh</div>
-                      </div>
-                      {accountType === 'teacher' && <span className="account-type-check">✓</span>}
-                    </div>
+                  <div className="flex-grow-1">
+                    <Form.Label className="small mb-1">Email</Form.Label>
+                    <Form.Control
+                      type="email"
+                      value={registerEmail}
+                      onChange={(e) => setRegisterEmail(e.target.value)}
+                      required
+                      size="sm"
+                    />
                   </div>
                 </Form.Group>
 
+                <Form.Group className="mb-2 d-flex align-items-center justify-content-between gap-2">
+                  <div className="flex-grow-1">
+                    <Form.Label className="small mb-1">Mã Xác Nhận</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Nhập mã xác nhận"
+                      value={registerOtp}
+                      onChange={(e) => setRegisterOtp(e.target.value)}
+                      required
+                      size="sm"
+                    />
+                  </div>
+                  <div style={{ marginTop: "22px" }}>
+                    <Button
+                      variant="outline-dark"
+                      size="sm"
+                      type="button"
+                      className="px-2 py-1"
+                      onClick={handleSendOtp}
+                    >
+                      Gửi mã xác nhận
+                    </Button>
+                    {otpMessage && <div className="text-success small">{otpMessage}</div>}
+                    {otpError && <div className="text-danger small">{otpError}</div>}
+                  </div>
+                </Form.Group>
+
+                {/* Username */}
                 <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Họ và tên</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    value={registerName} 
-                    onChange={(e) => setRegisterName(e.target.value)} 
-                    required 
+                  <Form.Label className="small mb-1">Username</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={registerName}
+                    onChange={(e) => setRegisterName(e.target.value)}
+                    required
                     size="sm"
                   />
                 </Form.Group>
 
                 <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Email</Form.Label>
-                  <Form.Control 
-                    type="email" 
-                    value={registerEmail} 
-                    onChange={(e) => setRegisterEmail(e.target.value)} 
-                    required 
-                    size="sm"
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Mật khẩu</Form.Label>
-                  <Form.Control 
-                    type="password" 
-                    value={registerPassword} 
-                    onChange={(e) => setRegisterPassword(e.target.value)} 
-                    required 
+                  <Form.Label className="small mb-1">Password</Form.Label>
+                  <Form.Control
+                    type="password"
+                    value={registerPassword}
+                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    required
                     size="sm"
                   />
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label className="small mb-1">Xác nhận mật khẩu</Form.Label>
-                  <Form.Control 
-                    type="password" 
-                    value={registerConfirmPassword} 
-                    onChange={(e) => setRegisterConfirmPassword(e.target.value)} 
-                    required 
+                  <Form.Label className="small mb-1">
+                    Xác nhận mật khẩu
+                  </Form.Label>
+                  <Form.Control
+                    type="password"
+                    value={registerConfirmPassword}
+                    onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                    required
                     size="sm"
                   />
                 </Form.Group>
 
-                <Button variant="dark" type="submit" className="w-100 mb-2 py-1">Tạo tài khoản</Button>
-                {registerMessage && <div className="alert alert-success py-1 small mb-2">{registerMessage}</div>}
-                {registerErrorMessage && <div className="alert alert-danger py-1 small mb-2">{registerErrorMessage}</div>}
+                <Button variant="dark" type="submit" className="w-100 mb-2 py-1">
+                  Đăng ký
+                </Button>
+
+                {registerMessage && (
+                  <div className="alert alert-success py-1 small mb-2">
+                    {registerMessage}
+                  </div>
+                )}
+                {registerErrorMessage && (
+                  <div className="alert alert-danger py-1 small mb-2">
+                    {registerErrorMessage}
+                  </div>
+                )}
               </Form>
             )}
           </div>

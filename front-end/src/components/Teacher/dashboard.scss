@@ -1,0 +1,375 @@
+.dashboard-container {
+  background: linear-gradient(to bottom right, #e6f0ff, #f8e8ff);
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  padding: 20px 40px;
+
+  h2 {
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  p {
+    margin: 0;
+    color: #555;
+  }
+}
+
+/* Card thống kê trên đầu */
+.dashboard-container .card {
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.dashboard-container .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.dashboard-container .card h5 {
+  font-weight: 600;
+  color: #333;
+}
+
+.dashboard-container .card p.fs-4 {
+  font-weight: 700;
+  color: #000;
+}
+
+/* Nút mặc định -> màu đen */
+.btn {
+  border-radius: 10px;
+  font-weight: 500;
+  padding: 8px 18px;
+}
+
+.btn-dark,
+.btn-outline-dark {
+  background: #000;
+  color: #fff;
+  border: none;
+}
+
+.btn-dark:hover,
+.btn-outline-dark:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Tabs */
+.nav-tabs {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: none;
+  margin-bottom: 20px;
+  gap: 10px;
+
+  .nav-item {
+    flex: 1;
+    text-align: center;
+  }
+
+  .nav-link {
+    border-radius: 25px;
+    color: #333;
+    font-weight: normal;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    background: #fff;
+    border: 1px solid #ddd;
+
+    &:hover {
+      background-color: #f2f2f2;
+      color: #000;
+    }
+
+    &.active {
+      background-color: #eaeaea;
+      color: #000;
+      font-weight: 500;
+    }
+  }
+}
+
+/* Box thống kê */
+.stat-box {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 100px;
+
+  .stat-title {
+    font-size: 14px;
+    color: #555;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    margin-top: 5px;
+  }
+}
+
+/* Card khóa học */
+.course-card {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 20px;
+  margin: 10px auto;
+  min-height: 300px;
+  max-width: 95%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .card-text {
+    font-size: 14px;
+    color: #555;
+    flex-grow: 1;
+  }
+
+  .card-footer {
+    margin-top: 15px;
+    text-align: left;
+  }
+}
+
+/* Table Styles */
+.table-container {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.custom-table {
+  margin-bottom: 0;
+  width: 100%;
+  
+  thead th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #333;
+    background: #f8f9fa;
+    padding: 12px 15px;
+  }
+  
+  tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+  }
+  
+  tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+}
+
+/* Tài liệu */
+.doc-info-card {
+  background: #fafafa;
+  border: 2px dashed #ddd;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  
+  .doc-info-content {
+    h6 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+  }
+}
+
+.spec-card {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 25px 20px;
+  text-align: center;
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-3px);
+  }
+  
+  .spec-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+  }
+  
+  h6 {
+    margin-bottom: 5px;
+    color: #333;
+  }
+}
+
+/* Flashcards */
+.flashcard {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 20px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  
+  .flashcard-content {
+    .flashcard-question,
+    .flashcard-answer {
+      margin-bottom: 15px;
+      
+      p {
+        margin: 5px 0 0 0;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #000;
+      }
+    }
+  }
+  
+  .flashcard-actions {
+    text-align: right;
+  }
+}
+
+/* Reviews */
+.review-card {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 20px;
+  
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    
+    .reviewer-info {
+      h6 {
+        margin-bottom: 2px;
+        color: #333;
+      }
+    }
+    
+    .review-rating {
+      font-size: 1.2rem;
+    }
+  }
+  
+  .review-comment {
+    font-style: italic;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  
+  .review-date {
+    text-align: right;
+  }
+}
+
+/* Badge Styles */
+.badge {
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+/* Button Styles */
+.btn {
+  border-radius: 10px;
+  font-weight: 500;
+  
+  &.btn-sm {
+    padding: 4px 12px;
+    font-size: 0.875rem;
+  }
+  
+  &.btn-outline-dark,
+  &.btn-outline-danger {
+    background: transparent;
+    
+    &.btn-outline-dark {
+      border: 1px solid #000;
+      color: #000;
+      
+      &:hover {
+        background: #000;
+        color: #fff;
+      }
+    }
+    
+    &.btn-outline-danger {
+      border: 1px solid #dc3545;
+      color: #dc3545;
+      
+      &:hover {
+        background: #dc3545;
+        color: #fff;
+      }
+    }
+  }
+}
+
+/* Modal popup */
+.modal-content {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+.modal-title {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 15px 20px;
+  }
+  
+  .nav-tabs .nav-link {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+  
+  .table-container {
+    padding: 15px;
+  }
+  
+  .course-card {
+    min-height: 250px;
+  }
+}
