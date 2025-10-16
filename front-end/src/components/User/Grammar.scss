@@ -1,0 +1,305 @@
+/* General styling */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5; /* Light grey background */
+  margin: 0;
+  padding: 0;
+}
+
+.grammar-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 40px auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header */
+.grammar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.grammar-header h1 {
+  font-size: 28px;
+  color: #5d3fd3; /* Darker purple for header */
+  margin: 0;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 30px;
+  color: #a0a0a0;
+  cursor: pointer;
+  padding: 0 10px;
+  transition: color 0.2s ease;
+}
+
+.close-button:hover {
+  color: #777;
+}
+
+/* Progress Section */
+.progress-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.progress-section p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.progress-bar-background {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #b19cd9; /* Light purple for progress bar */
+  border-radius: 4px;
+  transition: width 0.3s ease-in-out;
+}
+
+.completion-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #777;
+}
+
+/* Main Content Area */
+.grammar-content {
+  display: flex;
+  gap: 30px;
+}
+
+/* Question Card */
+.question-card {
+  flex: 3;
+  background-color: #f7f3fd; /* Very light purple for card background */
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.question-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #e7dffd; /* Lighter purple dashed border */
+}
+
+.card-header .icon {
+  font-size: 24px;
+  color: #8b6fd3; /* Medium purple for icon */
+}
+
+.card-header .title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #5d3fd3; /* Darker purple for title */
+}
+
+.card-header .difficulty {
+  background-color: #e6e0f7; /* Lighter purple background for difficulty */
+  color: #5d3fd3; /* Darker purple text for difficulty */
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.card-header .tag {
+  background-color: #f0ecfb; /* Even lighter purple for tag */
+  color: #8b6fd3; /* Medium purple text for tag */
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.question-card .description {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.question-body .question-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 25px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.option-item {
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  padding: 15px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  color: #444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option-item:hover {
+  border-color: #b19cd9; /* Light purple on hover */
+  background-color: #e7dffd; /* Lighter purple on hover */
+}
+
+.option-item.selected {
+  background-color: #d8c3f4; /* Medium light purple when selected */
+  border-color: #b19cd9;
+  color: #333;
+  font-weight: 500;
+}
+
+.option-item.correct {
+  background-color: #d4edda; /* Green for correct answer */
+  border-color: #28a745;
+  color: #155724;
+}
+
+.option-item.incorrect {
+  background-color: #f8d7da; /* Red for incorrect answer */
+  border-color: #dc3545;
+  color: #721c24;
+}
+
+.check-button {
+  width: 100%;
+  padding: 15px 25px;
+  background-color: #8b6fd3; /* Main purple button */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.check-button:hover:not(:disabled) {
+  background-color: #6a4cd3; /* Darker purple on hover */
+}
+
+.check-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Progress Sidebar */
+.progress-sidebar {
+  flex: 1;
+  background-color: #f7f3fd; /* Very light purple for sidebar */
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.progress-sidebar h3 {
+  font-size: 20px;
+  color: #5d3fd3; /* Darker purple for sidebar header */
+  margin-top: 0;
+  margin-bottom: 25px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e7dffd;
+}
+
+.progress-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.progress-sidebar li {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  font-size: 16px;
+  color: #555;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.progress-sidebar li:hover {
+  color: #5d3fd3;
+}
+
+.progress-sidebar li.active-tense {
+  font-weight: 600;
+  color: #5d3fd3; /* Darker purple for active item */
+}
+
+.progress-sidebar li .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #ccc;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.progress-sidebar li.active-tense .dot {
+  background-color: #8b6fd3; /* Main purple for active dot */
+}
+
+.progress-sidebar li .question-count {
+  margin-left: auto;
+  font-size: 14px;
+  color: #777;
+}
+
+/* Chat Icon */
+.chat-icon {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #8b6fd3; 
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.chat-icon:hover {
+  background-color: #6a4cd3; /* Darker purple on hover */
+  transform: translateY(-3px);
+}
