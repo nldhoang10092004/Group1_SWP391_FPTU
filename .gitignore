@@ -2,3 +2,27 @@
 .vs/
 *.vsidx
 front-end/node_modules/
+
+# .gitignore file in the root of your repository (Group1_SWP391_FPTU/)
+
+# Ignore .NET build output and temporary files
+/server/**/bin/
+/server/**/obj/
+/server/**/.vs/
+/server/**/*.user
+/server/**/*.suo
+/server/**/*.bak
+/server/**/*.log
+/server/**/Properties/launchSettings.json # Often contains local dev settings
+/server/EMT_API/avatars/ # If avatars are generated locally and not meant to be tracked
+
+# Ignore Node.js / npm related files (if front-end uses Node.js)
+/front-end/node_modules/
+/front-end/build/ # If you compile your front-end into a build folder
+/front-end/dist/ # Common build output folder name
+/front-end/.env # Environment variables
+.env
+
+# General ignores
+*.DS_Store
+*.env
