@@ -1,4 +1,3 @@
-// Style cho nút login/signup
 .btn-login, .btn-signup {
   border: none;
   padding: 6px 16px;
@@ -31,11 +30,21 @@
   }
 }
 
-// Style cho modal auth
+
 .auth-modal {
+  
+  .modal-backdrop {
+    padding-bottom: 30rem;
+    background-color: rgba(0, 0, 0, 0.2); 
+    backdrop-filter: blur(3px); 
+
+  }
+
   .modal-content {
     border-radius: 12px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    background:white;
+    backdrop-filter: blur(10px);
   }
 
   .modal-header {
@@ -70,7 +79,7 @@
       border: none;
       font-weight: 500;
       font-size: 0.9rem;
-      color: #6c757d;
+      color: white;
       position: relative;
       transition: all 0.3s ease;
 
@@ -124,7 +133,6 @@
     }
   }
 
-  // Style cho chọn loại tài khoản
   .account-type-card {
     border: 1px solid #e9ecef;
     border-radius: 8px;

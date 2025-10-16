@@ -1,0 +1,492 @@
+.home-page {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
+  .hero-section {
+    background: linear-gradient(to bottom right, #e6f0ff, #f8e8ff);
+    color: Black;
+    padding: 60px 0;
+    
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .hero-description {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+    
+    .hero-buttons {
+      .btn {
+        padding: 12px 30px;
+        font-weight: 600;
+      }
+    }
+    
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      
+      .stat-item {
+        font-size: 1.1rem;
+      }
+    }
+    
+    .hero-image-container {
+      position: relative;
+      text-align: center;
+      
+      .hero-logo {
+            min-width: 80%;
+    border-radius: 10px;
+    height: 400px;
+      }
+      
+      .live-lesson-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        
+        .live-dot {
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          background: #ff4757;
+          border-radius: 50%;
+          margin-right: 5px;
+          animation: pulse 1.5s infinite;
+        }
+      }
+    }
+  }
+  
+  .welcome-section {
+    padding: 40px 0;
+    
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      text-align: center;
+      border: none;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      
+      h3 {
+        color: #667eea;
+        font-size: 2.5rem;
+        font-weight: 700;
+      }
+      
+      p {
+        color: #666;
+        margin-bottom: 0;
+      }
+    }
+  }
+  
+  .section-divider {
+    margin: 30px 0;
+    border-color: #eee;
+  }
+  
+  .lessons-nav {
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    
+    .tab-navigation {
+      display: flex;
+      gap: 0;
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 5px;
+      
+      .tab-item {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        background: transparent;
+        color: #666;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        
+        &.active {
+          background: white;
+          color: #667eea;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        &:hover:not(.active) {
+          background: rgba(255, 255, 255, 0.5);
+        }
+      }
+    }
+  }
+  
+  .level-section-box {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    
+    .section-title {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .current-level {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    
+    .level-card {
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &.active {
+        border-color: #667eea;
+        background: #f8f9ff;
+      }
+      
+      .level-radio {
+        display: none;
+      }
+      
+      .level-label {
+        cursor: pointer;
+        margin-bottom: 0;
+        
+        .level-name {
+          display: block;
+          color: #333;
+          margin-bottom: 5px;
+        }
+        
+        .level-description {
+          font-size: 0.9rem;
+          color: #666;
+        }
+      }
+    }
+    
+    .divider {
+      height: 1px;
+      background: #eee;
+      margin: 20px 0;
+    }
+    
+    .progress-section {
+      .progress-title {
+        color: #333;
+        margin-bottom: 15px;
+      }
+      
+      .progress-container {
+        .progress-bar-custom {
+          height: 10px;
+          background: #e9ecef;
+          border-radius: 5px;
+          overflow: hidden;
+          
+          .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+          }
+        }
+        
+        .progress-info {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 10px;
+          color: #666;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
+.courses-tab {
+  padding: 20px 0;
+  
+  h3 {
+    color: #2c3e50;
+    font-weight: 700;
+    text-align: center;
+  }
+}
+
+.course-card-design {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .course-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    
+    .course-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+      flex: 1;
+      margin-right: 10px;
+    }
+    
+    .course-level-badge {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+  }
+
+  .course-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 16px;
+  }
+
+  .course-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 16px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    
+    .stat-item {
+      text-align: center;
+      
+      .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        display: block;
+      }
+      
+      .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 4px;
+      }
+    }
+  }
+
+  .progress-info {
+    margin-bottom: 16px;
+    
+    .progress-title {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    .progress-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      .progress-text {
+        font-size: 0.9rem;
+        color: #2c3e50;
+        font-weight: 600;
+      }
+      
+      .progress-percent {
+        font-size: 0.9rem;
+        color: #28a745;
+        font-weight: 700;
+      }
+    }
+  }
+
+  .course-content-section {
+    margin-bottom: 16px;
+    
+    h6 {
+      font-size: 0.9rem;
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .lessons-list {
+      .lesson-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f3f4;
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        .lesson-name {
+          font-size: 0.85rem;
+          color: #2c3e50;
+          flex: 1;
+        }
+        
+        .lesson-duration {
+          font-size: 0.8rem;
+          color: #6c757d;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .divider {
+    height: 1px;
+    background: #e9ecef;
+    margin: 16px 0;
+  }
+
+  .course-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    
+    .start-course-btn,
+    .view-lessons-btn {
+      flex: 1;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 6px;
+    }
+    
+    .start-course-btn {
+      background: #2c3e50;
+      border: none;
+      
+      &:hover {
+        background: #34495e;
+        transform: translateY(-1px);
+      }
+    }
+    
+    .view-lessons-btn {
+      border-color: #2c3e50;
+      color: #2c3e50;
+      
+      &:hover {
+        background: #2c3e50;
+        color: white;
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  .enrollment-date {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #6c757d;
+    padding-top: 8px;
+    border-top: 1px solid #f1f3f4;
+  }
+}
+
+
+
+.practice-section {
+  .skill-card {
+    padding: 2rem 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 15px;
+    text-align: center;
+    background: white;
+    transition: transform 0.3s ease;
+    height: 100%;
+    
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .skill-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    h6 {
+      color: #000;
+      margin: 0 0 1rem 0;
+    }
+  }
+}
+
+
+// Responsive
+@media (max-width: 768px) {
+  .courses-tab {
+    .col-md-4 {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+    
+    .course-card-correct {
+      .action-buttons {
+        flex-direction: column;
+      }
+    }
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .courses-tab {
+    .col-md-4 {
+      flex: 0 0 50%;
+      max-width: 50%;
+    }
+  }
+}
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}

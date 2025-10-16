@@ -1,20 +1,27 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { forgotPasswordApi } from "../../middleware/auth"; 
 import "./forgotpass.scss";
 
 export default function ForgotPass() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Fake API gọi forgot-password với email:", email);
-    setSent(true);
-
-    setTimeout(() => {
-      navigate("/resetpassword?token=fakeToken123");
-    }, 1500);
+    setError("");
+    try {
+      const res = await forgotPasswordApi(email);
+      console.log("✅ Kết quả gửi OTP:", res.data);
+      setSent(true);
+      // Nếu backend gửi token qua email thật, bạn không cần navigate ngay
+      // navigate("/resetpassword?token=fakeToken123"); // nếu cần test nhanh thì bỏ comment dòng này
+    } catch (err) {
+      console.error("❌ Lỗi khi gửi OTP:", err);
+      setError("Gửi OTP thất bại. Vui lòng kiểm tra lại email.");
+    }
   };
 
   return (
@@ -35,13 +42,15 @@ export default function ForgotPass() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <button type="submit">Tiếp tục</button>
+            <button type="submit">Gửi Link Khôi Phục</button>
           </form>
         ) : (
           <p className="sent-msg">
             Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.
           </p>
         )}
+
+        {error && <p className="error-text">{error}</p>}
 
         <Link to="/" className="back-link">
           Quay lại trang chủ

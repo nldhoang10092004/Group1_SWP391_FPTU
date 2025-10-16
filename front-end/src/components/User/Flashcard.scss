@@ -1,0 +1,231 @@
+/* General styling */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5; 
+  margin: 0;
+  padding: 0;
+}
+
+.flashcard-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 600px; 
+  margin: 40px auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.flashcard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.flashcard-header h1 {
+  font-size: 28px;
+  color: #c8baeb; 
+  margin: 0;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 30px;
+  color: #a0a0a0;
+  cursor: pointer;
+  padding: 0 10px;
+  transition: color 0.2s ease;
+}
+
+.close-button:hover {
+  color: #777;
+}
+
+/* Progress Section */
+.progress-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.progress-section p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.progress-bar-background {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #b19cd9; 
+  border-radius: 4px;
+  transition: width 0.3s ease-in-out;
+}
+
+.completion-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #777;
+}
+
+
+.flashcard-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.word-card {
+  width: 100%;
+  background-color: #f7f3fd; 
+  border-radius: 12px;
+  padding: 40px 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.word-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.word-level {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: #e6e0f7; 
+  color: #5d3fd3; 
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.word-text {
+  font-size: 38px;
+  font-weight: 700;
+  color: #333;
+  margin: 15px 0 10px;
+}
+
+.word-phonetic {
+  font-size: 18px;
+  font-style: italic;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.word-meaning {
+  font-size: 20px;
+  font-weight: 500;
+  color: #5d3fd3; 
+  margin-top: 20px;
+}
+
+.pronounce-button {
+  background-color: #8b6fd3; 
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 25px; 
+}
+
+.pronounce-button:hover {
+  background-color: #6a4cd3; 
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.nav-button {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-button.primary {
+  background-color: #c8baeb; /* Main purple */
+  color: white;
+  border: none;
+}
+
+.nav-button.primary:hover {
+  background-color: #c8baeb;
+}
+
+.nav-button.secondary {
+  background-color: transparent;
+  color: #c8baeb; /* Main purple */
+  border: 2px solid #8b6fd3;
+}
+
+.nav-button.secondary:hover {
+  background-color: #e7dffd;
+  color: #5d3fd3;
+}
+
+.chat-icon {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #c8baeb; 
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.chat-icon:hover {
+  background-color: #6a4cd3; 
+  transform: translateY(-3px);
+}
