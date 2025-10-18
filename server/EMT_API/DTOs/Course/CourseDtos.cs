@@ -39,5 +39,9 @@ namespace EMT_API.DTOs.Public
         public string VideoName { get; set; } = string.Empty;
         public string VideoURL { get; set; } = string.Empty;
         public bool IsPreview { get; set; }
+
+        // Dữ liệu runtime thêm vào (không map từ DB)
+        public bool CanWatch { get; set; } = false;
+        public bool RequiresMembership { get; set; } = false;
     }
 }
