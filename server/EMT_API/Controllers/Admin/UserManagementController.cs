@@ -68,14 +68,14 @@ public class UserManagementController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest req)
+    public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerRequest req)
     {
         if (await _db.Accounts.AnyAsync(a => a.Email == req.Email))
             return Conflict("Email already exists!");
         var acc = new Account
         {
             Email = req.Email,
-            Username = req.Username,
+            Username = req.Customername,
             Hashpass = PasswordHasher.Hash(req.Password),
             Role = req.Role,
             Status = "ACTIVE",
@@ -85,7 +85,7 @@ public class UserManagementController : ControllerBase
         _db.Accounts.Add(acc);
         await _db.SaveChangesAsync();
 
-        return Ok(new { message = "Account creation successful!" });
+        return Ok(new { message = "Customer creation successful!" });
     }
 
     [HttpPut("{id}/lock")]
