@@ -1,0 +1,214 @@
+// createLesson.scss - Updated for Dashboard consistency
+
+.create-lesson-container {
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  padding: 40px;
+  background-color: #f0f2f5; // Consistent light gray background with dashboard
+  color: #333; // Default text color
+
+  // --- Header Section ---
+  .header-content {
+    h3 {
+      font-size: 2.2rem; // Consistent with dashboard title
+      font-weight: 700;
+      color: #2c3e50; // Consistent with dashboard title color
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 1.1rem; // Consistent with dashboard welcome message
+      color: #555;
+      margin-bottom: 20px;
+    }
+  }
+
+  .header-buttons {
+    .btn {
+      font-weight: 600;
+      border-radius: 25px; // Rounded buttons
+      padding: 8px 20px;
+      transition: all 0.2s ease-in-out;
+
+      &.btn-outline-primary { // Use primary brand color
+        border-color: #667eea;
+        color: #667eea;
+        &:hover {
+          background-color: #667eea;
+          color: white;
+        }
+      }
+      &.btn-primary { // Use primary brand color
+        background-color: #667eea;
+        border-color: #667eea;
+        color: white;
+        &:hover {
+          background-color: #5a6edb;
+          border-color: #5a6edb;
+        }
+      }
+    }
+  }
+
+  // --- Card Styling (Consistent with Dashboard cards) ---
+  .card {
+    border: none;
+    border-radius: 15px; // Larger border-radius like dashboard cards
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); // Softer, more pronounced shadow
+    background-color: white;
+    padding: 15px; // Adjust padding as needed for content
+    margin-bottom: 20px; // Spacing between cards
+
+    h5, h6 {
+      font-weight: 700; // Bolder headings
+      color: #2c3e50; // Darker heading color
+      margin-bottom: 10px;
+      font-size: 1.25rem; // Adjust size for main card titles
+    }
+    h6 {
+      font-size: 1.1rem; // Slightly smaller for sidebar card titles
+    }
+
+    p.text-muted {
+      font-size: 0.95rem; // Consistent text size
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    // No hover effect on general cards unless specific interaction is desired
+    // &:hover {
+    //   transform: translateY(-2px);
+    //   box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    // }
+  }
+
+  // --- Form Element Styling (Consistent with Modal in Dashboard) ---
+  form {
+    label {
+      font-weight: 600; // Consistent with modal labels
+      color: #555;
+      margin-bottom: 8px; // More space below labels
+      display: block; // Ensure label takes full width for margin
+    }
+
+    input, select, textarea {
+      border-radius: 8px; // Consistent border-radius
+      border: 1px solid #ced4da; // Lighter border
+      padding: 10px 15px; // Consistent padding
+      font-size: 0.95rem; // Consistent font size
+      color: #333;
+
+      &:focus {
+        border-color: #667eea; // Primary brand color for focus
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25); // Consistent shadow
+      }
+    }
+
+    .form-text {
+      font-size: 0.85rem; // Smaller text for hints
+      color: #777;
+    }
+  }
+
+  // Specific styles for the "Video URL" row
+  .video-input-row {
+    .btn {
+      width: 100%;
+      border-radius: 8px; // Match input border-radius
+      padding: 10px 15px;
+      font-weight: 500;
+      color: #667eea;
+      border-color: #667eea;
+      &:hover {
+        background-color: #667eea;
+        color: white;
+      }
+    }
+  }
+
+  // --- Suggestions List Styling ---
+  ul {
+    padding-left: 25px; // Adjust padding for list items
+    font-size: 0.95rem; // Consistent font size
+    color: #444;
+    list-style-type: disc; // Explicit disc for consistency
+
+    li {
+      margin-bottom: 10px; // More spacing between list items
+      line-height: 1.5;
+    }
+  }
+}
+
+// --- Responsive Adjustments (Mirroring Dashboard) ---
+@media (max-width: 991.98px) {
+  .create-lesson-container {
+    padding: 30px;
+
+    .header-content {
+      h3 {
+        font-size: 1.8rem;
+      }
+      p {
+        font-size: 1rem;
+      }
+    }
+    .header-buttons {
+      text-align: left !important;
+      margin-top: 15px;
+      .btn {
+        width: 100%;
+        margin-bottom: 10px;
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    .card {
+      padding: 20px;
+      h5, h6 {
+        font-size: 1.15rem;
+      }
+      p.text-muted {
+        font-size: 0.9rem;
+      }
+    }
+    form {
+      input, select, textarea {
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 767.98px) {
+  .create-lesson-container {
+    padding: 15px;
+
+    .header-content {
+      h3 {
+        font-size: 1.6rem;
+        text-align: center;
+      }
+      p {
+        text-align: center;
+      }
+    }
+    .header-buttons {
+      .btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+      }
+    }
+    .card {
+      padding: 15px;
+      h5, h6 {
+        font-size: 1.05rem;
+      }
+      p.text-muted {
+        font-size: 0.85rem;
+      }
+    }
+  }
+}

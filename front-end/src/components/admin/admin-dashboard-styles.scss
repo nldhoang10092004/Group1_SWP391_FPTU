@@ -1,0 +1,397 @@
+// admin-dashboard-styles.scss
+// Base container for AdminDashboard (similar to .dashboard-container)
+.admin-dashboard-container {
+  font-family: 'Inter', sans-serif;
+  background-color: #f0f2f5; // Light gray background
+  color: #333;
+  min-height: 100vh;
+  padding-bottom: 50px; // Add some bottom padding
+}
+
+// --- Header Section ---
+.admin-dashboard-header {
+    margin-bottom: 2rem !important; // Tailwind mb-8 is 2rem
+    .dashboard-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        .lucide-arrow-left { // lucide icon for shadcn
+            font-size: 1.8rem;
+            color: #667eea;
+            margin-right: 0.5rem; // Equivalent to me-2
+        }
+    }
+
+    .welcome-message {
+        font-size: 1.1rem;
+        color: #555;
+        margin-bottom: 0; // Adjust margin
+    }
+
+    // Buttons within the header (if you use custom buttons)
+    .btn {
+        font-weight: 600;
+        border-radius: 25px;
+        padding: 8px 20px;
+        transition: all 0.2s ease-in-out;
+        
+        // For shadcn Button component, we need to target its internal structure
+        &.btn-outline-primary {
+            border-color: #667eea !important;
+            color: #667eea !important;
+            background-color: transparent !important;
+            &:hover {
+                background-color: #667eea !important;
+                color: white !important;
+            }
+        }
+        &.btn-primary {
+            background-color: #667eea !important;
+            border-color: #667eea !important;
+            color: white !important;
+            &:hover {
+                background-color: #5a6edb !important;
+                border-color: #5a6edb !important;
+            }
+        }
+        .lucide-arrow-left { // lucide icon for shadcn
+            margin-right: 5px;
+        }
+    }
+}
+
+
+// --- Stats Section ---
+.stats-row-admin-dashboard {
+  .stat-card-admin-dashboard {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    background-color: white;
+    padding: 15px;
+    height: 100%; // Ensure equal height for cards in a row
+
+    .stat-icon-wrapper-admin {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      .lucide-users, .lucide-trending-up, .lucide-dollar-sign, .lucide-book-open { // Target lucide icons
+        font-size: 1.8rem;
+        width: 1.8rem; // Ensure consistent size
+        height: 1.8rem;
+      }
+    }
+
+    .stat-title-admin-dashboard {
+      font-size: 0.9rem;
+      color: #777;
+      font-weight: 500;
+    }
+    .stat-value-admin-dashboard {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #2c3e50;
+      line-height: 1.2;
+    }
+    .badge { // Tailwind's default badge styles might need !important
+        font-size: 0.75rem !important;
+        padding: 4px 8px !important;
+        border-radius: 5px !important;
+    }
+    // Specific badge colors for shadcn, if you define custom variants:
+    .bg-success { background-color: #4caf50 !important; }
+    .bg-primary { background-color: #667eea !important; }
+    .bg-secondary { background-color: #6c757d !important; } // Gray for inactive
+    .bg-danger { background-color: #dc3545 !important; }
+    .bg-warning { background-color: #ffc107 !important; }
+    .text-dark { color: #333 !important; }
+    .text-white { color: white !important; }
+  }
+}
+
+// --- Tab Navigation ---
+.tab-navigation-row-admin {
+    border-bottom: none !important;
+    background-color: white;
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    display: grid !important; // Override flex for Tailwind's grid class
+    grid-auto-flow: column; // Keep it inline-block like
+    width: 100% !important;
+
+    .nav-link { // This will target TabsTrigger
+        color: #555 !important;
+        font-weight: 600 !important;
+        padding: 10px 20px !important;
+        border: none !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease-in-out !important;
+        background-color: transparent !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important; // Center content in tab trigger
+
+        &:hover {
+            color: #667eea !important;
+            background-color: #f5f8ff !important;
+        }
+
+        &[data-state="active"] { // Target active tab in shadcn
+            background-color: #667eea !important;
+            color: white !important;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+            border-color: #667eea !important;
+        }
+        .lucide-icon { // Placeholder for lucide icons inside tabs, if any
+            margin-right: 8px;
+            font-size: 1em;
+        }
+    }
+}
+
+// --- Tab Content Wrapper ---
+.tab-content-wrapper {
+  background-color: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
+
+  .section-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+  // If you use alert in AdminDashboard
+  .empty-state-alert {
+    text-align: center;
+    padding: 40px 20px;
+    border-radius: 12px;
+    border: 1px dashed #cfe2ff;
+    background-color: #f0f8ff;
+    color: #0c5460;
+
+    .alert-heading {
+      font-size: 1.5rem;
+      color: #0c5460;
+    }
+    p {
+      font-size: 1rem;
+      color: #0c5460;
+      margin-bottom: 20px;
+    }
+    .btn-primary {
+      background-color: #667eea;
+      border-color: #667eea;
+      color: white;
+      &:hover {
+        background-color: #5a6edb;
+      }
+    }
+  }
+}
+
+
+// --- Lessons/Users/Exams/Vouchers Tables ---
+.custom-table-container {
+  overflow-x: auto; // Ensure responsiveness for tables
+  .custom-table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #333;
+    // For shadcn Table, it uses its own styling. We'll augment it.
+    // To make it look like react-bootstrap table, we need to override some shadcn defaults.
+    border-collapse: separate;
+    border-spacing: 0; 
+    
+    thead th {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+      padding: 12px 15px;
+      font-weight: 600;
+      color: #555;
+      text-align: left;
+      &:first-child { border-top-left-radius: 8px; }
+      &:last-child { border-top-right-radius: 8px; }
+    }
+
+    tbody td {
+      padding: 12px 15px;
+      vertical-align: middle;
+      border-top: 1px solid #e9ecef;
+      background-color: white; 
+
+      &:first-child { border-left: 1px solid #e9ecef; }
+      &:last-child { border-right: 1px solid #e9ecef; }
+    }
+    tbody tr:last-child {
+      td:first-child { border-bottom-left-radius: 8px; }
+      td:last-child { border-bottom-right-radius: 8px; }
+    }
+
+    .badge {
+      font-size: 0.75rem !important;
+      padding: 4px 8px !important;
+      border-radius: 15px !important;
+      .lucide-icon { // Target lucide icons inside badges
+        font-size: 0.9em;
+      }
+    }
+    .text-muted { color: #6c757d !important; } // Ensure muted text is applied
+
+    .action-icon-btn {
+      border-radius: 50%; // Make buttons round
+      width: 35px !important;
+      height: 35px !important;
+      min-width: 35px !important; // Important for shadcn buttons
+      min-height: 35px !important;
+      display: inline-flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      padding: 0 !important;
+      font-size: 0.9em !important; // Adjust icon size
+      background-color: transparent !important;
+
+      .lucide-icon { // Ensure lucide icons inside buttons are sized correctly
+          width: 1.1em;
+          height: 1.1em;
+      }
+
+      &.btn-outline-primary {
+        color: #667eea !important;
+        border-color: #667eea !important;
+        &:hover {
+          background-color: #667eea !important;
+          color: white !important;
+        }
+      }
+      &.btn-outline-info {
+        color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+        &:hover {
+          background-color: #17a2b8 !important;
+          color: white !important;
+        }
+      }
+      &.btn-outline-success {
+        color: #4caf50 !important;
+        border-color: #4caf50 !important;
+        &:hover {
+          
+          color: white !important;
+        }
+      }
+      &.btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        &:hover {
+          background-color: #dc3545 !important;
+          color: white !important;
+        }
+      }
+      &.btn-outline-warning { // For hide action
+        color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        &:hover {
+          background-color: #ffc107 !important;
+          color: #333 !important;
+        }
+      }
+    }
+  }
+}
+
+// Review stars for Admin Dashboard
+.review-rating-stars-admin {
+    .lucide-star {
+        &.fill-yellow-400 { fill: #ffc107 !important; color: #ffc107 !important; }
+        &.text-gray-300 { color: #e0e0e0 !important; }
+    }
+}
+
+
+// --- Modal Styling (for Dialogs in AdminDashboard) ---
+.modal-content { // This targets DialogContent
+  border-radius: 15px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  // Ensure background is white if shadcn default overrides
+  background-color: white !important;
+  
+  .modal-header { // This targets DialogHeader
+    border-bottom: none !important;
+    padding: 20px 25px 10px !important;
+    .modal-title { // This targets DialogTitle
+      font-size: 1.5rem !important;
+      font-weight: 700 !important;
+      color: #2c3e50 !important;
+    }
+    // No direct equivalent to btn-close, but shadcn DialogClose button exists
+  }
+
+  .modal-body { // This targets the content div within DialogContent
+    padding: 10px 25px 25px !important;
+    .form-label {
+      font-weight: 600 !important;
+      color: #555 !important;
+      margin-bottom: 5px !important;
+      display: block !important; // Ensure label is block
+    }
+    .form-control { // This targets Input, Textarea
+      border-radius: 8px !important;
+      border: 1px solid #ced4da !important;
+      padding: 10px 15px !important;
+      &:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25) !important;
+      }
+    }
+    // For shadcn Select, the trigger acts like the input
+    .select-trigger.form-control { // Target shadcn SelectTrigger with form-control
+        border-radius: 8px !important;
+        border: 1px solid #ced4da !important;
+        padding: 10px 15px !important;
+        height: auto !important; // Adjust height if needed
+        &:focus-visible { // Focus state for shadcn Select
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25) !important;
+        }
+    }
+  }
+
+  .modal-footer { // This targets the div holding the buttons in DialogContent
+    border-top: none !important;
+    padding: 0 25px 20px !important;
+    .btn { // Ensure button styles apply
+      border-radius: 25px !important;
+      padding: 10px 25px !important;
+      font-weight: 600 !important;
+      &.btn-outline-secondary {
+        border-color: #6c757d !important;
+        color: #6c757d !important;
+        background-color: transparent !important;
+        &:hover {
+          background-color: #6c757d !important;
+          color: white !important;
+        }
+      }
+      &.btn-primary {
+        background-color: #667eea !important;
+        border-color: #667eea !important;
+        color: white !important;
+        &:hover {
+          background-color: #5a6edb !important;
+          border-color: #5a6edb !important;
+        }
+      }
+    }
+  }
+}
