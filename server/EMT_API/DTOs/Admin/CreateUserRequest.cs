@@ -1,6 +1,6 @@
 ﻿namespace EMT_API.DTOs.Admin
 {
-    public class CreateUserRequest
+    public class CreateCustomerRequest
     {
         public string Email { get; set; }
         public string Username { get; set; }
