@@ -75,7 +75,7 @@ public class UserManagementController : ControllerBase
         var acc = new Account
         {
             Email = req.Email,
-            Username = req.Customername,
+            Username = req.Username,
             Hashpass = PasswordHasher.Hash(req.Password),
             Role = req.Role,
             Status = "ACTIVE",
@@ -171,6 +171,46 @@ public class UserManagementController : ControllerBase
 
         return Ok(new { message = "Role updated successfully." });
     }
+    [HttpPost("create-teacher")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> CreateTeacher([FromBody] CreateTeacherRequest req)
+    {
+        if (await _db.Accounts.AnyAsync(a => a.Email == req.Email))
+            return Conflict("Email already exists!");
 
+        // 1️⃣ Tạo tài khoản trước
+        var acc = new Account
+        {
+            Email = req.Email,
+            Username = req.Username,
+            Hashpass = PasswordHasher.Hash(req.Password),
+            Role = "TEACHER",
+            Status = "ACTIVE",
+            CreateAt = DateTime.UtcNow
+        };
+
+        _db.Accounts.Add(acc);
+        await _db.SaveChangesAsync(); // Lúc này AccountID mới được tạo ra
+
+        // 2️⃣ Tạo Teacher tương ứng (dùng AccountID làm khóa ngoại)
+        var teacher = new Teacher
+        {
+            TeacherID = acc.AccountID,   // Khóa ngoại 1-1 với Account
+            Description = req.Description,
+            JoinAt = DateTime.UtcNow,
+            CertJson = req.CertJson
+        };
+
+        _db.Teachers.Add(teacher);
+        await _db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Teacher created successfully!",
+            teacherId = teacher.TeacherID,
+            accountEmail = acc.Email,
+            username = acc.Username
+        });
+    }
 }
 
