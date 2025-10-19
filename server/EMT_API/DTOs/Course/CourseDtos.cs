@@ -44,4 +44,20 @@ namespace EMT_API.DTOs.Public
         public bool CanWatch { get; set; } = false;
         public bool RequiresMembership { get; set; } = false;
     }
+
+    public class DeleteCourseRequest
+    {
+        public int CourseID { get; set; }
+    }
+
+    public class CourseViewResponse
+    {
+        public int CourseID { get; set; }
+        public string CourseName { get; set; } = string.Empty;
+        public string? CourseDescription { get; set; }
+        public int TeacherID { get; set; }
+        public string TeacherName { get; set; } = string.Empty;
+        public DateTime CreateAt { get; set; }
+        public DateTime? UpdateAt { get; set; }
+    }
 }
