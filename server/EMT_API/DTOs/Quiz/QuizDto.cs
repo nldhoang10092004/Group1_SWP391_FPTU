@@ -25,6 +25,7 @@
         public int QuestionID { get; set; }
         public string Content { get; set; } = string.Empty;
         public List<OptionDto> Options { get; set; } = new();
+        public byte QuestionType { get; internal set; }
     }
 
     public class OptionDto
