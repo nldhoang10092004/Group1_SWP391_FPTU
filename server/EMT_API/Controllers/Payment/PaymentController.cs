@@ -1,4 +1,5 @@
 ﻿using EMT_API.Data;
+using EMT_API.DTOs.Payment;
 using EMT_API.Models;
 using EMT_API.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -22,12 +23,19 @@ public class PaymentController : ControllerBase
 
     [HttpPost("create")]
     [Authorize(Roles = "STUDENT")]
-    public async Task<IActionResult> CreatePayment([FromBody] int planId)
+    public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentRequest request)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        // ✅ Lấy planId từ object
+        int planId = request.PlanId;
+
         var url = await _payos.CreatePaymentAsync(userId, planId);
-        return Redirect(url); // 🔁 Tự động chuyển hướng 
+
+        // Trả về URL cho FE (FE sẽ redirect client-side)
+        return Ok(new { paymentUrl = url });
     }
+
 
     [HttpPost("webhook")]
     [AllowAnonymous]
