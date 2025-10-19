@@ -27,6 +27,7 @@ public class UserManagementController : ControllerBase
         var returnWrapper = new { data = users };
         return Ok(returnWrapper);
     }
+
     //Chỉ hiển thị các tài khoản có role = STUDENT
     [HttpGet("students")]
     [Authorize(Roles = "ADMIN")]
@@ -67,17 +68,26 @@ public class UserManagementController : ControllerBase
         return Ok(teachers);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerRequest req)
+    [HttpPost("student")]
+    public async Task<IActionResult> CreateStudent([FromBody] CreateCustomerRequest req)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        // Kiểm tra trùng Email
         if (await _db.Accounts.AnyAsync(a => a.Email == req.Email))
-            return Conflict("Email already exists!");
+            return Conflict(new { message = "Email already exists!" });
+
+        // Kiểm tra trùng Username
+        if (await _db.Accounts.AnyAsync(a => a.Username == req.Username))
+            return Conflict(new { message = "Username already exists!" });
+
         var acc = new Account
         {
-            Email = req.Email,
-            Username = req.Username,
+            Email = req.Email.Trim(),
+            Username = req.Username.Trim(),
             Hashpass = PasswordHasher.Hash(req.Password),
-            Role = req.Role,
+            Role = "STUDENT",
             Status = "ACTIVE",
             CreateAt = DateTime.UtcNow
         };
@@ -85,7 +95,18 @@ public class UserManagementController : ControllerBase
         _db.Accounts.Add(acc);
         await _db.SaveChangesAsync();
 
-        return Ok(new { message = "Customer creation successful!" });
+        return Ok(new
+        {
+            message = "Student account created successfully!",
+            account = new
+            {
+                acc.AccountID,
+                acc.Username,
+                acc.Email,
+                acc.Role,
+                acc.Status
+            }
+        });
     }
 
     [HttpPut("{id}/lock")]
@@ -158,27 +179,48 @@ public class UserManagementController : ControllerBase
 
         return Ok(results);
     }
+
     [HttpPost("assign-role")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> AssignUserRole([FromBody] AssignRoleRequest request)
     {
+        var validRoles = new[] { "ADMIN", "TEACHER", "STUDENT" };
+
+        // Kiểm tra role hợp lệ
+        if (!validRoles.Contains(request.Role.ToUpper()))
+        {
+            return BadRequest(new { message = "Invalid role. Role must be ADMIN, TEACHER, or STUDENT." });
+        }
+
         var user = await _db.Accounts.FindAsync(request.UserId);
         if (user == null)
-            return NotFound(new { message = "User not found" });
+            return NotFound(new { message = "User not found." });
 
-        user.Role = request.Role;
+        user.Role = request.Role.ToUpper();
         await _db.SaveChangesAsync();
 
-        return Ok(new { message = "Role updated successfully." });
+        return Ok(new
+        {
+            message = "Role updated successfully.",
+            user = new
+            {
+                user.AccountID,
+                user.Username,
+                user.Email,
+                user.Role
+            }
+        });
     }
+
     [HttpPost("create-teacher")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> CreateTeacher([FromBody] CreateTeacherRequest req)
     {
+        // Kiểm tra email trùng
         if (await _db.Accounts.AnyAsync(a => a.Email == req.Email))
-            return Conflict("Email already exists!");
+            return Conflict(new { message = "Email already exists!" });
 
-        // 1️⃣ Tạo tài khoản trước
+        // 1️⃣ Tạo tài khoản giáo viên (Account)
         var acc = new Account
         {
             Email = req.Email,
@@ -190,26 +232,46 @@ public class UserManagementController : ControllerBase
         };
 
         _db.Accounts.Add(acc);
-        await _db.SaveChangesAsync(); // Lúc này AccountID mới được tạo ra
+        await _db.SaveChangesAsync(); // Lưu để có AccountID
 
-        // 2️⃣ Tạo Teacher tương ứng (dùng AccountID làm khóa ngoại)
+        // 2️⃣ Tạo thông tin trong bảng Teacher
         var teacher = new Teacher
         {
-            TeacherID = acc.AccountID,   // Khóa ngoại 1-1 với Account
-            Description = req.Description,
+            TeacherID = acc.AccountID,       // Liên kết 1-1 với Account
+            Description = req.Description ?? string.Empty,
             JoinAt = DateTime.UtcNow,
-            CertJson = req.CertJson
+            CertJson = req.CertJson ?? "{}" // Dữ liệu chứng chỉ JSON rỗng nếu không có
         };
-
         _db.Teachers.Add(teacher);
+
+        // 3️⃣ Tạo bản ghi rỗng trong UserDetail
+        var userDetail = new UserDetail
+        {
+            AccountID = acc.AccountID,
+            FullName = null,
+            Dob = null,
+            Address = null,
+            Phone = null,
+            AvatarURL = null
+        };
+        _db.UserDetails.Add(userDetail);
+
+        // Lưu tất cả
         await _db.SaveChangesAsync();
 
+        // 4️⃣ Trả kết quả chuẩn
         return Ok(new
         {
             message = "Teacher created successfully!",
             teacherId = teacher.TeacherID,
-            accountEmail = acc.Email,
-            username = acc.Username
+            account = new
+            {
+                acc.AccountID,
+                acc.Username,
+                acc.Email,
+                acc.Role,
+                acc.Status
+            }
         });
     }
 }
