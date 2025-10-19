@@ -48,6 +48,10 @@ public partial class EMTDbContext : DbContext
 
     public virtual DbSet<UserMembership> UserMemberships { get; set; }
 
+    public virtual DbSet<FlashcardSet> FlashcardSets { get; set; }
+    public virtual DbSet<FlashcardItem> FlashcardItems { get; set; }
+
+
     public virtual DbSet<WebhookEvent> WebhookEvents { get; set; }
 
     public virtual DbSet<vUserHasActiveMembership> vUserHasActiveMemberships { get; set; }
@@ -267,6 +271,27 @@ public partial class EMTDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_UM_User");
         });
+
+        modelBuilder.Entity<FlashcardSet>(entity =>
+        {
+            entity.ToTable("FlashcardSet"); // 👈 fix tên bảng thật
+            entity.HasKey(e => e.SetId).HasName("PK__Flashcar__SetID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+            entity.HasMany(e => e.FlashcardItems)
+                .WithOne(i => i.Set)
+                .HasForeignKey(i => i.SetId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_FlashcardItem_Set");
+        });
+
+        modelBuilder.Entity<FlashcardItem>(entity =>
+        {
+            entity.ToTable("FlashcardItem"); // 👈 fix tên bảng thật
+            entity.HasKey(e => e.ItemId).HasName("PK__Flashcar__ItemID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+        });
+
 
         modelBuilder.Entity<WebhookEvent>(entity =>
         {
