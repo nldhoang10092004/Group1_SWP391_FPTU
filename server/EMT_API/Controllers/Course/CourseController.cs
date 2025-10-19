@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore;
 namespace EMT_API.Controllers.Public
 {
     [ApiController]
-    [Route("api/public/course")]
+    [Route("api/user/course")]
     public class CourseController : ControllerBase
     {
         private readonly EMTDbContext _db;
         public CourseController(EMTDbContext db) => _db = db;
 
-        // GET: api/public/course
+        // GET: api/user/course
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourses()
         {
