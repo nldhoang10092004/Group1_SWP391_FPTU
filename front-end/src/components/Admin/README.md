@@ -1,159 +1,124 @@
-# 📦 EMT Admin Module - Self-Contained
+# Admin Dashboard - Hệ thống quản trị
 
-## ✅ Cài đặt cực kỳ đơn giản!
+## 📁 Files trong folder `/admin/`
 
-### **Bước 1: Copy folder này vào project**
-```bash
-# Copy toàn bộ folder Admin vào /components/
-cp -r Admin your-project/src/components/
-```
+### AdminDashboard.jsx
+Dashboard quản lý hệ thống dành cho Admin với các tính năng:
 
-### **Bước 2: Cài packages**
-```bash
-npm install lucide-react recharts @radix-ui/react-tabs @radix-ui/react-switch clsx tailwind-merge class-variance-authority @radix-ui/react-slot
-```
+#### Tính năng chính:
+1. **Thống kê tổng quan**
+   - Tổng số người dùng và người dùng mới
+   - Gói membership đang hoạt động
+   - Doanh thu tháng và tổng doanh thu
+   - Tổng số khóa học và bài học
 
-### **Bước 3: Import vào App**
+2. **Biểu đồ phân tích**
+   - Doanh thu theo tháng (Area Chart)
+   - Tăng trưởng người dùng (Line Chart)
+
+3. **Quản lý người dùng**
+   - Xem danh sách tất cả người dùng
+   - Khóa/kích hoạt tài khoản
+   - Xem thông tin chi tiết
+   - Lọc theo loại tài khoản (student/teacher/admin)
+
+4. **Quản lý giảng viên**
+   - Tạo tài khoản giảng viên mới
+   - Quản lý danh sách giảng viên
+   - Khóa/kích hoạt tài khoản giảng viên
+
+5. **Quản lý khóa học**
+   - Duyệt khóa học mới từ giảng viên
+   - Ẩn khóa học vi phạm
+   - Xem thống kê học viên theo khóa học
+
+6. **Kiểm duyệt đánh giá**
+   - Duyệt đánh giá từ học viên
+   - Ẩn hoặc xóa đánh giá không phù hợp
+   - Xem rating và feedback
+
+7. **Quản lý kiểm tra hệ thống**
+   - Tạo bài kiểm tra cho toàn hệ thống
+   - Cấu hình thời gian, số câu hỏi, điểm đạt
+   - Xuất/nhập câu hỏi
+   - Xóa hoặc tạm dừng bài kiểm tra
+
+8. **Quản lý Campaign/Voucher**
+   - Tạo voucher giảm giá
+   - Theo dõi số lần sử dụng
+   - Kích hoạt/tạm dừng voucher
+   - Cấu hình phần trăm hoặc giá trị cố định
+
+## 🔌 Dependencies
+
+### UI Components (từ `/components/ui/`)
+- Card, CardContent, CardDescription, CardHeader, CardTitle
+- Tabs, TabsContent, TabsList, TabsTrigger
+- Button, Badge, Table
+- Dialog, Input, Textarea, Select, Switch, Alert
+
+### External Libraries
+- **recharts** - Biểu đồ (LineChart, AreaChart, BarChart)
+- **lucide-react** - Icons
+- **sonner** - Toast notifications
+
+### Internal Services
+- **authService** từ `/utils/supabase/auth.jsx`
+  - `getAdminStats()` - Lấy thống kê admin
+  - `getAllRequests()` - Lấy tất cả requests (admin only)
+
+## 📝 Cách sử dụng
+
+### Import trong App.jsx:
 ```jsx
-import AdminDashboard from './components/Admin/Dashboard';
-
-function App() {
-  return (
-    <div>
-      {/* Header của bạn */}
-      <YourHeader />
-      
-      {/* Admin Dashboard */}
-      <AdminDashboard />
-      
-      {/* Footer của bạn */}
-      <YourFooter />
-    </div>
-  );
-}
+import { AdminDashboard } from "./admin/AdminDashboard";
 ```
 
-### **Bước 4: Xong!** 🎉
-
----
-
-## 📂 Cấu trúc folder
-
-```
-Admin/
-├── ui/                      # UI Components (self-contained)
-│   ├── utils.ts            # Helper functions
-│   ├── tabs.tsx            # Tabs component
-│   ├── button.tsx          # Button component
-│   ├── badge.tsx           # Badge component
-│   └── switch.tsx          # Switch component
-├── Dashboard.jsx           # Main dashboard
-├── Statistics.jsx          # Thống kê
-├── UserManagement.jsx      # Quản lý người dùng
-├── TeacherManagement.jsx   # Quản lý giảng viên
-├── CourseManagement.jsx    # Quản lý khóa học
-├── ReviewManagement.jsx    # Quản lý đánh giá
-├── ExamManagement.jsx      # Quản lý kiểm tra
-├── VoucherManagement.jsx   # Quản lý voucher
-├── dashboard.css           # Styles
-├── index.js                # Export entry
-└── README.md               # This file
-```
-
----
-
-## 🎨 Features
-
-### **7 Tabs chức năng:**
-1. 📊 **Thống kê** - Charts & Stats
-2. 👥 **Người dùng** - CRUD users
-3. 👨‍🏫 **Giảng viên** - CRUD teachers + create form
-4. 📚 **Khóa học** - CRUD courses + create form
-5. ⭐ **Đánh giá** - View & manage reviews
-6. 📝 **Kiểm tra** - Create exams với full validation
-7. 🎫 **Voucher** - Add vouchers với full validation
-
-### **UI/UX:**
-- ✅ Xanh biển pastel - Tabs kiểu viên thuốc
-- ✅ Bo tròn toàn bộ (pills & rounded cards)
-- ✅ Responsive design
-- ✅ Smooth animations
-- ✅ Modern gradient colors
-
----
-
-## 🔧 Không cần thêm gì!
-
-❌ **KHÔNG cần:**
-- Tạo thêm file UI components
-- Config thêm
-- Copy Header/Footer (dùng của bạn)
-
-✅ **CHỈ cần:**
-- Copy folder Admin
-- Cài packages
-- Import vào App
-
----
-
-## 📝 Notes
-
-- Module này **self-contained** - tất cả dependencies đã có trong folder
-- Header và Footer **KHÔNG** bao gồm - dùng Header/Footer có sẵn trong project của bạn
-- Tất cả imports đã được cập nhật để dùng `./ui/` (local)
-- CSS đã inline trong folder
-
----
-
-## 🚀 Quick Start
-
+### Sử dụng:
 ```jsx
-// App.jsx
-import AdminDashboard from './components/Admin/Dashboard';
-import MyHeader from './components/MyHeader';
-import MyFooter from './components/MyFooter';
-
-function App() {
-  const user = {
-    fullName: "Admin Name",
-    userType: "admin"
-  };
-
-  return (
-    <div className="app">
-      <MyHeader user={user} />
-      <AdminDashboard />
-      <MyFooter />
-    </div>
-  );
-}
-
-export default App;
+{currentView === "admin-dashboard" && userProfile?.userType === 'admin' && (
+  <AdminDashboard onClose={() => setCurrentView("home")} />
+)}
 ```
 
----
+### Props:
+- `onClose: () => void` - Callback khi đóng dashboard
 
-## 📦 Required Packages
+## 🔐 Phân quyền
 
-```json
-{
-  "dependencies": {
-    "lucide-react": "latest",
-    "recharts": "latest",
-    "@radix-ui/react-tabs": "latest",
-    "@radix-ui/react-switch": "latest",
-    "@radix-ui/react-slot": "latest",
-    "clsx": "latest",
-    "tailwind-merge": "latest",
-    "class-variance-authority": "latest"
-  }
-}
+Chỉ user với `userType === 'admin'` mới có thể truy cập AdminDashboard.
+
+### Demo Account:
+```
+Email: admin@emt.com
+Password: admin123
 ```
 
----
+## 📊 Mock Data
 
-## 🎯 Kết luận
+AdminDashboard sử dụng mock data cho:
+- Danh sách người dùng mẫu
+- Đánh giá khóa học mẫu
+- Khóa học mẫu
+- Bài kiểm tra hệ thống mẫu
+- Voucher mẫu
 
-**Copy 1 folder → Cài packages → Import → Done!** 🎉
+Trong production, data sẽ được lấy từ API thông qua `authService`.
 
-Không cần copy rời rạc, không cần config phức tạp!
+## 🎨 UI Features
+
+1. **Responsive Design** - Tự động điều chỉnh cho mobile, tablet, desktop
+2. **Loading States** - Hiển thị loading spinner khi tải dữ liệu
+3. **Toast Notifications** - Thông báo thành công/lỗi
+4. **Modal Dialogs** - Tạo mới giảng viên, voucher, bài kiểm tra
+5. **Charts** - Biểu đồ tương tác với recharts
+6. **Tables** - Bảng dữ liệu với sorting và filtering
+
+## 🚀 Roadmap
+
+- [ ] Xuất báo cáo Excel/PDF
+- [ ] Gửi email thông báo cho user
+- [ ] Tích hợp analytics chi tiết hơn
+- [ ] Quản lý permissions chi tiết
+- [ ] Backup/Restore database
+- [ ] Audit logs
