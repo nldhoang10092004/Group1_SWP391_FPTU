@@ -26,7 +26,7 @@ public class PaymentController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var url = await _payos.CreatePaymentAsync(userId, planId);
-        return Ok(new { checkoutUrl = url });
+        return Redirect(url); // 🔁 Tự động chuyển hướng 
     }
 
     [HttpPost("webhook")]
