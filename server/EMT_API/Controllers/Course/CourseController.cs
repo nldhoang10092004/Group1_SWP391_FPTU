@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace EMT_API.Controllers.Public
 {
     [ApiController]
-    [Route("api/public/course")]
+    [Route("api/user/course")]
     public class CourseController : ControllerBase
     {
         private readonly EMTDbContext _db;
