@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import Footer from "../Footer/footer";
 import { forgotPasswordApi } from "../../middleware/auth"; 
 import "./forgotpass.scss";
 
@@ -56,6 +57,7 @@ export default function ForgotPass() {
           Quay lại trang chủ
         </Link>
       </div>
+      <Footer />
     </div>
   );
 }

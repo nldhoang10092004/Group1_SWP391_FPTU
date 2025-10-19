@@ -1,6 +1,6 @@
-// createLesson.scss - Updated for Dashboard consistency
+// createEditFlashcard.scss - Consistent with Dashboard and CreateLesson
 
-.create-lesson-container {
+.create-edit-flashcard-container {
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
   padding: 40px;
@@ -74,12 +74,6 @@
       color: #666;
       margin-bottom: 20px;
     }
-
-    // No hover effect on general cards unless specific interaction is desired
-    // &:hover {
-    //   transform: translateY(-2px);
-    //   box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-    // }
   }
 
   // --- Form Element Styling (Consistent with Modal in Dashboard) ---
@@ -110,22 +104,6 @@
     }
   }
 
-  // Specific styles for the "Video URL" row
-  .video-input-row {
-    .btn {
-      width: 100%;
-      border-radius: 8px; // Match input border-radius
-      padding: 10px 15px;
-      font-weight: 500;
-      color: #667eea;
-      border-color: #667eea;
-      &:hover {
-        background-color: #667eea;
-        color: white;
-      }
-    }
-  }
-
   // --- Suggestions List Styling ---
   ul {
     padding-left: 25px; // Adjust padding for list items
@@ -142,7 +120,7 @@
 
 // --- Responsive Adjustments (Mirroring Dashboard) ---
 @media (max-width: 991.98px) {
-  .create-lesson-container {
+  .create-edit-flashcard-container {
     padding: 30px;
 
     .header-content {
@@ -183,7 +161,7 @@
 }
 
 @media (max-width: 767.98px) {
-  .create-lesson-container {
+  .create-edit-flashcard-container {
     padding: 15px;
 
     .header-content {

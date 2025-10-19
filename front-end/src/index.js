@@ -18,10 +18,15 @@ import CourseDetail from './components/User/CourseDetail';
 import EditCourse from './components/Teacher/EditCourse';
 import Flashcard from "./components/User/Flashcard";
 import Grammar from "./components/User/Grammar";
+import PaymentForm from "./components/User/PaymentForm";
+import PaymentSuccessSubscription from "./components/User/PaymentSuccessSubscription";
+import CreateEditQuizz from './components/Teacher/CreateEditQuizz';
+import CreateEditFlashcard from './components/Teacher/CreateEditFlashcard';
+import AdminDashboard  from "./components/admin/AdminDashboard";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("user"));
-  return user ? children : <Navigate to="/" replace />;
+  return user ? children : <Navigate to="/" replace />; 
 };
 
 
@@ -48,11 +53,18 @@ root.render(
         <Route path="createlesson" element={<CreateLesson />} />
         <Route path="editlesson" element={<EditLesson />} />
         <Route path="membership" element={<Membership />} />
+        <Route path="/payment/:id" element={<PaymentForm />} />
         <Route path="/course/:id" element={<CourseDetail />} />
-        <Route path="editcourse" element={<EditCourse />} />
+        <Route path="/editcourse/:id" element={<EditCourse />} />
         <Route path="flashcards" element={<Flashcard />} />
         <Route path="grammar" element={<Grammar />} />
-        
+        <Route path="paymentsuccess" element={<PaymentSuccessSubscription />} />
+        <Route path="/create-quiz" element={<CreateEditQuizz />} />
+        <Route path="/edit-quiz/:id" element={<CreateEditQuizz />} />
+        <Route path="/create-flashcard" element={<CreateEditFlashcard />} />
+        <Route path="/edit-flashcard/:id" element={<CreateEditFlashcard />} />
+        <Route path="admindashboard" element={<AdminDashboard />} />
+
         <Route path="profile" element={
           <ProtectedRoute>
             <Profile />

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, ProgressBar, Button, Form, Badge } from "react-bootstrap";
-import "./Home.scss";
+import "./Home.scss"; 
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
-import { getCourses } from "../../middleware/courseAPI";
+import { getCourses } from "../../middleware/courseAPI"; 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrophy, faFire, faBookOpen, faHourglassHalf, faCheckCircle, faClock, faStar, faLock, faGraduationCap, faUsers, faQuestionCircle, faShieldAlt, faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import Footer from "../Footer/footer";
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -20,7 +23,7 @@ const Home = () => {
   
   const demoData = {
     user: {
-      name: "Demo Student",
+      name: "Student", 
       xp: 850,
       streak: 5,
       level: 3,
@@ -32,20 +35,28 @@ const Home = () => {
       luyentap: { lessonsCompleted: 15, averageScore: "80%" },
       timeSpent: {time: "2h 30m", times:"This week"},
       achievements: [
-        { title: "Grammar Master", description: "Completed 10 grammar lessons", time: "2 days ago" },
-        { title: "Vocabulary Builder", description: "Learned 50 new words", time: "1 week ago" },
-        { title: "Streak Warrior", description: "7-day study streak", time: "1 week ago" }
+        { title: "Bậc thầy ngữ pháp", description: "Hoàn thành 10 bài ngữ pháp", time: "2 ngày trước" },
+        { title: "Người xây dựng từ vựng", description: "Học được 50 từ mới", time: "1 tuần trước" },
+        { title: "Chiến binh chuỗi ngày", description: "Chuỗi học 7 ngày", time: "1 tuần trước" }
       ],
       weeklyGoal: {
         lessons: { completed: 5, total: 7 },
         studyTime: { completed: 180, total: 300, unit: "min" }
       }
     },
+    lessons: [
+      { id: 1, title: "Basic Greetings", description: "Learn common greetings and introductions.", level: "Beginner", duration: "15 min", progress: 75, rating: 4.8, status: "in-progress", action: "Continue" },
+      { id: 2, title: "Present Tense Verbs", description: "Master the use of present simple and continuous.", level: "Beginner", duration: "20 min", progress: 100, rating: 4.7, status: "completed", action: "Review" },
+      { id: 3, title: "Past Tense Stories", description: "Narrate events using past simple and continuous.", level: "Intermediate", duration: "22 min", progress: 0, rating: 4.9, status: "available", action: "Start Lesson" },
+      { id: 4, title: "Asking Questions", description: "Formulate effective questions in various contexts.", level: "Intermediate", duration: "18 min", progress: 0, rating: 4.6, status: "available", action: "Start Lesson" },
+      { id: 5, title: "Daily Conversations", description: "Practice everyday conversations with common phrases.", level: "Intermediate", duration: "25 min", progress: 0, rating: 4.8, status: "available", action: "Start Lesson" },
+      { id: 6, title: "Future Plans & Dreams", description: "Talk about your future aspirations and plans.", level: "Advanced", duration: "28 min", progress: 0, rating: 4.7, status: "available", action: "Start Lesson" },
+    ]
   };
 
   const emptyData = {
     user: {
-      name: "User",
+      name: "Student", // Changed to match image
       xp: 0,
       streak: 0,
       level: 1,
@@ -64,14 +75,14 @@ const Home = () => {
     },
     lessons: []
   };
+  // --- END DEMO DATA ---
 
-  // Load data dựa theo loại tài khoản và membership
+  // Load data based on account type and membership
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
         
-        // Kiểm tra account type từ localStorage
         const accountType = localStorage.getItem("accountType") || "real";
         const membershipStatus = localStorage.getItem("hasMembership") === "true";
         
@@ -83,9 +94,11 @@ const Home = () => {
           if (membershipStatus) {
             setLessons(demoData.lessons);
           } else {
-            setLessons([]);
+            
+            setLessons([]); 
           }
         } else {
+          // For 'real' accounts, start with empty data, but if they have membership, show demo lessons
           setUser(emptyData.user);
           setStatsData(emptyData.stats);
           if (membershipStatus) {
@@ -103,7 +116,7 @@ const Home = () => {
     };
 
     loadData();
-  }, [hasMembership]);
+  }, []); // Empty dependency array means this runs once on mount
 
   useEffect(() => {
     if (activeTab === "khoahoc") {
@@ -138,6 +151,7 @@ const Home = () => {
       return lessons;
     }
     
+    // Filter by level, ensure case-insensitive comparison
     return lessons.filter(lesson => {
       const lessonLevel = lesson.level?.toLowerCase() || '';
       return lessonLevel === selectedLevel.toLowerCase();
@@ -163,11 +177,10 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      {/* Hero Section */}
-      <section className="hero-section">
+      {/* <section className="hero-section">
         <Container>
           <Row className="align-items-center">
-            <Col lg={6}>
+            <Col lg={6}> 
               <h1 className="hero-title">Master English with Interactive Lessons</h1>
               <p className="hero-description">
                 Learn English naturally with our AI-powered lessons, real conversations,
@@ -194,40 +207,43 @@ const Home = () => {
             </Col>
             <Col lg={6}>
               <div className="hero-image-container">
-                <img src="/logo.jpg" alt="EnglishMaster" className="hero-logo" />
+                <img src="https://via.placeholder.com/600x400/e0e7ff/667eea?text=EnglishMaster+Hero" alt="EnglishMaster" className="hero-logo" />
               </div>
             </Col>
           </Row>
         </Container>
-      </section>
+      </section> */}
 
       <Container>
-        {/* Welcome Section */}
+        {/* Welcome Section - Matches second screenshot */}
         <Row className="welcome-section">
           <Col>
             <h1>Chào mừng trở lại, {user?.name || 'User'}!</h1>
             <Row className="stats-row">
-              <Col md={4}>
+              <Col md={4} className="mb-4">
                 <Card className="stat-card">
                   <Card.Body>
+                    <FontAwesomeIcon icon={faTrophy} size="2x" className="mb-2" style={{color: '#667eea'}}/>
                     <h3>{user?.xp || 0}</h3>
                     <p>Tổng XP</p>
                   </Card.Body>
                 </Card>
               </Col>
-              <Col md={4}>
+              <Col md={4} className="mb-4">
                 <Card className="stat-card">
                   <Card.Body>
+                    <FontAwesomeIcon icon={faFire} size="2x" className="mb-2" style={{color: '#ffc107'}}/>
                     <h3>{user?.streak || 0}</h3>
-                    <p>Chuỗi ngày học</p>
+                    <p>Chuỗi ngày</p>
                   </Card.Body>
                 </Card>
               </Col>
-              <Col md={4}>
+              <Col md={4} className="mb-4">
                 <Card className="stat-card">
                   <Card.Body>
+                    <FontAwesomeIcon icon={faBookOpen} size="2x" className="mb-2" style={{color: '#28a745'}}/>
                     <h3>{user?.level || 1}</h3>
-                    <p>Trình độ hiện tại</p>
+                    <p>Cấp độ</p>
                   </Card.Body>
                 </Card>
               </Col>
@@ -235,12 +251,9 @@ const Home = () => {
           </Col>
         </Row>
 
-        <hr className="section-divider" />
-
-        {/* Lessons Navigation */}
+        {/* Tab Navigation - Matches second screenshot */}
         <Row className="lessons-nav">
           <Col>
-            <h2>Bài học</h2>
             <div className="tab-navigation mb-4">
               {tabs.map((tab) => (
                 <button
@@ -257,171 +270,176 @@ const Home = () => {
 
         {/* Tab Content */}
         {activeTab === "baihoc" && (
-          <>
-            <Row>
-              <Col md={4}>
-                <div className="your-lessons-section no-border">
-                  <h2 className="text-left">Bài học của bạn</h2>
-                  {hasMembership ? (
-                    <div className="membership-lessons">
-                      <p className="text-success">
-                        <Badge bg="success">Premium</Badge> Bạn đang sử dụng gói membership
-                      </p>
-                      <div className="quick-stats mt-3">
-                        <div className="stat-item">
-                          <strong>{lessons.filter(l => l.status === 'completed').length}</strong> bài đã hoàn thành
-                        </div>
-                        <div className="stat-item">
-                          <strong>{lessons.filter(l => l.status === 'in-progress').length}</strong> bài đang học
-                        </div>
-                        <div className="stat-item">
-                          <strong>{lessons.filter(l => l.status === 'available').length}</strong> bài học mới
-                        </div>
+          <Row>
+            <Col md={4}>
+              <div className="your-lessons-section">
+                <h2 className="text-left">Bài học của bạn</h2>
+                {hasMembership ? (
+                  <div className="membership-lessons">
+                    <p className="text-success">
+                      <Badge bg="success">Premium</Badge> Bạn đang sử dụng gói membership
+                    </p>
+                    <div className="quick-stats mt-3">
+                      <div className="stat-item">
+                        <FontAwesomeIcon icon={faCheckCircle} className="me-2" style={{color: '#28a745'}}/>
+                        <strong>{lessons.filter(l => l.status === 'completed').length}</strong> bài đã hoàn thành
+                      </div>
+                      <div className="stat-item">
+                        <FontAwesomeIcon icon={faHourglassHalf} className="me-2" style={{color: '#ffc107'}}/>
+                        <strong>{lessons.filter(l => l.status === 'in-progress').length}</strong> bài đang học
+                      </div>
+                      <div className="stat-item">
+                        <FontAwesomeIcon icon={faBookOpen} className="me-2" style={{color: '#667eea'}}/>
+                        <strong>{lessons.filter(l => l.status === 'available').length}</strong> bài học mới
                       </div>
                     </div>
-                  ) : (
-                    <div className="non-membership-lessons">
-                      <p className="text-muted">Bạn chưa có quyền truy cập vào bài học</p>
-                      <Button 
-                        variant="outline-primary" 
-                        size="sm" 
-                        className="mt-2"
-                        onClick={() => navigate("/membership")}
-                      >
-                        Đăng ký membership
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </Col>
-              <Col md={8}>
-                <div className="level-section-box">
-                  <h3 className="section-title">Chọn cấp độ phù hợp</h3>
-                  <p className="current-level">Cấp độ hiện tại của bạn: Level {user?.level || 1}</p>
-                  <Row className="level-options full-width">
-                    {levels.map((level) => (
-                      <Col md={3} key={level.id} className="mb-3">
-                        <div className={`level-card ${selectedLevel === level.id ? "active" : ""}`}>
-                          <Form.Check
-                            type="radio"
-                            name="levelSelection"
-                            id={level.id}
-                            checked={selectedLevel === level.id}
-                            onChange={() => handleLevelChange(level.id)}
-                            className="level-radio"
-                          />
-                          <label htmlFor={level.id} className="level-label">
-                            <strong className="level-name">{level.label}</strong>
-                            <div className="level-description">{level.desc}</div>
-                          </label>
-                        </div>
-                      </Col>
-                    ))}
-                  </Row>
+                  </div>
+                ) : (
+                  <div className="non-membership-lessons">
+                    <p className="text-muted">Bạn chưa có quyền truy cập vào bài học</p>
+                    <Button 
+                      variant="outline-primary" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => navigate("/membership")}
+                    >
+                      Đăng ký membership
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </Col>
+            <Col md={8}>
+              <div className="level-section-box">
+                <h3 className="section-title">Chọn cấp độ phù hợp</h3>
+                <p className="current-level">Cấp độ hiện tại của bạn: Level {user?.level || 1}</p>
+                <Row className="level-options">
+                  {levels.map((level) => (
+                    <Col md={3} key={level.id} className="mb-3">
+                      <div className={`level-card ${selectedLevel === level.id ? "active" : ""}`}>
+                        <Form.Check
+                          type="radio"
+                          name="levelSelection"
+                          id={level.id}
+                          checked={selectedLevel === level.id}
+                          onChange={() => handleLevelChange(level.id)}
+                          className="level-radio"
+                        />
+                        <label htmlFor={level.id} className="level-label">
+                          <strong className="level-name">{level.label}</strong>
+                          <div className="level-description">{level.desc}</div>
+                        </label>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
 
-                  {hasMembership ? (
-                    <>
-                      <div className="divider"></div>
-                      <div className="lessons-grid">
-                        <h5 className="mb-3">Bài học có sẵn ({filteredLessons.length} bài):</h5>
-                        {filteredLessons.length > 0 ? (
-                          <Row>
-                            {filteredLessons.map((lesson) => (
-                              <Col md={6} key={lesson.id} className="mb-3">
-                                <div className="lesson-card">
-                                  <div className="lesson-header">
-                                    <h6>{lesson.title}</h6>
-                                    <Badge bg={
-                                      lesson.level === "Beginner" ? "primary" : 
-                                      lesson.level === "Intermediate" ? "warning" : "danger"
-                                    }>
-                                      {lesson.level}
-                                    </Badge>
-                                  </div>
-                                  <p className="lesson-description">{lesson.description}</p>
-                                  <div className="lesson-meta">
-                                    <span className="duration">{lesson.duration}</span>
-                                    {lesson.progress > 0 && (
-                                      <div className="progress-section">
-                                        <ProgressBar 
-                                          now={lesson.progress} 
-                                          className="lesson-progress" 
-                                        />
-                                        <span>{lesson.progress}%</span>
-                                      </div>
-                                    )}
-                                    <div className="rating">⭐ {lesson.rating}</div>
-                                  </div>
-                                  <Button 
-                                    variant={
-                                      lesson.status === "completed" ? "outline-success" :
-                                      lesson.status === "in-progress" ? "primary" : "dark"
-                                    }
-                                    size="sm"
-                                    className="w-100 mt-2"
-                                    onClick={() => {
-                                      if (lesson.action === "Start Lesson" || lesson.action === "Continue") {
-                                        navigate(`/lesson/${lesson.id}`);
-                                      } else {
-                                        navigate(`/review/${lesson.id}`);
-                                      }
-                                    }}
-                                  >
-                                    {lesson.action}
-                                  </Button>
+                {hasMembership ? (
+                  <>
+                    <div className="divider"></div>
+                    <div className="lessons-grid">
+                      <h5 className="mb-3">Bài học có sẵn ({filteredLessons.length} bài):</h5>
+                      {filteredLessons.length > 0 ? (
+                        <Row>
+                          {filteredLessons.map((lesson) => (
+                            <Col md={6} key={lesson.id} className="mb-3">
+                              <div className="lesson-card">
+                                <div className="lesson-header">
+                                  <h6>{lesson.title}</h6>
+                                  <Badge bg={
+                                    lesson.level === "Beginner" ? "primary" : 
+                                    lesson.level === "Intermediate" ? "warning" : "danger"
+                                  }>
+                                    {lesson.level}
+                                  </Badge>
                                 </div>
-                              </Col>
-                            ))}
-                          </Row>
-                        ) : (
-                          <div className="no-lessons text-center py-4">
-                            <p className="text-muted">Không có bài học nào cho cấp độ này.</p>
-                            <Button 
-                              variant="outline-primary" 
-                              onClick={() => setSelectedLevel("all")}
-                            >
-                              Xem tất cả bài học
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="divider"></div>
-                      <div className="membership-required-section">
-                        <div className="membership-message">
-                          <h5>🔒 Cần membership để truy cập bài học</h5>
-                          <p className="mb-3">Đăng ký membership để truy cập toàn bộ bài học và tính năng học tập</p>
-                          <div className="membership-benefits mb-4">
-                            <h6>Khi đăng ký membership, bạn sẽ được:</h6>
-                            <ul className="text-start">
-                              <li>Truy cập toàn bộ bài học từ cơ bản đến nâng cao</li>
-                              <li>Học không giới hạn mọi lúc, mọi nơi</li>
-                              <li>Nhận chứng chỉ hoàn thành khóa học</li>
-                              <li>Hỗ trợ từ giáo viên và cộng đồng</li>
-                            </ul>
-                          </div>
+                                <p className="lesson-description">{lesson.description}</p>
+                                <div className="lesson-meta">
+                                  <FontAwesomeIcon icon={faClock} className="me-1" />
+                                  <span className="duration">{lesson.duration}</span>
+                                  {lesson.progress > 0 && (
+                                    <div className="progress-section">
+                                      <ProgressBar 
+                                        now={lesson.progress} 
+                                        className="lesson-progress" 
+                                      />
+                                      <span>{lesson.progress}%</span>
+                                    </div>
+                                  )}
+                                  <FontAwesomeIcon icon={faStar} className="ms-auto me-1" style={{color: '#ffc107'}} />
+                                  <div className="rating">{lesson.rating}</div>
+                                </div>
+                                <Button 
+                                  variant={
+                                    lesson.status === "completed" ? "outline-success" :
+                                    lesson.status === "in-progress" ? "primary" : "dark"
+                                  }
+                                  size="sm"
+                                  className="w-100 mt-2"
+                                  onClick={() => {
+                                    if (lesson.action === "Start Lesson" || lesson.action === "Continue") {
+                                      navigate(`/lesson/${lesson.id}`);
+                                    } else {
+                                      navigate(`/review/${lesson.id}`);
+                                    }
+                                  }}
+                                >
+                                  {lesson.action}
+                                </Button>
+                              </div>
+                            </Col>
+                          ))}
+                        </Row>
+                      ) : (
+                        <div className="no-lessons text-center py-4">
+                          <FontAwesomeIcon icon={faBookOpen} size="3x" className="mb-3" style={{color: '#ccc'}}/>
+                          <p className="text-muted">Không có bài học nào cho cấp độ này.</p>
                           <Button 
-                            variant="primary" 
-                            size="lg"
-                            className="mt-3"
-                            onClick={() => navigate("/membership")}
+                            variant="outline-primary" 
+                            onClick={() => setSelectedLevel("all")}
                           >
-                            Xem gói membership
+                            Xem tất cả bài học
                           </Button>
                         </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="divider"></div>
+                    <div className="membership-required-section">
+                      <div className="membership-message">
+                        <h5><FontAwesomeIcon icon={faLock} className="me-2"/> Cần membership để truy cập bài học</h5>
+                        <p className="mb-3">Đăng ký membership để truy cập toàn bộ bài học và tính năng học tập</p>
+                        <div className="membership-benefits mb-4">
+                          <h6>Khi đăng ký membership, bạn sẽ được:</h6>
+                          <ul className="text-start">
+                            <li>Truy cập toàn bộ bài học từ cơ bản đến nâng cao</li>
+                            <li>Học không giới hạn mọi lúc, mọi nơi</li>
+                            <li>Nhận chứng chỉ hoàn thành khóa học</li>
+                            <li>Hỗ trợ từ giáo viên và cộng đồng</li>
+                          </ul>
+                        </div>
+                        <Button 
+                          variant="primary" 
+                          size="lg"
+                          className="mt-3"
+                          onClick={() => navigate("/membership")}
+                        >
+                          Xem gói membership
+                        </Button>
                       </div>
-                    </>
-                  )}
-                </div>
-              </Col>
-            </Row>
-          </>
+                    </div>
+                  </>
+                )}
+              </div>
+            </Col>
+          </Row>
         )}
 
+        {/* Khóa học Tab Content - Matches third screenshot */}
         {activeTab === "khoahoc" && (
-          <div>
+          <div className="course-list">
             {loadingCourses ? (
               <div className="text-center py-4">
                 <div className="spinner-border text-primary" role="status">
@@ -431,37 +449,37 @@ const Home = () => {
               </div>
             ) : !courses || courses.length === 0 ? (
               <div className="text-center py-4">
+                <FontAwesomeIcon icon={faGraduationCap} size="3x" className="mb-3" style={{color: '#ccc'}}/>
                 <p className="text-muted">Hiện chưa có khóa học nào</p>
               </div>
             ) : (
-              <div className="course-list">
-                <Row>
-                  {courses.map((course) => (
-                    <Col md={6} lg={4} key={course.courseID} className="mb-4">
-                      <Card className="h-100">
-                        <Card.Body>
-                          <div className="d-flex justify-content-between align-items-start mb-2">
-                            <h5>{course.courseName}</h5>
-                            <Badge bg="info">Level {course.courseLevel}</Badge>
-                          </div>
-                          <p className="text-muted">{course.description}</p>
-                          <Button 
-                            variant="primary" 
-                            size="sm"
-                            onClick={() => navigate(`/course/${course.courseID}`)}
-                          >
-                            Xem chi tiết
-                          </Button>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  ))}
-                </Row>
-              </div>
+              <Row>
+                {courses.map((course) => (
+                  <Col md={6} lg={4} key={course.courseID} className="mb-4">
+                    <Card className="h-100">
+                      <Card.Body>
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <h5>{course.courseName}</h5>
+                          <Badge bg="info">Level {course.courseLevel}</Badge>
+                        </div>
+                        <p className="text-muted">{course.description}</p>
+                        <Button 
+                          variant="primary" 
+                          size="sm"
+                          onClick={() => navigate(`/course/${course.courseID}`)}
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
             )}
           </div>
         )}
 
+        {/* Luyện tập Tab Content */}
         {activeTab === "luyentap" && (
           <div className="practice-section">
             <h4 className="mb-4">Luyện tập kỹ năng</h4>
@@ -472,7 +490,7 @@ const Home = () => {
                 { title: "Ngữ pháp", icon: "📝", available: true },
                 { title: "Luyện nói", icon: "🎤", available: hasMembership },
                 { title: "Luyện nghe", icon: "🎧", available: hasMembership },
-                { title: "Hội thoại", icon: "💬", available: hasMembership }
+                { title: "Quizz", icon: "💬", available: hasMembership }
               ].map((skill, index) => (
                 <Col md={4} key={index} className="mb-3">
                   <div className={`skill-card ${!skill.available ? 'skill-locked' : ''}`}>
@@ -512,6 +530,7 @@ const Home = () => {
           </div>
         )}
 
+        {/* Thống kê Tab Content - Matches fourth and fifth screenshots */}
         {activeTab === "thongke" && (
           <div className="stats-section">
             <Row>
@@ -520,12 +539,13 @@ const Home = () => {
                   <Col md={3} className="mb-4">
                     <Card className="stat-card">
                       <Card.Body>
-                        <h5>Current Level</h5>
+                        <FontAwesomeIcon icon={faGraduationCap} size="2x" className="mb-2" style={{color: '#667eea'}}/>
+                        <h5>Cấp độ hiện tại</h5>
                         <div className="stat-item">
                           <strong>{statsData?.khoahoc?.currentLevel || 'Level 1'}</strong>
                         </div>
                         <div className="stat-item">
-                          <span>{statsData?.khoahoc?.xpToNext || 0} XP to next level</span>
+                          <span>{statsData?.khoahoc?.xpToNext || 0} XP để lên cấp độ tiếp theo</span>
                         </div>
                       </Card.Body>
                     </Card>
@@ -534,12 +554,13 @@ const Home = () => {
                   <Col md={3} className="mb-4">
                     <Card className="stat-card">
                       <Card.Body>
-                        <h5>Study Streak</h5>
+                        <FontAwesomeIcon icon={faFire} size="2x" className="mb-2" style={{color: '#ffc107'}}/>
+                        <h5>Chuỗi ngày học</h5>
                         <div className="stat-item">
-                          <span>{statsData?.streak?.days || 0} days in a row</span>
+                          <strong>{statsData?.streak?.days || 0} ngày liên tiếp</strong>
                         </div>
                         <div className="stat-item">
-                          <span>{statsData?.streak?.message || 'Start learning today!'}</span>
+                          <span>{statsData?.streak?.message || 'Bắt đầu học ngay hôm nay!'}</span>
                         </div>
                       </Card.Body>
                     </Card>
@@ -548,12 +569,13 @@ const Home = () => {
                   <Col md={3} className="mb-4">
                     <Card className="stat-card">
                       <Card.Body>
-                        <h5>Lessons Completed</h5>
+                        <FontAwesomeIcon icon={faCheckCircle} size="2x" className="mb-2" style={{color: '#28a745'}}/>
+                        <h5>Bài học đã hoàn thành</h5>
                         <div className="stat-item">
                           <strong>{statsData?.luyentap?.lessonsCompleted || 0}</strong>
                         </div>
                         <div className="stat-item">
-                          <span>Average score: {statsData?.luyentap?.averageScore || '0%'}</span>
+                          <span>Điểm trung bình: {statsData?.luyentap?.averageScore || '0%'}</span>
                         </div>
                       </Card.Body>
                     </Card>
@@ -562,12 +584,13 @@ const Home = () => {
                   <Col md={3} className="mb-4">
                     <Card className="stat-card">
                       <Card.Body>
-                        <h5>Time Spent</h5>
+                        <FontAwesomeIcon icon={faClock} size="2x" className="mb-2" style={{color: '#17a2b8'}}/>
+                        <h5>Thời gian học</h5>
                         <div className="stat-item">
                           <strong>{statsData?.timeSpent?.time || '0h 0m'}</strong>
                         </div>
                         <div className="stat-item">
-                          <span>{statsData?.timeSpent?.times || 'This week'}</span>
+                          <span>{statsData?.timeSpent?.times || 'Tuần này'}</span>
                         </div>
                       </Card.Body>
                     </Card>
@@ -580,8 +603,8 @@ const Home = () => {
                   <Col md={6} className="mb-4">
                     <Card>
                       <Card.Body>
-                        <h5>Recent Achievements</h5>
-                        <p className="text-muted">Your latest milestones</p>
+                        <h5>Thành tích gần đây</h5>
+                        <p className="text-muted">Các cột mốc mới nhất của bạn</p>
                         
                         {statsData?.achievements && statsData.achievements.length > 0 ? (
                           statsData.achievements.map((achievement, index) => (
@@ -605,19 +628,23 @@ const Home = () => {
                   <Col md={6} className="mb-4">
                     <Card>
                       <Card.Body>
-                        <h5>Weekly Goal</h5>
-                        <p className="text-muted">Keep up the momentum!</p>
+                        <h5>Mục tiêu hàng tuần</h5>
+                        <p className="text-muted">Duy trì đà học tập!</p>
                         
                         <div className="weekly-goal-item mb-3">
                           <div className="d-flex justify-content-between mb-2">
-                            <span>Lessons this week</span>
+                            <span>Bài học trong tuần</span>
                             <span>{statsData?.weeklyGoal?.lessons?.completed || 0}/{statsData?.weeklyGoal?.lessons?.total || 7}</span>
                           </div>
+                          <ProgressBar 
+                            now={(statsData?.weeklyGoal?.lessons?.completed || 0) / (statsData?.weeklyGoal?.lessons?.total || 7) * 100} 
+                            className="custom-progress-bar"
+                          />
                         </div>
                         
                         <div className="weekly-goal-item">
                           <div className="d-flex justify-content-between mb-2">
-                            <span>Study time goal</span>
+                            <span>Mục tiêu thời gian học</span>
                             <span>{statsData?.weeklyGoal?.studyTime?.completed || 0}/{statsData?.weeklyGoal?.studyTime?.total || 300} {statsData?.weeklyGoal?.studyTime?.unit || 'min'}</span>
                           </div>
                           <ProgressBar 
@@ -626,8 +653,8 @@ const Home = () => {
                           />
                           <p className="text-success mt-2">
                             {((statsData?.weeklyGoal?.studyTime?.completed || 0) / (statsData?.weeklyGoal?.studyTime?.total || 300) * 100) >= 50 
-                              ? "You're doing great! Keep it up to reach your weekly goal." 
-                              : "Let's get started! Complete your first lesson today."}
+                              ? "Bạn đang làm rất tốt! Hãy tiếp tục để đạt mục tiêu hàng tuần." 
+                              : "Hãy bắt đầu! Hoàn thành bài học đầu tiên của bạn ngay hôm nay."}
                           </p>
                         </div>
                       </Card.Body>
@@ -639,6 +666,7 @@ const Home = () => {
           </div>
         )}
       </Container>
+      <Footer />
     </div>
   );
 };

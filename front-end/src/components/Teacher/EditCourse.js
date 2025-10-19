@@ -98,9 +98,6 @@ const EditCourse = () => {
       }
 
       if (editingChapter) {
-        // Update existing chapter
-        // TODO: Call API
-        // await updateChapter(editingChapter.chapterID, { chapterName });
         
         const updatedChapters = course.chapters.map(ch =>
           ch.chapterID === editingChapter.chapterID
@@ -291,7 +288,7 @@ const EditCourse = () => {
         <Alert variant="danger">
           <Alert.Heading>Lỗi!</Alert.Heading>
           <p>Không tìm thấy khóa học.</p>
-          <Button variant="outline-danger" onClick={() => navigate("/teacher/dashboard")}>
+          <Button variant="outline-danger" onClick={() => navigate("/dashboard")}>
             Quay về Dashboard
           </Button>
         </Alert>

@@ -1,6 +1,5 @@
-// createLesson.scss - Updated for Dashboard consistency
 
-.create-lesson-container {
+.create-edit-quiz-container {
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
   padding: 40px;
@@ -74,12 +73,27 @@
       color: #666;
       margin-bottom: 20px;
     }
+  }
 
-    // No hover effect on general cards unless specific interaction is desired
-    // &:hover {
-    //   transform: translateY(-2px);
-    //   box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-    // }
+  // Specific style for nested question cards within the quiz editor
+  .question-card {
+    border: 1px solid #e0e0e0; // Slightly different border for nested card
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); // Lighter shadow
+    background-color: #fdfdfd; // Slightly off-white background
+    padding: 15px 20px; // Adjusted padding
+    .card-body {
+        padding: 0; // Remove default card-body padding
+    }
+    h6 { // Question number heading
+        font-size: 1.05rem;
+        margin-bottom: 0;
+        color: #444;
+    }
+    .input-group-text { // For percentage input
+        border-left: none;
+        background-color: #e9ecef;
+        border-color: #ced4da;
+    }
   }
 
   // --- Form Element Styling (Consistent with Modal in Dashboard) ---
@@ -110,22 +124,6 @@
     }
   }
 
-  // Specific styles for the "Video URL" row
-  .video-input-row {
-    .btn {
-      width: 100%;
-      border-radius: 8px; // Match input border-radius
-      padding: 10px 15px;
-      font-weight: 500;
-      color: #667eea;
-      border-color: #667eea;
-      &:hover {
-        background-color: #667eea;
-        color: white;
-      }
-    }
-  }
-
   // --- Suggestions List Styling ---
   ul {
     padding-left: 25px; // Adjust padding for list items
@@ -142,7 +140,7 @@
 
 // --- Responsive Adjustments (Mirroring Dashboard) ---
 @media (max-width: 991.98px) {
-  .create-lesson-container {
+  .create-edit-quiz-container {
     padding: 30px;
 
     .header-content {
@@ -183,7 +181,7 @@
 }
 
 @media (max-width: 767.98px) {
-  .create-lesson-container {
+  .create-edit-quiz-container {
     padding: 15px;
 
     .header-content {

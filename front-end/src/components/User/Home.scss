@@ -1,164 +1,297 @@
 .home-page {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
+  background-color: #f0f2f5; // Light gray background for the entire page
+  color: #333; // Default text color
+
   .hero-section {
-    background: linear-gradient(to bottom right, #e6f0ff, #f8e8ff);
-    color: Black;
-    padding: 60px 0;
+    background: linear-gradient(to right, #e0e7ff, #c3daff); // Softer blue gradient
+    color: #333;
+    padding: 80px 0; // More padding for a grander feel
+    text-align: center; // Center content by default
     
     .hero-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
+      font-size: 3rem; // Larger title
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      color: #2c3e50;
     }
     
     .hero-description {
-      font-size: 1.1rem;
-      margin-bottom: 2rem;
-      opacity: 0.9;
+      font-size: 1.2rem;
+      margin-bottom: 2.5rem;
+      color: #555;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
     }
     
     .hero-buttons {
+      margin-bottom: 3rem;
       .btn {
-        padding: 12px 30px;
-        font-weight: 600;
+        padding: 14px 35px; // Larger buttons
+        font-weight: 700;
+        border-radius: 30px; // Rounded buttons
+        transition: all 0.3s ease;
+
+        &.start-learning-btn {
+          background-color: #667eea; // Primary blue
+          border-color: #667eea;
+          color: white;
+
+          &:hover {
+            background-color: #5a6edb;
+            border-color: #5a6edb;
+            transform: translateY(-2px);
+          }
+        }
+
+        &.watch-demo-btn {
+          border: 2px solid #667eea;
+          color: #667eea;
+          background-color: transparent;
+
+          &:hover {
+            background-color: #667eea;
+            color: white;
+            transform: translateY(-2px);
+          }
+        }
       }
     }
     
     .hero-stats {
       display: flex;
-      gap: 2rem;
-      
+      justify-content: center; // Center the stats
+      gap: 3rem; // More space between stats
+      margin-top: 3rem;
+
       .stat-item {
         font-size: 1.1rem;
+        color: #555;
+        strong {
+          color: #2c3e50;
+        }
       }
     }
     
     .hero-image-container {
-      position: relative;
-      text-align: center;
-      
-      .hero-logo {
-            min-width: 80%;
-    border-radius: 10px;
-    height: 400px;
-      }
-      
-      .live-lesson-badge {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        
-        .live-dot {
-          display: inline-block;
-          width: 8px;
-          height: 8px;
-          background: #ff4757;
-          border-radius: 50%;
-          margin-right: 5px;
-          animation: pulse 1.5s infinite;
-        }
+      margin-top: 40px; // Space from buttons
+      img {
+        max-width: 100%; // Ensure image fits
+        height: auto;
+        border-radius: 15px; // Slightly rounded corners for the image
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); // Subtle shadow
       }
     }
   }
-  
+
+  .container {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
   .welcome-section {
-    padding: 40px 0;
+    background-color: #f0f2f5;
+    padding: 20px 0;
     
     h1 {
-      color: #333;
+      color: #2c3e50;
+      font-size: 2rem;
+      font-weight: 700;
       margin-bottom: 30px;
+      padding-left: 15px; // Align with cards
     }
     
+    .stats-row {
+      display: flex;
+      gap: 20px; // Space between stat cards
+      justify-content: center; // Center the stat cards
+      flex-wrap: wrap; // Allow wrapping on smaller screens
+    }
+
     .stat-card {
-      text-align: center;
+      background: white;
       border: none;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+      text-align: center;
+      flex: 1; // Allows cards to take equal space
+      min-width: 250px; // Minimum width before wrapping
+
+      .card-body {
+        padding: 0; // Remove default padding for better control
+      }
       
       h3 {
         color: #667eea;
         font-size: 2.5rem;
-        font-weight: 700;
+        font-weight: 800;
+        margin-bottom: 5px;
       }
       
       p {
         color: #666;
+        font-size: 1rem;
         margin-bottom: 0;
       }
     }
   }
   
   .section-divider {
-    margin: 30px 0;
-    border-color: #eee;
+    margin: 40px 0;
+    border: none;
+    border-top: 1px solid #e9ecef;
   }
   
   .lessons-nav {
     h2 {
-      color: #333;
-      margin-bottom: 20px;
+      color: #2c3e50;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 25px;
+      padding-left: 15px;
     }
     
     .tab-navigation {
       display: flex;
-      gap: 0;
-      background: #f8f9fa;
-      border-radius: 10px;
-      padding: 5px;
-      
+      gap: 10px; // Space between tabs
+      background: #e9ecef;
+      border-radius: 12px;
+      padding: 8px;
+      margin-bottom: 30px; // Space below tab navigation
+      width: fit-content; // Only take necessary width
+      margin-left: 15px;
+
       .tab-item {
-        flex: 1;
-        padding: 12px 20px;
+        padding: 10px 25px;
         border: none;
         background: transparent;
-        color: #666;
+        color: #555;
         font-weight: 600;
-        border-radius: 8px;
+        border-radius: 10px;
         transition: all 0.3s ease;
+        font-size: 1.05rem;
+        cursor: pointer;
         
         &.active {
           background: white;
           color: #667eea;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
         &:hover:not(.active) {
-          background: rgba(255, 255, 255, 0.5);
+          color: #667eea;
         }
       }
     }
   }
   
-  .level-section-box {
+  // Bai hoc tab content styling
+  .your-lessons-section {
     background: white;
     border-radius: 15px;
     padding: 25px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    height: calc(100% - 30px); // Fill height and account for margin
+    margin-bottom: 30px; // Margin for layout
+    
+    h2 {
+      font-size: 1.5rem;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .membership-lessons {
+      .badge {
+        font-size: 0.85rem;
+        padding: 5px 10px;
+        border-radius: 5px;
+      }
+      p {
+        font-size: 1rem;
+        color: #4CAF50; // Green for premium message
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .quick-stats {
+        display: grid;
+        gap: 15px;
+        .stat-item {
+          background-color: #f8f9fa;
+          padding: 12px 15px;
+          border-radius: 8px;
+          font-size: 0.95rem;
+          color: #555;
+          strong {
+            color: #2c3e50;
+            font-size: 1.2rem;
+          }
+        }
+      }
+    }
+
+    .non-membership-lessons {
+      p {
+        font-size: 1rem;
+        color: #777;
+        margin-bottom: 20px;
+      }
+      .btn-outline-primary {
+        border-color: #667eea;
+        color: #667eea;
+        border-radius: 20px;
+        padding: 8px 20px;
+        &:hover {
+          background-color: #667eea;
+          color: white;
+        }
+      }
+    }
+  }
+
+  .level-section-box {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    min-height: 400px; // Ensure a decent height
+    margin-bottom: 30px; // Consistent margin
     
     .section-title {
-      color: #333;
+      color: #2c3e50;
+      font-size: 1.5rem;
+      font-weight: 700;
       margin-bottom: 10px;
     }
     
     .current-level {
-      color: #666;
-      margin-bottom: 20px;
+      color: #777;
+      margin-bottom: 25px;
+      font-size: 0.95rem;
     }
     
+    .level-options {
+      margin-bottom: 30px; // Space below level options
+    }
+
     .level-card {
       border: 2px solid #e9ecef;
-      border-radius: 10px;
-      padding: 15px;
+      border-radius: 12px;
+      padding: 18px;
       cursor: pointer;
       transition: all 0.3s ease;
+      background-color: #fcfcfc;
+      display: flex;
+      align-items: flex-start; // Align content at the top
       
       &.active {
         border-color: #667eea;
-        background: #f8f9ff;
+        background: #eef2ff; // Lighter background for active
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
       }
       
       .level-radio {
@@ -168,11 +301,16 @@
       .level-label {
         cursor: pointer;
         margin-bottom: 0;
-        
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+
         .level-name {
           display: block;
-          color: #333;
-          margin-bottom: 5px;
+          color: #2c3e50;
+          font-weight: 700;
+          margin-bottom: 4px;
+          font-size: 1.1rem;
         }
         
         .level-description {
@@ -184,309 +322,578 @@
     
     .divider {
       height: 1px;
-      background: #eee;
-      margin: 20px 0;
+      background: #e9ecef;
+      margin: 30px 0;
     }
+
+    .lessons-grid {
+      h5 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+
+      .lesson-card {
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        background-color: #fdfdfd;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 100%; // Ensure cards in a row have equal height
+
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .lesson-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+
+          h6 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+          }
+          .badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 5px;
+            &.bg-primary { background-color: #667eea !important; }
+            &.bg-warning { background-color: #ffc107 !important; color: #333 !important;}
+            &.bg-danger { background-color: #dc3545 !important; }
+          }
+        }
+
+        .lesson-description {
+          font-size: 0.9rem;
+          color: #666;
+          margin-bottom: 15px;
+          line-height: 1.4;
+        }
+
+        .lesson-meta {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          margin-bottom: 15px;
+          font-size: 0.85rem;
+          color: #777;
+
+          .duration {
+            font-weight: 500;
+          }
+
+          .progress-section {
+            display: flex;
+            align-items: center;
+            flex-grow: 1; // Allow progress bar to take available space
+
+            .lesson-progress {
+              flex-grow: 1;
+              height: 6px;
+              margin-right: 8px;
+              .progress-bar {
+                background-color: #667eea;
+              }
+            }
+            span {
+              white-space: nowrap;
+            }
+          }
+
+          .rating {
+            font-weight: 600;
+            color: #ffc107; // Star color
+          }
+        }
+
+        .btn {
+          font-weight: 600;
+          border-radius: 20px;
+          padding: 8px 15px;
+          &.btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+            color: white;
+            &:hover {
+              background-color: #5a6edb;
+              border-color: #5a6edb;
+            }
+          }
+          &.btn-dark {
+            background-color: #2c3e50;
+            border-color: #2c3e50;
+            color: white;
+            &:hover {
+              background-color: #34495e;
+              border-color: #34495e;
+            }
+          }
+          &.btn-outline-success { // For completed lessons
+            color: #28a745;
+            border-color: #28a745;
+            &:hover {
+              background-color: #28a745;
+              color: white;
+            }
+          }
+        }
+      }
+    }
+
+    .no-lessons {
+      text-align: center;
+      padding: 40px 20px;
+      p {
+        font-size: 1.1rem;
+        color: #777;
+        margin-bottom: 20px;
+      }
+      .btn-outline-primary {
+        border-color: #667eea;
+        color: #667eea;
+        border-radius: 20px;
+        padding: 10px 25px;
+        &:hover {
+          background-color: #667eea;
+          color: white;
+        }
+      }
+    }
+
+    .membership-required-section {
+      text-align: center;
+      padding: 40px 20px;
+      background-color: #f8f9fa;
+      border-radius: 12px;
+      margin-top: 20px;
+      
+      .membership-message {
+        h5 {
+          font-size: 1.6rem;
+          color: #2c3e50;
+          margin-bottom: 15px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+        p {
+          font-size: 1rem;
+          color: #666;
+          margin-bottom: 25px;
+        }
+        .membership-benefits {
+          text-align: left;
+          max-width: 400px;
+          margin: 0 auto 30px auto;
+          h6 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 600;
+          }
+          ul {
+            list-style: none;
+            padding: 0;
+            li {
+              font-size: 0.95rem;
+              color: #555;
+              margin-bottom: 10px;
+              &::before {
+                content: "✅";
+                margin-right: 10px;
+              }
+            }
+          }
+        }
+        .btn-primary {
+          background-color: #667eea;
+          border-color: #667eea;
+          color: white;
+          padding: 12px 30px;
+          border-radius: 30px;
+          font-weight: 600;
+          &:hover {
+            background-color: #5a6edb;
+            border-color: #5a6edb;
+          }
+        }
+      }
+    }
+  }
+
+  // Khóa học tab content styling
+  .course-list {
+    .card {
+      border: 1px solid #e9ecef;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      height: 100%; // Ensure cards have equal height
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-body {
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        h5 {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: #2c3e50;
+          margin-bottom: 10px;
+        }
+        .badge {
+          background-color: #17a2b8; // Info color for level
+          color: white;
+          padding: 5px 10px;
+          border-radius: 5px;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+        p {
+          font-size: 0.95rem;
+          color: #666;
+          line-height: 1.5;
+          margin-bottom: 20px;
+          flex-grow: 1; // Allow description to take space
+        }
+        .btn-primary {
+          background-color: #667eea;
+          border-color: #667eea;
+          color: white;
+          border-radius: 25px;
+          padding: 8px 20px;
+          font-weight: 600;
+          align-self: flex-start; // Align button to the left
+          &:hover {
+            background-color: #5a6edb;
+            border-color: #5a6edb;
+          }
+        }
+      }
+    }
+  }
+
+  // Luyện tập tab content styling
+  .practice-section {
+    padding: 20px 0;
     
-    .progress-section {
-      .progress-title {
-        color: #333;
+    h4 {
+      font-size: 1.8rem;
+      color: #2c3e50;
+      font-weight: 700;
+      margin-bottom: 30px;
+    }
+
+    .skill-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 15px;
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      height: 100%; // Ensure equal height
+
+      &:hover:not(.skill-locked) {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      }
+      
+      .skill-icon {
+        font-size: 3rem;
         margin-bottom: 15px;
       }
       
-      .progress-container {
-        .progress-bar-custom {
-          height: 10px;
-          background: #e9ecef;
-          border-radius: 5px;
-          overflow: hidden;
-          
-          .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            border-radius: 5px;
-            transition: width 0.5s ease;
+      h6 {
+        font-size: 1.2rem;
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+
+      .badge {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        background-color: #6c757d !important; // Gray for locked skills
+      }
+      
+      .btn {
+        border-radius: 25px;
+        padding: 8px 20px;
+        font-weight: 600;
+        &.btn-outline-dark {
+          border-color: #2c3e50;
+          color: #2c3e50;
+          &:hover {
+            background-color: #2c3e50;
+            color: white;
           }
         }
+        &.btn-outline-secondary {
+          border-color: #6c757d;
+          color: #6c757d;
+          cursor: not-allowed;
+        }
+      }
+
+      &.skill-locked {
+        opacity: 0.7;
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  // Thống kê tab content styling
+  .stats-section {
+    padding: 20px 0;
+    
+    .stat-card {
+      background: white;
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 25px;
+      height: 100%; // Equal height
+      
+      h5 {
+        font-size: 1.2rem;
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+
+      .stat-item {
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+        color: #555;
+        strong {
+          color: #667eea;
+          font-size: 1.5rem;
+          display: block; // Ensures number is on its own line
+          margin-bottom: 5px;
+        }
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    .card { // For Recent Achievements and Weekly Goal cards
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 25px;
+      height: 100%;
+
+      h5 {
+        font-size: 1.2rem;
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      p.text-muted {
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+      }
+
+      .achievement-item {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
         
-        .progress-info {
-          display: flex;
-          justify-content: space-between;
+        h6 {
+          font-size: 1rem;
+          color: #2c3e50;
+          font-weight: 600;
+        }
+        p {
+          font-size: 0.85rem;
+          margin-bottom: 0;
+        }
+        .achievement-time {
+          font-size: 0.8rem;
+          white-space: nowrap; // Prevent wrapping
+        }
+      }
+
+      .weekly-goal-item {
+        margin-bottom: 20px;
+        span {
+          font-size: 0.95rem;
+          color: #555;
+        }
+        .custom-progress-bar {
+          height: 8px;
+          border-radius: 5px;
+          .progress-bar {
+            background-color: #667eea; // Progress bar color
+          }
+        }
+        p.text-success {
+          font-size: 0.9rem;
           margin-top: 10px;
-          color: #666;
+          color: #28a745 !important;
+        }
+      }
+    }
+  }
+
+  .loading {
+    padding: 100px 0;
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      border-width: 0.3em;
+      color: #667eea !important;
+    }
+    p {
+      font-size: 1.1rem;
+      color: #555;
+    }
+  }
+}
+
+// Media Queries for Responsiveness
+@media (max-width: 991.98px) {
+  .home-page {
+    .hero-section {
+      padding: 60px 0;
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      .hero-description {
+        font-size: 1rem;
+      }
+      .hero-buttons {
+        .btn {
+          padding: 10px 25px;
           font-size: 0.9rem;
         }
       }
-    }
-  }
-
-.courses-tab {
-  padding: 20px 0;
-  
-  h3 {
-    color: #2c3e50;
-    font-weight: 700;
-    text-align: center;
-  }
-}
-
-.course-card-design {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e9ecef;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  }
-
-  .course-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
-    
-    .course-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #2c3e50;
-      margin: 0;
-      flex: 1;
-      margin-right: 10px;
-    }
-    
-    .course-level-badge {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-  }
-
-  .course-description {
-    color: #6c757d;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    margin-bottom: 16px;
-  }
-
-  .course-stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 16px;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    
-    .stat-item {
-      text-align: center;
-      
-      .stat-number {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #2c3e50;
-        display: block;
-      }
-      
-      .stat-label {
-        font-size: 0.8rem;
-        color: #6c757d;
-        margin-top: 4px;
+      .hero-stats {
+        flex-direction: column;
+        gap: 1rem;
       }
     }
-  }
 
-  .progress-info {
-    margin-bottom: 16px;
-    
-    .progress-title {
-      font-size: 0.9rem;
-      color: #6c757d;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-    
-    .progress-details {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      
-      .progress-text {
-        font-size: 0.9rem;
-        color: #2c3e50;
-        font-weight: 600;
+    .welcome-section {
+      h1 {
+        text-align: center;
+        padding-left: 0;
       }
-      
-      .progress-percent {
-        font-size: 0.9rem;
-        color: #28a745;
-        font-weight: 700;
-      }
-    }
-  }
-
-  .course-content-section {
-    margin-bottom: 16px;
-    
-    h6 {
-      font-size: 0.9rem;
-      color: #2c3e50;
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-    
-    .lessons-list {
-      .lesson-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid #f1f3f4;
-        
-        &:last-child {
-          border-bottom: none;
+      .stats-row {
+        justify-content: center;
+        .col-md-4 {
+          flex: 0 0 80%; // Make cards wider on small screens
+          max-width: 80%;
+          margin-bottom: 20px;
         }
-        
-        .lesson-name {
-          font-size: 0.85rem;
-          color: #2c3e50;
+      }
+    }
+
+    .lessons-nav {
+      h2 {
+        text-align: center;
+        padding-left: 0;
+      }
+      .tab-navigation {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+        .tab-item {
           flex: 1;
-        }
-        
-        .lesson-duration {
-          font-size: 0.8rem;
-          color: #6c757d;
-          font-weight: 500;
+          padding: 10px 15px;
         }
       }
     }
-  }
 
-  .divider {
-    height: 1px;
-    background: #e9ecef;
-    margin: 16px 0;
-  }
-
-  .course-actions {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-    
-    .start-course-btn,
-    .view-lessons-btn {
-      flex: 1;
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      border-radius: 6px;
+    .your-lessons-section, .level-section-box {
+      margin-bottom: 20px;
+      padding: 20px;
     }
-    
-    .start-course-btn {
-      background: #2c3e50;
-      border: none;
-      
-      &:hover {
-        background: #34495e;
-        transform: translateY(-1px);
+    .level-section-box {
+      .level-options {
+        .col-md-3 {
+          flex: 0 0 50%; // Two cards per row
+          max-width: 50%;
+        }
       }
     }
-    
-    .view-lessons-btn {
-      border-color: #2c3e50;
-      color: #2c3e50;
-      
-      &:hover {
-        background: #2c3e50;
-        color: white;
-        transform: translateY(-1px);
+    .course-list .card .card-body {
+      padding: 20px;
+    }
+
+    .practice-section {
+      .col-md-4 {
+        flex: 0 0 100%; // One skill card per row
+        max-width: 100%;
+        margin-bottom: 20px;
       }
     }
-  }
-
-  .enrollment-date {
-    text-align: center;
-    font-size: 0.8rem;
-    color: #6c757d;
-    padding-top: 8px;
-    border-top: 1px solid #f1f3f4;
-  }
-}
-
-
-
-.practice-section {
-  .skill-card {
-    padding: 2rem 1rem;
-    border: 1px solid #e9ecef;
-    border-radius: 15px;
-    text-align: center;
-    background: white;
-    transition: transform 0.3s ease;
-    height: 100%;
-    
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .skill-icon {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-    
-    h6 {
-      color: #000;
-      margin: 0 0 1rem 0;
+    .stats-section {
+      .col-md-3, .col-md-6 {
+        flex: 0 0 100%; // Full width for stat cards
+        max-width: 100%;
+        margin-bottom: 20px;
+      }
     }
   }
 }
 
-
-// Responsive
-@media (max-width: 768px) {
-  .courses-tab {
-    .col-md-4 {
-      flex: 0 0 100%;
+@media (max-width: 575.98px) {
+  .home-page {
+    .hero-section {
+      .hero-title {
+        font-size: 2rem;
+      }
+      .hero-buttons {
+        flex-direction: column;
+        .btn {
+          width: 80%;
+          margin: 0 auto 15px auto;
+        }
+      }
+    }
+    .welcome-section .stats-row .col-md-4 {
+      flex: 0 0 95%;
+      max-width: 95%;
+    }
+    .lessons-nav .tab-navigation .tab-item {
+      font-size: 0.9rem;
+      padding: 8px 10px;
+    }
+    .level-section-box .level-options .col-md-3 {
+      flex: 0 0 100%; // One level card per row
       max-width: 100%;
     }
-    
-    .course-card-correct {
-      .action-buttons {
+    .level-section-box .lessons-grid .lesson-card {
+      .lesson-header {
         flex-direction: column;
+        align-items: flex-start;
+        h6 { margin-bottom: 5px; }
+      }
+      .lesson-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
       }
     }
-  }
-}
-
-@media (min-width: 769px) and (max-width: 992px) {
-  .courses-tab {
-    .col-md-4 {
-      flex: 0 0 50%;
-      max-width: 50%;
-    }
-  }
-}
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 1;
   }
 }

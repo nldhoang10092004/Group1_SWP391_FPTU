@@ -177,6 +177,8 @@ const CourseDetail = () => {
                   Bạn có thể xem trước <strong>{previewVideos} video miễn phí</strong> để trải nghiệm nội dung khóa học 
                   trước khi đăng ký membership.
                 </p>
+              
+                 
               </Card.Body>
             </Card>
           </Col>

@@ -3,52 +3,11 @@ import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import { Modal, Button, Form, Dropdown } from "react-bootstrap";
-import { styled, alpha } from "@mui/material/styles";
-import InputBase from "@mui/material/InputBase";
-import SearchIcon from "@mui/icons-material/Search";
+// Xóa bỏ các import Material-UI Search
 import { useNavigate } from "react-router-dom";
 import { loginApi, registerApi } from "../../middleware/auth";
 import { sendOtpApi } from "../../middleware/auth";
-import "./Header.scss";
-
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(3),
-    width: "auto",
-  },
-}));
-
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create("width"),
-    width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: "20ch",
-    },
-  },
-}));
+import "./Header.scss"; // Đảm bảo đường dẫn đúng
 
 const Header = () => {
   const navigate = useNavigate();
@@ -64,23 +23,23 @@ const Header = () => {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
-  const [accountType, setAccountType] = useState("student");
+  const [accountType, setAccountType] = useState("student"); // Giữ nguyên nếu có ý định dùng sau này
   const [registerMessage, setRegisterMessage] = useState("");
   const [registerErrorMessage, setRegisterErrorMessage] = useState("");
   const [otpMessage, setOtpMessage] = useState("");
   const [otpError, setOtpError] = useState("");
   const [registerOtp, setRegisterOtp] = useState("");
-  const [isOtpValid, setIsOtpValid] = useState(false);
+  const [isOtpValid, setIsOtpValid] = useState(false); // Giữ nguyên
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem("user");
-      if (!savedUser || savedUser === "undefined" || savedUser === "null") return null;
+      if (!savedUser || savedUser === "undefined" || savedUser === "null")
+        return null;
       return JSON.parse(savedUser);
     } catch {
       return null;
     }
   });
-
 
   useEffect(() => {
     const openAuthModal = (e) => {
@@ -110,6 +69,9 @@ const Header = () => {
     setRegisterMessage("");
     setRegisterErrorMessage("");
     setAccountType("student");
+    setOtpMessage("");
+    setOtpError("");
+    setRegisterOtp("");
   };
 
   const handleAuthClick = () => setShowAuthModal(true);
@@ -117,9 +79,10 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("accessToken"); 
     setUser(null);
-    navigate("/");
-    window.location.reload();
+    navigate("/"); 
+    window.location.reload(); 
   };
 
   const handleLoginSubmit = async (e) => {
@@ -134,7 +97,7 @@ const Header = () => {
         throw new Error("AccessToken missing in response");
       }
 
-      const loggedUser = { accountID, accessToken, expiresIn };
+      const loggedUser = { accountID, accessToken, expiresIn, email: email }; 
       localStorage.setItem("user", JSON.stringify(loggedUser));
       localStorage.setItem("accessToken", accessToken);
 
@@ -144,9 +107,8 @@ const Header = () => {
       setTimeout(() => {
         resetLoginForm();
         setShowAuthModal(false);
-        navigate("/home");
+        navigate("/home"); // Chuyển hướng sau khi đăng nhập
       }, 1500);
-
     } catch (error) {
       console.error("Login error:", error);
       setLoginErrorMessage(
@@ -155,31 +117,30 @@ const Header = () => {
     }
   };
 
-
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra OTP có nhập chưa
     if (!registerOtp) {
       setRegisterErrorMessage("Vui lòng nhập OTP");
       return;
     }
 
     try {
-      // Gọi API đăng ký
       const response = await registerApi({
         email: registerEmail,
         username: registerName,
         password: registerPassword,
         confirmPassword: registerConfirmPassword,
-        otp: registerOtp
+        otp: registerOtp,
       });
-
 
       const { accountID, accessToken, expiresIn } = response.data;
 
-
-      const registeredUser = { accountID, accessToken, expiresIn };
+      const registeredUser = {
+        accountID,
+        accessToken,
+        expiresIn
+      }; // Thêm email
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(registeredUser));
 
@@ -189,7 +150,7 @@ const Header = () => {
       setTimeout(() => {
         resetRegisterForm();
         setShowAuthModal(false);
-        navigate("/home");
+        navigate("/home"); // Chuyển hướng sau khi đăng ký
       }, 1500);
     } catch (error) {
       setRegisterErrorMessage(
@@ -197,15 +158,17 @@ const Header = () => {
       );
     }
   };
+
   const handleSendOtp = async () => {
     if (!registerEmail) {
       setOtpError("Vui lòng nhập email trước khi gửi OTP");
       return;
     }
     try {
+      setOtpError(""); // Clear previous errors
+      setOtpMessage("Đang gửi OTP...");
       const res = await sendOtpApi(registerEmail);
       setOtpMessage("OTP đã được gửi đến email của bạn!");
-      setOtpError("");
       console.log("OTP:", res.data.otp); // debug OTP
     } catch (error) {
       setOtpError(error.response?.data?.message || "Gửi OTP thất bại");
@@ -225,83 +188,74 @@ const Header = () => {
 
   return (
     <>
-      <Navbar expand="lg" className="auth-">
+      <Navbar expand="lg" className="main-header">
         <Container>
-          <Navbar.Brand href="/">EnglishMaster</Navbar.Brand>
+          <Navbar.Brand href="/" className="logo">
+            <span className="logo-icon">📖</span> EnglishMaster
+          </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Search>
-              <SearchIconWrapper>
-                <SearchIcon />
-              </SearchIconWrapper>
-              <StyledInputBase
-                placeholder="Search…"
-                inputProps={{ "aria-label": "search" }}
+            {/* Custom Search Bar */}
+            <div className="search-bar ms-auto me-auto">
+              <input
+                type="text"
+                placeholder="Tìm kiếm bài học, giảng viên, lớp học..."
               />
-            </Search>
+            </div>
 
-            <Nav className="ms-auto">
+            <Nav className="header-actions">
+              <span className="notification-icon">🔔</span>
               {!user ? (
-                <>
-                  <button
-                    className="btn-login me-2"
-                    onClick={() => {
-                      handleAuthClick();
-                      setActiveTab("login");
-                      resetRegisterForm();
-                    }}
-                  >
-                    Login
-                  </button>
-                  <button
-                    className="btn-signup"
-                    onClick={() => {
-                      handleAuthClick();
-                      setActiveTab("register");
-                      resetLoginForm();
-                    }}
-                  >
-                    Sign Up
-                  </button>
-                </>
+                <div>
+                <Button
+                  className="login-btn"
+                  onClick={() => {
+                    handleAuthClick();
+                    setActiveTab("login");
+                    resetRegisterForm(); 
+                  }}
+                >
+                  Đăng nhập
+                </Button>
+                <Button
+                  className="login-btn"
+                  onClick={() => {
+                    handleAuthClick();
+                    setActiveTab("register");
+                    resetRegisterForm(); 
+                  }}
+                >
+                  Đăng kí
+                </Button>
+              </div>
               ) : (
+                // User dropdown
                 <Dropdown align="end">
                   <Dropdown.Toggle
-                    variant="light"
+                    variant="link" // Use link variant for custom styling
                     id="dropdown-user"
-                    className="d-flex align-items-center"
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      padding: 0,
-                    }}
+                    className="user-dropdown-toggle d-flex align-items-center"
                   >
                     <img
-                      src={user.avatar || "/default-avatar.png"}
+                      src={user.avatar || "/default-avatar.png"} // Sử dụng ảnh avatar nếu có
                       alt="avatar"
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "50%",
-                        marginRight: "8px",
-                      }}
+                      className="user-avatar"
                     />
-                    <span>{user.name || user.email}</span>
+                    <span className="user-name">
+                      {user.name || user.email || "Người dùng"}
+                    </span>
                   </Dropdown.Toggle>
 
                   <Dropdown.Menu>
                     <Dropdown.Item onClick={() => navigate("/profile")}>
-                      View Profile
+                      Xem Hồ sơ
                     </Dropdown.Item>
-                    <Dropdown.Item onClick={() => navigate("/profile")}>
-                      Settings
+                    <Dropdown.Item onClick={() => navigate("/settings")}>
+                      Cài đặt
                     </Dropdown.Item>
                     <Dropdown.Divider />
-                    <Dropdown.Item
-                      className="text-danger"
-                      onClick={handleLogout}
-                    >
-                      Logout
+                    <Dropdown.Item className="text-danger" onClick={handleLogout}>
+                      Đăng xuất
                     </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
@@ -311,7 +265,7 @@ const Header = () => {
         </Container>
       </Navbar>
 
-      {/* Modal */}
+      {/* Auth Modal */}
       <Modal
         show={showAuthModal}
         onHide={() => setShowAuthModal(false)}
@@ -329,16 +283,24 @@ const Header = () => {
 
           <div className="auth-tabs-nav mb-3">
             <button
-              className={`tab-nav-btn ${activeTab === "login" ? "active" : ""
-                }`}
-              onClick={() => setActiveTab("login")}
+              className={`tab-nav-btn ${
+                activeTab === "login" ? "active" : ""
+              }`}
+              onClick={() => {
+                setActiveTab("login");
+                resetRegisterForm(); // Reset register form when switching to login
+              }}
             >
               Đăng nhập
             </button>
             <button
-              className={`tab-nav-btn ${activeTab === "register" ? "active" : ""
-                }`}
-              onClick={() => setActiveTab("register")}
+              className={`tab-nav-btn ${
+                activeTab === "register" ? "active" : ""
+              }`}
+              onClick={() => {
+                setActiveTab("register");
+                resetLoginForm(); // Reset login form when switching to register
+              }}
             >
               Đăng ký
             </button>
@@ -371,10 +333,7 @@ const Header = () => {
                 </Form.Group>
 
                 <div className="mb-2 text-end">
-                  <a
-                    href="/forgotpassword"
-                    className="text-muted small"
-                  >
+                  <a href="/forgotpassword" className="text-muted small">
                     Quên mật khẩu?
                   </a>
                 </div>
@@ -425,21 +384,20 @@ const Header = () => {
                 )}
               </Form>
             ) : (
+              // REGISTER FORM
               <Form onSubmit={handleRegisterSubmit}>
                 <Form.Group className="mb-2">
-                  <div className="flex-grow-1">
-                    <Form.Label className="small mb-1">Email</Form.Label>
-                    <Form.Control
-                      type="email"
-                      value={registerEmail}
-                      onChange={(e) => setRegisterEmail(e.target.value)}
-                      required
-                      size="sm"
-                    />
-                  </div>
+                  <Form.Label className="small mb-1">Email</Form.Label>
+                  <Form.Control
+                    type="email"
+                    value={registerEmail}
+                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    required
+                    size="sm"
+                  />
                 </Form.Group>
 
-                <Form.Group className="mb-2 d-flex align-items-center justify-content-between gap-2">
+                <Form.Group className="mb-2 d-flex align-items-center gap-2">
                   <div className="flex-grow-1">
                     <Form.Label className="small mb-1">Mã Xác Nhận</Form.Label>
                     <Form.Control
@@ -461,12 +419,11 @@ const Header = () => {
                     >
                       Gửi mã xác nhận
                     </Button>
-                    {otpMessage && <div className="text-success small">{otpMessage}</div>}
-                    {otpError && <div className="text-danger small">{otpError}</div>}
                   </div>
                 </Form.Group>
+                {otpMessage && <div className="text-success small mb-2">{otpMessage}</div>}
+                {otpError && <div className="text-danger small mb-2">{otpError}</div>}
 
-                {/* Username */}
                 <Form.Group className="mb-2">
                   <Form.Label className="small mb-1">Username</Form.Label>
                   <Form.Control
@@ -496,7 +453,9 @@ const Header = () => {
                   <Form.Control
                     type="password"
                     value={registerConfirmPassword}
-                    onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                    onChange={(e) =>
+                      setRegisterConfirmPassword(e.target.value)
+                    }
                     required
                     size="sm"
                   />

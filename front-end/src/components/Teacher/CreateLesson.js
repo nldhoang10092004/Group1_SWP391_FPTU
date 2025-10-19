@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./createLesson.scss"; 
 import axios from "axios";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSave, faTimes, faUpload, faFilePdf, faVideo, faLightbulb, faBookOpen } from '@fortawesome/free-solid-svg-icons';
 
 
 const CreateLesson = () => {
@@ -11,7 +13,7 @@ const CreateLesson = () => {
 
   const [lessonData, setLessonData] = useState({
     title: "",
-    course: "",
+    course: "", // You might want to populate this from an API call
     duration: "",
     type: "Video",
     description: "",
@@ -30,38 +32,46 @@ const CreateLesson = () => {
   };
 
   const handleSave = async () => {
-  try {
-    const formData = new FormData();
-    for (const key in lessonData) {
-      formData.append(key, lessonData[key]);
+    // Basic validation
+    if (!lessonData.title || !lessonData.course || !lessonData.duration) {
+      alert("Vui lòng điền đầy đủ các trường bắt buộc (có dấu *)!");
+      return;
     }
 
-    const response = await axios.post("http://localhost:5293/api/lessons", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    try {
+      const formData = new FormData();
+      for (const key in lessonData) {
+        formData.append(key, lessonData[key]);
+      }
 
-    alert("Lưu bài học thành công!");
-    navigate("/dashboard");
-  } catch (error) {
-    console.error("Lỗi khi lưu bài học:", error);
-    alert("Không thể lưu bài học!");
-  }
-};
+      // Placeholder for your actual API endpoint
+      // You might need to adjust this based on your backend
+      const response = await axios.post("http://localhost:5293/api/lessons", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      alert("Lưu bài học thành công!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Lỗi khi lưu bài học:", error);
+      alert("Không thể lưu bài học!");
+    }
+  };
 
   return (
     <Container fluid className="p-4 create-lesson-container">
       {/* Header */}
-      <Row className="mb-4">
-        <Col>
+      <Row className="mb-4 d-flex justify-content-between align-items-center">
+        <Col className="header-content">
           <h3><strong>Tạo bài học mới</strong></h3>
           <p>Tạo nội dung học tập cho học viên của bạn</p>
         </Col>
-        <Col className="text-end">
-          <Button variant="outline-dark" className="me-2" onClick={() => navigate("/dashboard")}>
-            Hủy
+        <Col className="text-end header-buttons">
+          <Button variant="outline-primary" className="me-2" onClick={() => navigate("/dashboard")}>
+            <FontAwesomeIcon icon={faTimes} className="me-1" /> Hủy
           </Button>
-          <Button variant="dark" onClick={handleSave}>
-            Lưu bài học
+          <Button variant="primary" onClick={handleSave}>
+            <FontAwesomeIcon icon={faSave} className="me-1" /> Lưu bài học
           </Button>
         </Col>
       </Row>
@@ -75,39 +85,44 @@ const CreateLesson = () => {
 
             <Form>
               <Form.Group className="mb-3">
-                <Form.Label>Tiêu đề bài học *</Form.Label>
+                <Form.Label>Tiêu đề bài học <span className="text-danger">*</span></Form.Label>
                 <Form.Control
                   type="text"
                   placeholder="Ví dụ: Basic Greetings"
                   name="title"
                   value={lessonData.title}
                   onChange={handleChange}
+                  required
                 />
               </Form.Group>
 
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Khóa học *</Form.Label>
+                    <Form.Label>Khóa học <span className="text-danger">*</span></Form.Label>
                     <Form.Select
                       name="course"
                       value={lessonData.course}
                       onChange={handleChange}
+                      required
                     >
                       <option value="">Chọn khóa học</option>
-                      <option value="English Foundation">English Foundation</option>
-                      <option value="Pre-Intermediate English">Pre-Intermediate English</option>
+                      {/* Replace with dynamic course loading from API */}
+                      <option value="English Foundation">IELTS Nền Tảng</option>
+                      <option value="Pre-Intermediate English">IELTS Cơ Bản</option>
+                      <option value="Advanced English">IELTS Nâng Cao</option>
                     </Form.Select>
                   </Form.Group>
                 </Col>
 
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Loại bài học *</Form.Label>
+                    <Form.Label>Loại bài học <span className="text-danger">*</span></Form.Label>
                     <Form.Select
                       name="type"
                       value={lessonData.type}
                       onChange={handleChange}
+                      required
                     >
                       <option value="Video">Video</option>
                       <option value="Tương tác">Tương tác</option>
@@ -120,13 +135,14 @@ const CreateLesson = () => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Thời lượng *</Form.Label>
+                    <Form.Label>Thời lượng <span className="text-danger">*</span></Form.Label>
                     <Form.Control
                       type="text"
                       placeholder="Ví dụ: 15 min"
                       name="duration"
                       value={lessonData.duration}
                       onChange={handleChange}
+                      required
                     />
                   </Form.Group>
                 </Col>
@@ -148,10 +164,10 @@ const CreateLesson = () => {
 
           {/* Video */}
           <Card className="p-4 mb-3">
-            <h5>📹 Video bài học</h5>
+            <h5><FontAwesomeIcon icon={faVideo} className="me-2" /> Video bài học</h5>
             <p className="text-muted">Tải lên video hoặc nhập URL video cho bài học</p>
 
-            <Row className="mb-3">
+            <Row className="mb-3 video-input-row">
               <Col md={8}>
                 <Form.Control
                   type="text"
@@ -162,7 +178,9 @@ const CreateLesson = () => {
                 />
               </Col>
               <Col md={4}>
-                <Button variant="outline-dark" className="w-100">Lưu URL</Button>
+                <Button variant="outline-primary" className="w-100">
+                    <FontAwesomeIcon icon={faUpload} className="me-1" /> Lưu URL
+                </Button>
               </Col>
             </Row>
 
@@ -173,7 +191,7 @@ const CreateLesson = () => {
 
           {/* Tài liệu */}
           <Card className="p-4 mb-3">
-            <h5>📑 Tài liệu học tập</h5>
+            <h5><FontAwesomeIcon icon={faFilePdf} className="me-2" /> Tài liệu học tập</h5>
             <p className="text-muted">Thêm tài liệu bổ sung cho bài học (PDF, Word, PowerPoint, etc.)</p>
             <Form.Control type="file" name="material" onChange={handleChange} />
           </Card>
@@ -182,7 +200,7 @@ const CreateLesson = () => {
         {/* Sidebar bên phải */}
         <Col md={4}>
           <Card className="p-4 mb-3">
-            <h6>🖼️ Hình đại diện</h6>
+            <h6><FontAwesomeIcon icon={faBookOpen} className="me-2" /> Hình đại diện</h6>
             <Form.Control type="file" name="thumbnail" onChange={handleChange} />
             <Form.Text className="text-muted">
               Khuyến nghị: 16:9, tối thiểu 1280x720px
@@ -190,7 +208,7 @@ const CreateLesson = () => {
           </Card>
 
           <Card className="p-4">
-            <h6>💡 Gợi ý</h6>
+            <h6><FontAwesomeIcon icon={faLightbulb} className="me-2" /> Gợi ý</h6>
             <ul>
               <li>Tiêu đề ngắn gọn và mô tả rõ nội dung</li>
               <li>Video nên có chất lượng HD (720p+)</li>

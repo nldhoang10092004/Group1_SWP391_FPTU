@@ -1,0 +1,130 @@
+.main-footer {
+  background-color: #1a202c; // Dark background for footer
+  color: #a0aec0; // Light gray text
+  padding: 60px 0 20px;
+  font-size: 0.95rem;
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+
+    .footer-logo-icon {
+      font-size: 2rem;
+      margin-right: 10px;
+      color: #4f46e5; // Primary color for icon
+    }
+  }
+
+  .footer-description {
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    max-width: 300px; // Limit width for better readability
+  }
+
+  .social-icons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+
+    .social-icon {
+      color: #a0aec0;
+      font-size: 1.2rem;
+      transition: color 0.3s ease;
+      &:hover {
+        color: white;
+      }
+    }
+  }
+
+  .footer-heading {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1.5rem;
+  }
+
+  .footer-links,
+  .footer-contact-info {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      margin-bottom: 10px;
+      a {
+        color: #a0aec0;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        &:hover {
+          color: white;
+        }
+      }
+      .icon {
+        margin-right: 10px;
+        color: #4f46e5; // Icon color
+      }
+    }
+  }
+
+  .footer-contact-info {
+    li {
+      display: flex;
+      align-items: flex-start; // Align icon and text
+    }
+  }
+
+  .footer-bottom {
+    border-top: 1px solid #2d3748; // Darker border
+    margin-top: 40px;
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    .copyright {
+      margin: 0;
+      color: #a0aec0;
+    }
+
+    .footer-legal-links {
+      display: flex;
+      gap: 20px;
+
+      a {
+        color: #a0aec0;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        &:hover {
+          color: white;
+        }
+      }
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      text-align: center;
+      .footer-legal-links {
+        margin-top: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  }
+
+  @media (max-width: 992px) {
+    .footer-brand,
+    .footer-description,
+    .social-icons {
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+      justify-content: center; 
+    }
+  }
+}
