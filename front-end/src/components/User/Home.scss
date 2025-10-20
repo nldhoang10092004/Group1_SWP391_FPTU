@@ -1,0 +1,783 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+// --- Design System Variables ---
+// Colors
+$bg-white: #ffffff;
+$bg-gradient-light: linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0);
+$text-gray-900: #1a202c;
+$text-gray-600: #4a5568;
+$text-gray-500: #718096;
+$primary-gradient: linear-gradient(to right, #4f46e5, #8b5cf6); // Indigo-600 to Purple-600
+$accent-gradient: linear-gradient(to right, #f97316, #ef4444); // Orange-500 to Red-600
+$success-gradient: linear-gradient(to right, #10b981, #059669); // Green-500 to Emerald-600
+
+// Typography
+$font-family-base: 'Inter', sans-serif;
+$font-bold: 700;
+$font-medium: 500;
+
+// Effects
+$glass-morphism-bg: rgba(255, 255, 255, 0.3);
+$glass-morphism-border: rgba(255, 255, 255, 0.18);
+$backdrop-blur: 10px;
+$transition-duration: 0.3s;
+$border-radius-lg: 1rem; // rounded-2xl
+$border-radius-md: 0.75rem; // rounded-xl
+
+
+.home-page {
+  background: $bg-gradient-light;
+  min-height: 100vh;
+  font-family: $font-family-base;
+
+  // Loading State
+  .loading {
+    padding: 4rem 0;
+    
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      border-width: 0.3em;
+    }
+    
+    p {
+      color: $text-gray-600;
+      font-weight: $font-medium;
+    }
+  }
+
+  // Welcome Section
+  .welcome-section {
+    padding: 2rem 0 1rem;
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: $font-bold;
+      color: $text-gray-900;
+      margin-bottom: 2rem;
+      background: $primary-gradient;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stats-row {
+      margin: 0 -0.75rem;
+    }
+
+    .stat-card {
+      background: $glass-morphism-bg;
+      backdrop-filter: blur($backdrop-blur);
+      border: 1px solid $glass-morphism-border;
+      border-radius: $border-radius-lg;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      transition: all $transition-duration ease;
+      text-align: center;
+      height: 100%;
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-body {
+        padding: 1.5rem 1rem;
+      }
+
+      h3 {
+        font-size: 2rem;
+        font-weight: $font-bold;
+        color: $text-gray-900;
+        margin: 0.5rem 0;
+      }
+
+      p {
+        color: $text-gray-600;
+        font-weight: $font-medium;
+        margin: 0;
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  // Tab Navigation
+  .lessons-nav {
+    margin-bottom: 2rem;
+  }
+
+  .tab-navigation {
+    display: flex;
+    background: $glass-morphism-bg;
+    backdrop-filter: blur($backdrop-blur);
+    border: 1px solid $glass-morphism-border;
+    border-radius: $border-radius-lg;
+    padding: 0.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+    .tab-item {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: transparent;
+      color: $text-gray-600;
+      font-weight: $font-medium;
+      border-radius: $border-radius-md;
+      transition: all $transition-duration ease;
+      cursor: pointer;
+      font-family: $font-family-base;
+
+      &.active {
+        background: $primary-gradient;
+        color: $bg-white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      &:not(.active):hover {
+        color: $text-gray-900;
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+  // Your Lessons Section
+  .your-lessons-section {
+    background: $glass-morphism-bg;
+    backdrop-filter: blur($backdrop-blur);
+    border: 1px solid $glass-morphism-border;
+    border-radius: $border-radius-lg;
+    padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: $font-bold;
+      color: $text-gray-900;
+      margin-bottom: 1.5rem;
+    }
+
+    .membership-lessons {
+      .badge {
+        font-weight: $font-medium;
+        font-size: 0.75rem;
+      }
+
+      .text-muted {
+        font-size: 0.85rem;
+        color: $text-gray-500 !important;
+      }
+
+      .quick-stats {
+        .stat-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 0.75rem;
+          font-size: 0.9rem;
+          color: $text-gray-600;
+          font-weight: $font-medium;
+
+          strong {
+            color: $text-gray-900;
+            margin: 0 0.25rem;
+          }
+        }
+      }
+    }
+
+    .non-membership-lessons {
+      text-align: center;
+      padding: 1rem 0;
+
+      .btn {
+        border-radius: $border-radius-md;
+        font-weight: $font-medium;
+      }
+    }
+  }
+
+  // Level Section Box
+  .level-section-box {
+    background: $bg-white;
+    border-radius: $border-radius-lg;
+    padding: 2rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    margin-bottom: 4rem;
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: $font-bold;
+      color: $text-gray-900;
+      margin-bottom: 0.5rem;
+    }
+
+    .current-level {
+      color: $text-gray-600;
+      font-weight: $font-medium;
+      margin-bottom: 1.5rem;
+    }
+
+    .level-options {
+      margin: 0 -0.75rem;
+    }
+
+    .level-card {
+      background: $bg-gradient-light;
+      border: 2px solid transparent;
+      border-radius: $border-radius-md;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all $transition-duration ease;
+      height: 100%;
+
+      &.active {
+        border-color: rgba(79, 70, 229, 0.5);
+        background: rgba(79, 70, 229, 0.05);
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1);
+      }
+
+      &:hover:not(.active) {
+        border-color: $glass-morphism-border;
+        transform: translateY(-2px);
+      }
+
+      .level-radio {
+        display: none;
+      }
+
+      .level-label {
+        cursor: pointer;
+        margin: 0;
+
+        .level-name {
+          display: block;
+          font-weight: $font-bold;
+          color: $text-gray-900;
+          margin-bottom: 0.5rem;
+          font-size: 1rem;
+        }
+
+        .level-description {
+          font-size: 0.85rem;
+          color: $text-gray-600;
+          line-height: 1.4;
+        }
+      }
+    }
+
+    .divider {
+      height: 1px;
+      background: $glass-morphism-border;
+      margin: 2rem 0;
+    }
+
+    // Lessons Grid
+    .lessons-grid {
+      h5 {
+        font-weight: $font-bold;
+        color: $text-gray-900;
+        margin-bottom: 1.5rem;
+      }
+
+      .lesson-card {
+        background: $glass-morphism-bg;
+        backdrop-filter: blur($backdrop-blur);
+        border: 1px solid $glass-morphism-border;
+        border-radius: $border-radius-md;
+        padding: 1.25rem;
+        transition: all $transition-duration ease;
+        height: 100%;
+
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .lesson-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 0.75rem;
+
+          h6 {
+            font-weight: $font-bold;
+            color: $text-gray-900;
+            margin: 0;
+            flex: 1;
+            margin-right: 1rem;
+          }
+
+          .badge {
+            font-weight: $font-medium;
+            font-size: 0.7rem;
+          }
+        }
+
+        .lesson-description {
+          color: $text-gray-600;
+          font-size: 0.9rem;
+          margin-bottom: 1rem;
+          line-height: 1.4;
+        }
+
+        .lesson-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.85rem;
+          color: $text-gray-500;
+          margin-bottom: 1rem;
+
+          .duration {
+            font-weight: $font-medium;
+          }
+
+          .progress-section {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+
+            .lesson-progress {
+              width: 60px;
+              height: 6px;
+              
+              .progress-bar {
+                background: $primary-gradient;
+              }
+            }
+
+            span {
+              font-size: 0.8rem;
+              font-weight: $font-medium;
+              color: $text-gray-600;
+            }
+          }
+
+          .rating {
+            font-weight: $font-medium;
+            color: $text-gray-600;
+          }
+        }
+
+        .btn {
+          border-radius: $border-radius-md;
+          font-weight: $font-medium;
+          font-size: 0.85rem;
+          transition: all $transition-duration ease;
+
+          &:hover {
+            transform: translateY(-1px);
+          }
+        }
+      }
+
+      .no-lessons {
+        padding: 3rem 1rem;
+        
+        .btn {
+          border-radius: $border-radius-md;
+          font-weight: $font-medium;
+        }
+      }
+    }
+
+    // Membership Required Section
+    .membership-required-section {
+      text-align: center;
+      padding: 2rem;
+
+      .membership-message {
+        h5 {
+          font-weight: $font-bold;
+          color: $text-gray-900;
+          margin-bottom: 1rem;
+        }
+
+        p {
+          color: $text-gray-600;
+          margin-bottom: 2rem;
+        }
+
+        .membership-benefits {
+          text-align: left;
+          background: $glass-morphism-bg;
+          backdrop-filter: blur($backdrop-blur);
+          border: 1px solid $glass-morphism-border;
+          border-radius: $border-radius-md;
+          padding: 1.5rem;
+
+          h6 {
+            font-weight: $font-bold;
+            color: $text-gray-900;
+            margin-bottom: 1rem;
+          }
+
+          ul {
+            padding-left: 1rem;
+            margin: 0;
+
+            li {
+              color: $text-gray-600;
+              margin-bottom: 0.5rem;
+              font-weight: $font-medium;
+            }
+          }
+        }
+
+        .btn {
+          border-radius: $border-radius-lg;
+          font-weight: $font-bold;
+          padding: 0.75rem 2rem;
+          background: $primary-gradient;
+          border: none;
+          transition: all $transition-duration ease;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+          }
+        }
+      }
+    }
+  }
+
+  // Course List
+  .course-list {
+    .card {
+      background: $glass-morphism-bg;
+      backdrop-filter: blur($backdrop-blur);
+      border: 1px solid $glass-morphism-border;
+      border-radius: $border-radius-lg;
+      transition: all $transition-duration ease;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-body {
+        padding: 1.5rem;
+
+        h5 {
+          font-weight: $font-bold;
+          color: $text-gray-900;
+          margin-bottom: 0.75rem;
+        }
+
+        .badge {
+          font-weight: $font-medium;
+        }
+
+        p {
+          color: $text-gray-600;
+          margin-bottom: 1rem;
+          font-size: 0.9rem;
+        }
+
+        .btn {
+          border-radius: $border-radius-md;
+          font-weight: $font-medium;
+        }
+      }
+    }
+  }
+
+  // Practice Section
+  .practice-section {
+    h4 {
+      font-weight: $font-bold;
+      color: $text-gray-900;
+      margin-bottom: 2rem;
+    }
+
+    .skill-card {
+      background: $glass-morphism-bg;
+      backdrop-filter: blur($backdrop-blur);
+      border: 1px solid $glass-morphism-border;
+      border-radius: $border-radius-lg;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      transition: all $transition-duration ease;
+      height: 100%;
+
+      &:not(.skill-locked):hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      }
+
+      &.skill-locked {
+        opacity: 0.7;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .skill-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      h6 {
+        font-weight: $font-bold;
+        color: $text-gray-900;
+        margin-bottom: 1rem;
+      }
+
+      .badge {
+        font-weight: $font-medium;
+        margin-bottom: 1rem;
+      }
+
+      .btn {
+        border-radius: $border-radius-md;
+        font-weight: $font-medium;
+        transition: all $transition-duration ease;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+        }
+      }
+    }
+  }
+
+  // Stats Section
+  .stats-section {
+    .stat-card {
+      background: $glass-morphism-bg;
+      backdrop-filter: blur($backdrop-blur);
+      border: 1px solid $glass-morphism-border;
+      border-radius: $border-radius-lg;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      transition: all $transition-duration ease;
+      height: 100%;
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-body {
+        padding: 1.5rem;
+        text-align: center;
+
+        h5 {
+          font-weight: $font-bold;
+          color: $text-gray-900;
+          margin-bottom: 1rem;
+          font-size: 1rem;
+        }
+
+        .stat-item {
+          margin-bottom: 0.5rem;
+
+          strong {
+            font-size: 1.5rem;
+            font-weight: $font-bold;
+            color: $text-gray-900;
+            display: block;
+          }
+
+          span {
+            color: $text-gray-600;
+            font-weight: $font-medium;
+            font-size: 0.9rem;
+          }
+        }
+      }
+    }
+
+    .card {
+      background: $glass-morphism-bg;
+      backdrop-filter: blur($backdrop-blur);
+      border: 1px solid $glass-morphism-border;
+      border-radius: $border-radius-lg;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+
+      .card-body {
+        padding: 1.5rem;
+
+        h5 {
+          font-weight: $font-bold;
+          color: $text-gray-900;
+          margin-bottom: 0.5rem;
+        }
+
+        .achievement-item {
+          padding: 0.75rem;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: $border-radius-md;
+          border-left: 3px solid $primary-gradient;
+
+          h6 {
+            font-weight: $font-bold;
+            color: $text-gray-900;
+            margin-bottom: 0.25rem;
+          }
+
+          .achievement-time {
+            font-size: 0.8rem;
+          }
+        }
+
+        .weekly-goal-item {
+          margin-bottom: 1.5rem;
+
+          .custom-progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            
+            .progress-bar {
+              background: $primary-gradient;
+            }
+          }
+
+          p {
+            font-size: 0.9rem;
+            font-weight: $font-medium;
+          }
+        }
+      }
+    }
+  }
+
+  // Badge Styles
+  .badge {
+    font-weight: $font-medium;
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+
+    &.bg-success {
+      background: $success-gradient !important;
+    }
+
+    &.bg-primary {
+      background: $primary-gradient !important;
+    }
+
+    &.bg-warning {
+      background: linear-gradient(to right, #f59e0b, #d97706) !important;
+    }
+
+    &.bg-danger {
+      background: $accent-gradient !important;
+    }
+
+    &.bg-info {
+      background: linear-gradient(to right, #0ea5e9, #0284c7) !important;
+    }
+  }
+
+  // Button Styles
+  .btn {
+    font-weight: $font-medium;
+    transition: all $transition-duration ease;
+
+    &.btn-primary {
+      background: $primary-gradient;
+      border: none;
+
+      &:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    &.btn-outline-primary {
+      border: 2px solid rgba(79, 70, 229, 0.5);
+      color: #4f46e5;
+      background: transparent;
+
+      &:hover {
+        background: $primary-gradient;
+        color: $bg-white;
+        border-color: transparent;
+        transform: translateY(-2px);
+      }
+    }
+
+    &.btn-dark {
+      background: $text-gray-900;
+      border: none;
+
+      &:hover {
+        background: lighten($text-gray-900, 10%);
+        transform: translateY(-2px);
+      }
+    }
+
+    &.btn-outline-dark {
+      border: 2px solid $text-gray-500;
+      color: $text-gray-600;
+
+      &:hover {
+        background: $primary-gradient;
+        color: $bg-white;
+        border-color: transparent;
+      }
+    }
+  }
+
+  // Progress Bar
+  .progress {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    
+    .progress-bar {
+      border-radius: 10px;
+    }
+  }
+
+  // Responsive Design
+  @media (max-width: 768px) {
+    .welcome-section {
+      padding: 1.5rem 0 0.5rem;
+      
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+      }
+    }
+
+    .tab-navigation {
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .tab-item {
+        text-align: center;
+      }
+    }
+
+    .your-lessons-section {
+      position: static;
+      margin-bottom: 2rem;
+    }
+
+    .level-section-box {
+      padding: 1.5rem;
+
+    }
+
+    .stat-card .card-body {
+      padding: 1rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .welcome-section h1 {
+      font-size: 1.75rem;
+    }
+
+    .level-card {
+      padding: 0.75rem;
+    }
+
+    .lesson-card {
+      padding: 1rem;
+    }
+
+    .membership-message {
+      padding: 1rem !important;
+    }
+  }
+}

@@ -1,0 +1,278 @@
+// EditCourse.scss
+.edit-course-page {
+  .back-button {
+    color: #666;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      color: #333;
+      text-decoration: none;
+    }
+  }
+
+  .card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+
+    .card-header {
+      background: white;
+      border-bottom: 1px solid #e9ecef;
+      padding: 1rem 1.5rem;
+
+      h5 {
+        margin: 0;
+        font-weight: 600;
+      }
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+  }
+
+  .course-stats {
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+
+      span {
+        color: #666;
+      }
+
+      strong {
+        color: #333;
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  .accordion {
+    .accordion-item {
+      border: 1px solid #dee2e6;
+      border-radius: 8px !important;
+      margin-bottom: 1rem;
+      overflow: hidden;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .accordion-button {
+      background: white;
+      color: #333;
+      font-weight: 500;
+      padding: 1rem 1.5rem;
+
+      &:not(.collapsed) {
+        background: #f8f9fa;
+        color: #667eea;
+        box-shadow: none;
+      }
+
+      &:focus {
+        box-shadow: none;
+        border-color: transparent;
+      }
+
+      .chapter-header-content {
+        width: 100%;
+        margin-right: 1rem;
+
+        strong {
+          font-size: 1rem;
+        }
+
+        small {
+          font-size: 0.875rem;
+        }
+      }
+    }
+
+    .accordion-body {
+      padding: 1.5rem;
+      background: #fafbfc;
+    }
+  }
+
+  .video-list {
+    .video-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 0.75rem;
+      border: 1px solid #e9ecef;
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        border-color: #667eea;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .video-name {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+      }
+
+      .video-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .video-actions {
+        display: flex;
+        gap: 0.5rem;
+
+        button {
+          padding: 0.25rem 0.5rem;
+          font-size: 1rem;
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: none;
+          }
+        }
+      }
+    }
+  }
+
+  // Modal customization
+  .modal {
+    .modal-header {
+      border-bottom: 1px solid #e9ecef;
+
+      .modal-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+      }
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      border-top: 1px solid #e9ecef;
+      padding: 1rem 1.5rem;
+    }
+  }
+
+  // Form styling
+  .form-label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+
+    &:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+  }
+
+  // Badge customization
+  .badge {
+    padding: 0.35rem 0.65rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+  }
+
+  // Button customization
+  .btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+
+    &-primary {
+      background: #667eea;
+      border-color: #667eea;
+
+      &:hover {
+        background: #5568d3;
+        border-color: #5568d3;
+      }
+    }
+
+    &-outline-primary {
+      color: #667eea;
+      border-color: #667eea;
+
+      &:hover {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+      }
+    }
+
+    &-link {
+      color: #667eea;
+      text-decoration: none;
+
+      &:hover {
+        color: #5568d3;
+      }
+
+      &.text-danger {
+        color: #dc3545 !important;
+
+        &:hover {
+          color: #c82333 !important;
+        }
+      }
+    }
+  }
+
+  // Responsive
+  @media (max-width: 991px) {
+    .card {
+      margin-bottom: 1.5rem;
+    }
+
+    .accordion {
+      .accordion-button {
+        .chapter-header-content {
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 576px) {
+    .card-body {
+      padding: 1rem;
+    }
+
+    .video-list {
+      .video-item {
+        padding: 0.75rem;
+
+        .video-name {
+          font-size: 0.9rem;
+        }
+
+        .video-actions {
+          flex-direction: column;
+
+          button {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}
