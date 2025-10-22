@@ -43,7 +43,6 @@ $border-radius-md: 0.75rem; // rounded-xl
       font-weight: $font-bold;
       color: $text-gray-900;
       background: $primary-gradient;
-      -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin: 0;
       font-size: 2rem;
@@ -115,7 +114,6 @@ $border-radius-md: 0.75rem; // rounded-xl
 
       span:last-child {
         background: $primary-gradient;
-        -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: $font-bold;
       }

@@ -347,8 +347,6 @@ h1, h2, h3, h4, h5, h6 {
 
     .highlight-text {
       background: $primary-gradient; // Gradient text for "không giới hạn"
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
       display: inline-block; // Ensure gradient applies correctly
       text-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
     }
@@ -415,7 +413,6 @@ h1, h2, h3, h4, h5, h6 {
       display: block;
       margin-bottom: 0.3rem;
       background: $primary-gradient;
-      -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
     }
@@ -461,8 +458,7 @@ h1, h2, h3, h4, h5, h6 {
       .feature-icon {
         font-size: 2.5rem;
         margin-bottom: 1rem;
-        background: $primary-gradient; // Example, can be more dynamic
-        -webkit-background-clip: text;
+        background: $primary-gradient; 
         -webkit-text-fill-color: transparent;
         text-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
       }
@@ -546,8 +542,7 @@ h1, h2, h3, h4, h5, h6 {
       font-size: 2.5rem;
       display: block;
       margin-bottom: 1rem;
-      background: $accent-gradient; /* Accent gradient icon */
-      -webkit-background-clip: text;
+      background: $accent-gradient;
       -webkit-text-fill-color: transparent;
       text-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
     }
@@ -1042,7 +1037,6 @@ h1, h2, h3, h4, h5, h6 {
           &:hover {
             color: $primary-gradient;
             background: $primary-gradient;
-            -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
           }
         }

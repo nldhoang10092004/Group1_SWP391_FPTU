@@ -3,6 +3,10 @@ import { Container, Row, Col, Card, Button, Form, Modal, Alert } from "react-boo
 import { FaCog, FaLock, FaCamera, FaTrash, FaUpload, FaArrowLeft } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { getUser, updateUser, updateAvatar, changePassword } from "../../middleware/userAPI";
+import { Container, Row, Col, Card, Button, Form, Modal, Alert } from "react-bootstrap";
+import { FaCog, FaLock, FaCamera, FaTrash, FaUpload, FaArrowLeft } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import { getUser, updateUser, updateAvatar, changePassword } from "../../middleware/userAPI";
 import "./Profile.scss";
 
 const Profile = () => {
@@ -24,222 +28,68 @@ const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const userId = 123;
 
-  const token = localStorage.getItem("accessToken");
-  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  let backPath = "/home";
-
-  // Show toast notification
-  const showToast = (message, type = "info") => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: "", type: "" }), 5000);
-  };
-
-  // Fetch user data
   useEffect(() => {
-    if (!token) {
-      setError("Vui lòng đăng nhập để xem trang này");
-      setLoading(false);
-      setTimeout(() => navigate("/login"), 2000);
-      return;
-    }
-
-    let isMounted = true;
-    let avatarObjectUrl = null;
-
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        const data = await getUser(token);
-        
-        if (isMounted) {
-          const userEmail = data.email || storedUser?.email || storedUser?.username || "";
-          
-          setUser({
-            fullName: data.fullName || storedUser?.fullName || storedUser?.username || "",
-            email: userEmail,
-            bio: data.bio || "",
-            address: data.address || "",
-            dob: data.dob ? data.dob.split('T')[0] : "",
-            gender: data.gender || "",
-            phone: data.phone || "",
-          });
-        }
-
-        // Load avatar
-        try {
-          const res = await fetch(
-            `${process.env.REACT_APP_API_URL || "https://localhost:7010"}/api/user/profile/avatar`,
-            { 
-              headers: { Authorization: `Bearer ${token}` },
-              mode: 'cors'
-            }
-          );
-          
-          if (res.ok) {
-            const blob = await res.blob();
-            avatarObjectUrl = URL.createObjectURL(blob);
-            if (isMounted) setAvatarUrl(avatarObjectUrl);
-          }
-        } catch (avatarErr) {
-          console.warn("⚠️ Lỗi avatar:", avatarErr.message);
-        }
-
-        showToast("Tải dữ liệu thành công!", "success");
-
-      } catch (err) {
-        console.error("❌ Lỗi khi tải user:", err);
-        
-        if (err.response?.status === 401 || err.message === "Token hết hạn") {
-          setError("Phiên đăng nhập đã hết hạn. Đang chuyển về trang đăng nhập...");
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("user");
-          setTimeout(() => navigate("/login"), 2000);
-        } else if (err.code === "ERR_NETWORK") {
-          setError("Không thể kết nối tới server. Vui lòng kiểm tra kết nối mạng hoặc đảm bảo backend đang chạy.");
-        } else if (err.response?.status === 404) {
-          setError("Không tìm thấy thông tin người dùng.");
-        } else {
-          setError(`Không thể tải dữ liệu: ${err.response?.data?.message || err.message || "Lỗi không xác định"}`);
-        }
-        
-        showToast("Không thể tải dữ liệu người dùng", "error");
-      } finally {
-        if (isMounted) setLoading(false);
+        const userData = await getUser(userId);
+        setUser(userData);
+      } catch (error) {
+        console.error("Không thể tải dữ liệu người dùng");
       }
     };
+    fetchData();
+  }, []);
 
-    fetchUserData();
+  useEffect(() => { 
+    // Khi có backend thật: fetch("/api/user").then(res => res.json()).then(data => setUser(data)); 
+    setUser({ 
+      name: "Demo Student", 
+      email: "students@gmail.com", 
+      avatar: "/default-avatar.png", 
+      bio: "", 
+      address: "Hà Nội", 
+      birthday: "2000-01-01", 
+      phone: "0987654321" 
+    }); 
+  }, []);
 
-    return () => {
-      isMounted = false;
-      if (avatarObjectUrl) URL.revokeObjectURL(avatarObjectUrl);
-    };
-  }, [token, navigate]);
+  if (!user) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
-  // Handle file change
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast("File quá lớn! Vui lòng chọn ảnh dưới 5MB.", "warning");
-        return;
-      }
-
-      setSelectedFile(file);
-      if (previewImage) URL.revokeObjectURL(previewImage);
-      setPreviewImage(URL.createObjectURL(file));
-      showToast("Đã chọn ảnh mới", "success");
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => setSelectedImage(event.target.result);
+      reader.readAsDataURL(e.target.files[0]);
     }
   };
 
-  // Remove avatar preview
-  const handleRemoveAvatar = () => {
-    if (previewImage) URL.revokeObjectURL(previewImage);
-    setSelectedFile(null);
-    setPreviewImage(null);
-    showToast("Đã xóa ảnh đã chọn", "info");
-  };
-
-  // Update avatar
-  const handleUpdateAvatar = async () => {
-    if (!selectedFile) {
-      showToast("Vui lòng chọn ảnh!", "warning");
-      return;
-    }
-
-    try {
-      showToast("Đang upload avatar...", "info");
-
-      const response = await updateAvatar(selectedFile, token);
-
-      if (response && response.avatarUrl) {
-        const newAvatarUrl = response.avatarUrl;
-
-        localStorage.setItem("avatarUrl", newAvatarUrl);
-
-        const userData = JSON.parse(localStorage.getItem("user") || "{}");
-        userData.avatarUrl = newAvatarUrl;
-        localStorage.setItem("user", JSON.stringify(userData));
-
-        window.dispatchEvent(new Event("avatarUpdated"));
-
-        setAvatarUrl(newAvatarUrl);
-        setSelectedFile(null);
-        setPreviewImage(null);
-        setShowAvatarModal(false);
-
-        showToast("Cập nhật avatar thành công!", "success");
-      } else {
-        showToast("API không trả về avatarUrl, vui lòng kiểm tra server.", "error");
-      }
-    } catch (err) {
-      console.error("❌ Lỗi update avatar:", err);
-      showToast("Lỗi khi cập nhật avatar!", "error");
-    }
-  };
-
-  // Save profile
   const handleSaveProfile = async () => {
     try {
-      showToast("Đang lưu thông tin profile...", "info");
-      
-      const updatedUser = {
-        fullName: user.fullName,
-        phone: user.phone,
-        bio: user.bio,
-        dob: user.dob,
-        gender: user.gender,
-        address: user.address,
-      };
-      
-      await updateUser(updatedUser, token);
-      showToast("Cập nhật thông tin thành công!", "success");
-    } catch (err) {
-      console.error("❌ Lỗi update profile:", err);
-      const errorMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
-      showToast(`Lỗi khi cập nhật thông tin: ${errorMsg}`, "error");
+      const updatedUser = { ...user, avatar: selectedImage || user.avatar };
+      await updateUser(userId, updatedUser);
+      alert("Cập nhật thông tin thành công!");
+    } catch (error) {
+      alert("Lỗi khi cập nhật thông tin!");
     }
   };
 
-  // Change password
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      showToast("Vui lòng điền đầy đủ thông tin!", "warning");
-      return;
-    }
-
     if (newPassword !== confirmPassword) {
-      showToast("Mật khẩu xác nhận không khớp!", "warning");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      showToast("Mật khẩu mới phải có ít nhất 6 ký tự!", "warning");
+      alert("Mật khẩu xác nhận không khớp!");
       return;
     }
 
     try {
-      showToast("Đang đổi mật khẩu...", "info");
-      
-      await changePassword(currentPassword, newPassword, confirmPassword, token);
-      showToast("Đổi mật khẩu thành công!", "success");
-      
+      await changePassword(userId, currentPassword, newPassword);
+      alert("Đổi mật khẩu thành công!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (err) {
-      console.error("❌ Lỗi đổi mật khẩu:", err);
-      const errorMsg = err.response?.data?.message || "Mật khẩu hiện tại không đúng";
-      showToast(`Lỗi khi đổi mật khẩu: ${errorMsg}`, "error");
+    } catch (error) {
+      alert("Lỗi khi đổi mật khẩu!");
     }
   };
 
@@ -311,21 +161,12 @@ const Profile = () => {
       )}
 
       <Container className="profile-container py-4">
-        <div className="mb-3">
-          <Link to={backPath} className="back-link">
-            <FaArrowLeft className="me-2" /> Quay lại
-          </Link>
-        </div>
-
         <Row>
           <Col md={4}>
             <Card className="profile-card mb-4">
               <Card.Body className="text-center">
                 <div className="avatar-section mb-3">
-                  <div 
-                    className="avatar-wrapper" 
-                    onClick={() => setShowAvatarModal(true)}
-                  >
+                  <div className="avatar-wrapper">
                     <img
                       src={previewImage || avatarUrl}
                       alt="Avatar"
@@ -366,10 +207,10 @@ const Profile = () => {
 
                   <Form.Group className="mb-3">
                     <Form.Label><strong>Email</strong></Form.Label>
-                    <Form.Control 
-                      type="text" 
-                      value={user.email || ""} 
-                      disabled 
+                    <Form.Control
+                      type="text"
+                      value={user.email}
+                      onChange={(e) => setUser({ ...user, email: e.target.value })}
                     />
                   </Form.Group>
 
