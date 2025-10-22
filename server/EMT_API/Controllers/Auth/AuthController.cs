@@ -173,15 +173,34 @@ public class AuthController : ControllerBase
     // LOGIN
     // ---------------------------
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest req)
+    public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
+        // ✅ Validate input
+        if (string.IsNullOrWhiteSpace(req.EmailOrUsername) || string.IsNullOrWhiteSpace(req.Password))
+            return BadRequest("Vui lòng nhập đầy đủ email/username và mật khẩu.");
+
+        // ✅ Username / email format: chỉ a-z A-Z 0-9 _ - @, tối thiểu 8 ký tự
+        var userPattern = @"^[a-zA-Z0-9_\-@]{8,}$";
+        if (!System.Text.RegularExpressions.Regex.IsMatch(req.EmailOrUsername, userPattern))
+            return BadRequest("Tên đăng nhập/email không hợp lệ (chỉ gồm chữ, số, _, -, @ và tối thiểu 8 ký tự).");
+
+        // ✅ Password format: tối thiểu 8 ký tự, có ít nhất 1 chữ thường + 1 chữ hoa
+        var passPattern = @"^(?=.*[a-z])(?=.*[A-Z]).{8,}$";
+        if (!System.Text.RegularExpressions.Regex.IsMatch(req.Password, passPattern))
+            return BadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm ít nhất 1 chữ hoa và 1 chữ thường.");
+
+        // ✅ Tìm user theo username hoặc email
         var user = await _db.Accounts
             .FirstOrDefaultAsync(a => a.Email == req.EmailOrUsername || a.Username == req.EmailOrUsername);
-        if (user is null) return Unauthorized("Email/username không đúng.");
 
+        if (user is null)
+            return Unauthorized("Email/username không đúng.");
+
+        // ✅ Kiểm tra mật khẩu
         if (!PasswordHasher.Verify(req.Password, user.Hashpass))
             return Unauthorized("Mật khẩu không đúng.");
 
+        // ✅ Tạo access/refresh token
         var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
         var (rt, exp) = _tokens.CreateRefreshToken();
 
@@ -192,12 +211,25 @@ public class AuthController : ControllerBase
 
         SetRefreshCookie(rt, exp);
 
-        return Ok(new AuthResponse(
-            AccountID: user.AccountID,
-            AccessToken: access,
-            ExpiresIn: int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60
-        ));
+        // ✅ Xác định redirect URL theo Role
+        string redirectUrl = user.Role switch
+        {
+            "ADMIN" => "http://localhost:3000/admin/dashboard",
+            "TEACHER" => "http://localhost:3000/teacher/dashboard",
+            _ => "http://localhost:3000/home"
+        };
+
+        // ✅ Gửi response JSON cho FE
+        return Ok(new
+        {
+            AccountID = user.AccountID,
+            AccessToken = access,
+            ExpiresIn = int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60,
+            Role = user.Role,
+            RedirectUrl = redirectUrl
+        });
     }
+
 
     // ---------------------------
     // REFRESH TOKEN (xoay vòng)
