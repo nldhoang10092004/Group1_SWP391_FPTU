@@ -1,78 +1,112 @@
-import React from "react";
-import { Container, Row, Col } from "react-bootstrap";
-import "./Footer.scss"; // import file SCSS của bạn
-
+import React, { useState, useEffect } from "react";
+import { Container, Row, Col, Modal, Button } from "react-bootstrap";
+import "./Footer.scss";
+ 
 const Footer = () => {
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupContent, setPopupContent] = useState({
+    type: "info",
+    title: "Thông báo",
+    message: "Đây là nội dung popup ví dụ!",
+  });
+
+  const handleClosePopup = () => setShowPopup(false);
+
+  const getPopupHeaderClass = (type) => {
+    switch (type) {
+      case "success":
+        return "popup-header-success";
+      case "error":
+        return "popup-header-error";
+      default:
+        return "popup-header-info";
+    }
+  };
   return (
-    <footer className="main-footer">
-      <Container>
-        <Row>
-          <Col lg={4} md={6} className="mb-4 mb-lg-0">
-            <div className="footer-brand">
-              <span className="footer-logo-icon">📖</span> EnglishMaster
+    <>
+      <footer className="main-footer">
+        <Container>
+          <Row>
+            <Col lg={4} md={6} className="footer-logo-col">
+              <div className="footer-logo">
+                <span className="logo-icon">📚</span> EnglishMaster
+              </div>
+              <p>
+                Nền tảng học tiếng Anh với AI tiên tiến, giúp bạn chinh phục mọi
+                mục tiêu học tập một cách hiệu quả nhất.
+              </p>
+              <div className="social-icons">
+                <a href="#facebook"><i className="fab fa-facebook-f"></i></a>
+                <a href="#twitter"><i className="fab fa-twitter"></i></a>
+                <a href="#instagram"><i className="fab fa-instagram"></i></a>
+                <a href="#linkedin"><i className="fab fa-linkedin-in"></i></a>
+              </div>
+            </Col>
+
+            <Col lg={2} md={6} className="footer-links-col">
+              <h4>Liên kết nhanh</h4>
+              <ul>
+                <li><a href="#about">Về chúng tôi</a></li>
+                <li><a href="#courses">Khóa học</a></li>
+                <li><a href="#teachers">Giáo viên</a></li>
+                <li><a href="#blog">Blog</a></li>
+                <li><a href="#contact">Liên hệ</a></li>
+              </ul>
+            </Col>
+
+            <Col lg={3} md={6} className="footer-links-col">
+              <h4>Hỗ trợ</h4>
+              <ul>
+                <li><a href="#help-center">Trung tâm trợ giúp</a></li>
+                <li><a href="#terms">Điều khoản dịch vụ</a></li>
+                <li><a href="#policy">Chính sách bảo mật</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#payment">Thanh toán</a></li>
+              </ul>
+            </Col>
+
+            <Col lg={3} md={6} className="footer-contact-col">
+              <h4>Liên hệ</h4>
+              <address>
+                <p><span className="icon">📍</span> 123 Đường AI, Quận Học Tập, Thành phố Thông Minh</p>
+                <p><span className="icon">📞</span> +84 123 456 789</p>
+                <p><span className="icon">✉️</span> support@englishmaster.com</p>
+              </address>
+            </Col>
+          </Row>
+
+          <div className="footer-divider"></div>
+          <div className="footer-bottom">
+            <p>© 2025 EnglishMaster. All rights reserved.</p>
+            <div className="policy-links">
+              <a href="#privacy">Chính sách bảo mật</a> | 
+              <a href="#terms-of-service">Điều khoản dịch vụ</a> | 
+              <a href="#cookies">Cookies</a>
             </div>
-            <p className="footer-description">
-              Nền tảng học tiếng Anh thông minh với AI giúp bạn chinh phục tiếng Anh hiệu quả và
-              nhanh chóng.
-            </p>
-            <div className="social-icons">
-              <a href="#facebook" className="social-icon">
-                <i className="fab fa-facebook-f"></i>
-              </a>
-              <a href="#twitter" className="social-icon">
-                <i className="fab fa-twitter"></i>
-              </a>
-              <a href="#instagram" className="social-icon">
-                <i className="fab fa-instagram"></i>
-              </a>
-              <a href="#linkedin" className="social-icon">
-                <i className="fab fa-linkedin-in"></i>
-              </a>
-            </div>
-          </Col>
-
-          <Col lg={2} md={6} className="mb-4 mb-lg-0">
-            <h5 className="footer-heading">Liên kết nhanh</h5>
-            <ul className="footer-links">
-              <li><a href="#about">Về chúng tôi</a></li>
-              <li><a href="#courses">Khóa học</a></li>
-              <li><a href="#teachers">Giáo viên</a></li>
-              <li><a href="#blog">Blog</a></li>
-              <li><a href="#contact">Liên hệ</a></li>
-            </ul>
-          </Col>
-
-          <Col lg={3} md={6} className="mb-4 mb-lg-0">
-            <h5 className="footer-heading">Hỗ trợ</h5>
-            <ul className="footer-links">
-              <li><a href="#faq">Trung tâm trợ giúp</a></li>
-              <li><a href="#terms">Điều khoản sử dụng</a></li>
-              <li><a href="#privacy">Chính sách bảo mật</a></li>
-              <li><a href="#faqs">Câu hỏi thường gặp</a></li>
-              <li><a href="#payment">Phương thức thanh toán</a></li>
-            </ul>
-          </Col>
-
-          <Col lg={3} md={6}>
-            <h5 className="footer-heading">Liên hệ</h5>
-            <ul className="footer-contact-info">
-              <li><span className="icon">📍</span> 123 Đường ABC, Quận 1, TP. Hồ Chí Minh</li>
-              <li><span className="icon">📞</span> (+84) 123 456 789</li>
-              <li><span className="icon">📧</span> support@englishmaster.vn</li>
-            </ul>
-          </Col>
-        </Row>
-
-        <div className="footer-bottom">
-          <p className="copyright">© 2025 EnglishMaster. All rights reserved.</p>
-          <div className="footer-legal-links">
-            <a href="#privacy">Chính sách bảo mật</a>
-            <a href="#terms">Điều khoản dịch vụ</a>
-            <a href="#cookies">Cookies</a>
           </div>
-        </div>
-      </Container>
-    </footer>
+        </Container>
+      </footer>
+
+      {/* Popup Modal */}
+      <Modal
+        show={showPopup}
+        onHide={handleClosePopup}
+        centered
+        className="custom-homepage-popup-modal"
+      >
+        <Modal.Header closeButton className={getPopupHeaderClass(popupContent.type)}>
+          <Modal.Title>{popupContent.title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="homepage-popup-body">
+          <p>{popupContent.message}</p>
+        </Modal.Body>
+        <Modal.Footer className="homepage-popup-footer">
+          <Button variant="primary" onClick={handleClosePopup} className="homepage-popup-close-button">
+            Đóng
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 };
 

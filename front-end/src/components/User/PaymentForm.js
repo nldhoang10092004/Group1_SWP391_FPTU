@@ -55,39 +55,51 @@ function PaymentForm() {
         setPlan(selected);
       } catch (error) {
         console.error("Lỗi khi lấy plan:", error);
+        toast.error("Không thể tải thông tin gói học");
       }
     };
     loadPlan();
   }, [id]);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!formData.fullName || !formData.email || !formData.phone) {
-    toast.error("Vui lòng điền đầy đủ thông tin");
-    return;
-  }
-
-  setIsProcessing(true);
-  try {
-    const res = await createPayment(plan.planID);
-
-   
-    if (res?.status === 401 || res?.message?.includes("Unauthorized")) {
-      toast.error("Bạn cần đăng nhập để thực hiện thanh toán.");
+    if (!formData.fullName || !formData.email || !formData.phone) {
+      toast.error("Vui lòng điền đầy đủ thông tin");
       return;
     }
 
-    toast.success("Thanh toán thành công!");
-    navigate("/paymentsuccess"); 
-  } catch (err) {
-    console.error("Lỗi khi tạo thanh toán:", err);
-    toast.error("Lỗi khi tạo thanh toán. Vui lòng thử lại.");
-  } finally {
-    setIsProcessing(false);
-  }
-};
+    setIsProcessing(true);
+    try {
+      // 🔹 Gọi API với planID
+      const paymentUrl = await createPayment(plan.planID);
+      
+      if (paymentUrl) {
+        toast.success("Đang chuyển đến trang thanh toán...");
+        
+        // 🔹 Chờ 500ms để user thấy toast, sau đó redirect
+        setTimeout(() => {
+          window.location.href = paymentUrl;
+        }, 500);
+      } else {
+        toast.error("Không nhận được URL thanh toán");
+        setIsProcessing(false);
+      }
+      
+    } catch (err) {
+      console.error("Lỗi khi tạo thanh toán:", err);
 
+      // 🔹 Xử lý lỗi 401 Unauthorized
+      if (err.response?.status === 401) {
+        toast.error("Bạn cần đăng nhập để thực hiện thanh toán");
+        navigate("/login");
+        return;
+      }
+
+      toast.error(err.response?.data?.message || "Lỗi khi tạo thanh toán. Vui lòng thử lại.");
+      setIsProcessing(false);
+    }
+  };
 
   if (!plan) return <div className="loading">Đang tải gói...</div>;
 
@@ -137,20 +149,15 @@ function PaymentForm() {
                     required
                   />
 
-                  <div className="qr-box">
-                    <div className="qr-placeholder">📱</div>
-                    <p>Quét mã QR để thanh toán</p>
-                    <p>Số tiền: <strong>{plan.price.toLocaleString("vi-VN")}đ</strong></p>
-                  </div>
-
                   <Button type="submit" disabled={isProcessing} className="submit-btn">
-                    {isProcessing ? "Đang xử lý..." : "Xác nhận thanh toán"}
+                    {isProcessing ? "Đang xử lý..." : "Thanh toán ngay"}
                   </Button>
                 </form>
               </CardContent>
             </Card>
           </div>
 
+          {/* ORDER SUMMARY */}
           <div className="order-summary">
             <Card>
               <CardHeader>
@@ -167,7 +174,6 @@ function PaymentForm() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

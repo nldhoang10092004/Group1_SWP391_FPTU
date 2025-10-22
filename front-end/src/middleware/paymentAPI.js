@@ -1,41 +1,42 @@
 // src/middleware/paymentAPI.js
 import axios from "axios";
 
-const API_BASE = "https://localhost:7010/api/payment";
-
-
-export async function createPayment(data) {
-  try {
-    const token = localStorage.getItem("accessToken"); // 🔹 Lấy token từ localStorage
-    if (!token) throw new Error("Chưa đăng nhập");
-
-    const res = await axios.post(`${API_BASE}/create`, data, {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`, // 🔹 Gửi kèm token
-      },
-    });
-
-    return res.data;
-  } catch (error) {
-    console.error("❌ Lỗi khi tạo thanh toán:", error);
-    throw error;
-  }
-}
-
+const API_BASE = `${process.env.REACT_APP_API_URL}/api/payment`;
 
 /**
- * Webhook - backend gọi tới endpoint này (không dùng ở frontend)
- * Dùng để test local hoặc log response webhook
+ * Tạo thanh toán - Backend trả về paymentUrl để redirect
+ * @param {number} planID - ID của gói học
+ * @returns {Promise<string>} URL thanh toán
  */
-export async function handlePaymentWebhook(payload) {
+export async function createPayment(planID) {
   try {
-    const res = await axios.post(`${API_BASE}/webhook`, payload, {
-      headers: { "Content-Type": "application/json" },
-    });
-    return res.data;
+    const token = localStorage.getItem("accessToken");
+    if (!token) throw new Error("Chưa đăng nhập");
+
+    const res = await axios.post(
+      `${API_BASE}/create`,
+      { planId: planID }, // 🔹 Gửi object { planId: number } theo Swagger
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true"
+        },
+      }
+    );
+
+    console.log("✅ Payment response:", res.data);
+    
+    // 🔹 Backend trả về { paymentUrl: "https://..." }
+    const paymentUrl = res.data.paymentUrl || res.data.url;
+    
+    if (!paymentUrl) {
+      throw new Error("Không nhận được URL thanh toán từ server");
+    }
+    
+    return paymentUrl;
   } catch (error) {
-    console.error("❌ Lỗi webhook:", error);
+    console.error("❌ Lỗi khi tạo thanh toán:", error.response?.data || error.message);
     throw error;
   }
 }

@@ -117,7 +117,6 @@ function PaymentSuccessSubscription({ plan, paymentInfo, onStartLearning, onGoHo
           </p>
         </CardContent>
       </Card>
-      <Footer />
     </div>
   );
 }

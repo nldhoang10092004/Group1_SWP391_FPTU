@@ -1,346 +1,617 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-body {
-  font-family: "Quicksand", sans-serif;
-}
+// --- Design System Variables ---
+// Colors
+$bg-white: #ffffff;
+$bg-gradient-light: linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0);
+$text-gray-900: #1a202c;
+$text-gray-600: #4a5568;
+$text-gray-500: #718096;
 
-/* Main Header Styles (based on HomePage header) */
+$primary-gradient: linear-gradient(to right, #4f46e5, #8b5cf6); // Indigo-600 to Purple-600
+$accent-gradient: linear-gradient(to right, #f97316, #ef4444); // Orange-500 to Red-600
+$success-gradient: linear-gradient(to right, #10b981, #059669); // Green-500 to Emerald-600
+
+// Typography
+$font-family-base: 'Inter', sans-serif;
+$font-bold: 700;
+$font-medium: 500;
+
+// Effects
+$glass-morphism-bg: rgba(255, 255, 255, 0.3);
+$glass-morphism-border: rgba(255, 255, 255, 0.18);
+$backdrop-blur: 10px;
+$transition-duration: 0.3s;
+$border-radius-lg: 1rem; // rounded-2xl
+$border-radius-md: 0.75rem; // rounded-xl
+
+
+// --- Header Container ---
 .main-header {
-  background-color: #fff;
-  padding: 15px 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
+  left: 0;
+  width: 100%;
   z-index: 1000;
+  background: $glass-morphism-bg;
+  backdrop-filter: blur($backdrop-blur);
+  border-bottom: 1px solid $glass-morphism-border;
+  padding: 0.75rem 0;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  transition: all $transition-duration ease;
 
-  .navbar-brand.logo {
+  &.scrolled {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+  }
+
+  .navbar-brand {
     display: flex;
     align-items: center;
     font-size: 1.5rem;
-    font-weight: 700;
-    color: #4f46e5; // Primary brand color
-    margin-right: 20px;
+    font-weight: $font-bold;
+    color: $text-gray-900;
+    text-decoration: none;
+    transition: all $transition-duration ease;
 
-    .logo-icon {
-      font-size: 1.8rem;
-      margin-right: 8px;
+    &:hover {
+      color: $text-gray-900;
+      transform: translateY(-1px);
     }
 
-    @media (max-width: 768px) {
-      margin-right: 10px;
-      font-size: 1.3rem;
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      margin-right: 0.75rem;
+      background: $primary-gradient;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+      transition: all $transition-duration ease;
+    }
+
+    &:hover .logo-icon {
+      text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+      transform: scale(1.05);
     }
   }
 
+  // --- Search Bar ---
   .search-bar {
-    flex-grow: 1;
-    max-width: 500px; // Limit search bar width
-    position: relative;
+    flex: 1;
+    max-width: 500px;
+    margin: 0 2rem;
+
+    @media (max-width: 992px) {
+      margin: 1rem 0;
+      max-width: 100%;
+      order: 3;
+    }
 
     input {
       width: 100%;
-      padding: 10px 15px 10px 40px; // Add left padding for icon
-      border: 1px solid #e2e8f0;
-      border-radius: 25px;
+      padding: 0.75rem 1.5rem;
+      border: 1px solid $glass-morphism-border;
+      border-radius: $border-radius-lg;
+      background: $glass-morphism-bg;
+      backdrop-filter: blur($backdrop-blur);
+      font-family: $font-family-base;
       font-size: 0.95rem;
-      background-color: #f0f2f5; // Lighter background for search
-      color: #333;
+      color: $text-gray-900;
+      transition: all $transition-duration ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 
       &::placeholder {
-        color: #94a3b8;
+        color: $text-gray-500;
       }
+
       &:focus {
         outline: none;
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-        background-color: white;
+        border-color: rgba(79, 70, 229, 0.5);
+        box-shadow: 0 6px 25px rgba(79, 70, 229, 0.15);
+        background: rgba(255, 255, 255, 0.5);
       }
-    }
 
-    // Custom search icon placement
-    &::before {
-      content: "🔎"; // Unicode magnifying glass
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.1rem;
-      color: #94a3b8;
-    }
-
-    @media (max-width: 768px) {
-      width: 100%;
-      margin: 15px 0 !important; // Override ms-auto me-auto
-      max-width: none;
+      &:hover {
+        border-color: rgba(79, 70, 229, 0.3);
+      }
     }
   }
 
+  // --- Header Actions Container ---
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 20px;
-    margin-left: 20px; // Space from search bar
+    gap: 1rem;
 
-    .notification-icon {
-      font-size: 1.4rem;
-      color: #64748b;
-      cursor: pointer;
-      position: relative;
-      transition: color 0.3s ease;
-      &:hover {
-        color: #4f46e5;
-      }
+    @media (max-width: 992px) {
+      width: 100%;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+  }
 
-      @media (max-width: 768px) {
-        font-size: 1.2rem;
-      }
+  // --- Auth Buttons ---
+  .auth-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    @media (max-width: 576px) {
+      flex-direction: column;
+      width: 100%;
+      gap: 0.75rem;
     }
 
     .login-btn {
-      background-color: #4f46e5; // Primary button color
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-weight: 600;
+  background: $primary-gradient;
+  color: $bg-white;
+  border: none;
+  padding: 0.75rem 1.75rem;
+  border-radius: $border-radius-lg;
+  font-weight: $font-bold;
+  transition: all $transition-duration ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+      padding: 0.6rem 1.5rem;
       font-size: 0.95rem;
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      font-weight: $font-medium;
+      border-radius: $border-radius-md;
+    }
+
+    .register-btn {
+      background: transparent;
+      border: 2px solid $text-gray-500;
+      color: $text-gray-600;
+      padding: 0.6rem 1.5rem;
+      border-radius: $border-radius-md;
+      font-weight: $font-medium;
+      font-size: 0.95rem;
+      transition: all $transition-duration ease;
+
       &:hover {
-        background-color: #4338ca;
+        background: $primary-gradient;
+        color: $bg-white;
+        border-color: transparent;
         transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
       }
 
-      @media (max-width: 768px) {
-        padding: 8px 15px;
-        font-size: 0.85rem;
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  // --- User Dropdown ---
+  .user-dropdown-toggle {
+    background: transparent !important;
+    border: none !important;
+    padding: 0.5rem;
+    border-radius: $border-radius-md;
+    transition: all $transition-duration ease;
+    text-decoration: none;
+
+    &::after {
+      display: none;
+    }
+
+    &:hover, &:focus {
+      background: $glass-morphism-bg !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid $glass-morphism-border;
+      transition: all $transition-duration ease;
+    }
+
+    .user-name {
+      color: $text-gray-900;
+      font-weight: $font-medium;
+      font-size: 0.95rem;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      @media (max-width: 576px) {
+        max-width: 100px;
       }
     }
 
-    // User Dropdown Styles
-    .user-dropdown-toggle {
-      background: none !important;
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0;
+    &:hover .user-avatar {
+      border-color: rgba(79, 70, 229, 0.5);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+  }
+
+  // Dropdown Menu
+  .dropdown-menu {
+    background: $glass-morphism-bg;
+    backdrop-filter: blur($backdrop-blur);
+    border: 1px solid $glass-morphism-border;
+    border-radius: $border-radius-lg;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    animation: dropdownFadeIn 0.3s ease;
+
+    .dropdown-item {
+      padding: 0.75rem 1rem;
+      border-radius: $border-radius-md;
+      color: $text-gray-600;
+      font-weight: $font-medium;
+      transition: all $transition-duration ease;
       display: flex;
       align-items: center;
-      gap: 10px; // Space between avatar and name
-      cursor: pointer;
+      gap: 0.5rem;
 
-      &:focus,
-      &:active {
-        outline: none !important;
-        box-shadow: none !important;
+      &:hover, &:focus {
+        background: $primary-gradient;
+        color: $bg-white;
+        transform: translateX(5px);
       }
 
-      .user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #e0e7ff; // Light border
-      }
+      &.text-danger {
+        color: #ef4444 !important;
 
-      .user-name {
-        color: #333;
-        font-weight: 600;
-        font-size: 0.95rem;
-
-        @media (max-width: 768px) {
-          display: none; // Hide name on small screens to save space
-        }
-      }
-    }
-
-    .dropdown-menu {
-      border-radius: 10px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-      border: none;
-      .dropdown-item {
-        font-size: 0.9rem;
-        padding: 8px 15px;
-        color: #333;
         &:hover {
-          background-color: #f0f2f5;
-          color: #4f46e5;
-        }
-        &.text-danger:hover {
-          background-color: #ffebee; 
+          background: $accent-gradient;
+          color: $bg-white !important;
         }
       }
     }
 
-    @media (max-width: 768px) {
-      margin-left: auto; // Push actions to the right
-      gap: 10px; 
+    .dropdown-divider {
+      border-color: $glass-morphism-border;
+      margin: 0.5rem 0;
     }
   }
 
-  // Navbar collapse for mobile
+  @keyframes dropdownFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  // --- Navbar Toggle (Mobile) ---
   .navbar-toggler {
-    border: none;
+    border: 1px solid $glass-morphism-border;
+    background: $glass-morphism-bg;
+    padding: 0.5rem 0.75rem;
+    border-radius: $border-radius-md;
+    transition: all $transition-duration ease;
+
     &:focus {
-      box-shadow: none;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+    }
+
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28107, 114, 128, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
     }
   }
 
-  .navbar-collapse {
-    @media (max-width: 991.98px) {
-      flex-direction: column;
-      align-items: flex-start;
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid #e2e8f0;
+  // --- Mobile Responsive Adjustments ---
+  @media (max-width: 992px) {
+    .navbar-collapse {
+      background: $glass-morphism-bg;
+      backdrop-filter: blur($backdrop-blur);
+      border-radius: $border-radius-lg;
+      margin-top: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      border: 1px solid $glass-morphism-border;
+    }
 
-      .search-bar {
-        order: 1; // Search bar first
-        width: 100%;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        margin-bottom: 15px;
+    .search-bar {
+      order: 2;
+    }
+
+    .header-actions {
+      order: 3;
+    }
+  }
+
+  @media (max-width: 576px) {
+    padding: 0.5rem 0;
+
+    .navbar-brand {
+      font-size: 1.3rem;
+
+      .logo-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1.8rem;
+        margin-right: 0.5rem;
       }
-      .header-actions {
-        order: 2; // Actions second
+    }
+
+    .search-bar {
+      margin: 0.75rem 0;
+    }
+
+    .auth-buttons {
+      .login-btn, .register-btn {
         width: 100%;
-        justify-content: flex-end; // Align items to the right
-        margin-left: 0;
+        justify-content: center;
       }
     }
   }
 }
-.auth-modal {
-  .modal-backdrop {
-    padding-bottom: 30rem;
-    background-color: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(3px);
-  }
 
+// --- Auth Modal Styling ---
+.auth-modal {
   .modal-content {
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    background: white;
-    backdrop-filter: blur(10px);
+    background: $bg-white;
+    border-radius: $border-radius-lg;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    border: 1px solid $glass-morphism-border;
   }
 
   .modal-header {
-    border-bottom: 1px solid #e9ecef;
-    padding: 0.75rem 1rem;
+    border-bottom: 1px solid $glass-morphism-border;
+    padding: 1.5rem 1.5rem 1rem;
 
     .modal-title {
-      font-weight: 600;
-      color: #343a40;
-      text-align: center;
-      width: 100%;
+      font-weight: $font-bold;
+      color: $text-gray-900;
+      font-size: 1.5rem;
+      background: $primary-gradient;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .btn-close {
-      font-size: 0.7rem;
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      color: $text-gray-500;
+      transition: color $transition-duration ease;
+
+      &:hover {
+        color: $text-gray-900;
+      }
     }
   }
 
   .modal-body {
-    padding: 1rem;
+    padding: 1.5rem;
+
+    .small {
+      color: $text-gray-600;
+      font-weight: $font-medium;
+    }
   }
 
+  // Auth Tabs Navigation
   .auth-tabs-nav {
     display: flex;
-    border-bottom: 1px solid #e9ecef;
+    background: $bg-gradient-light;
+    border-radius: $border-radius-md;
+    padding: 0.25rem;
+    margin-bottom: 1.5rem;
 
     .tab-nav-btn {
       flex: 1;
-      padding: 0.5rem;
-      background: none;
+      padding: 0.75rem 1rem;
       border: none;
-      font-weight: 500;
-      font-size: 0.9rem;
-      color: #6c757d; // Changed to match the image (grayed out)
-      position: relative;
-      transition: all 0.3s ease;
+      background: transparent;
+      color: $text-gray-600;
+      font-weight: $font-medium;
+      border-radius: $border-radius-md;
+      transition: all $transition-duration ease;
+      cursor: pointer;
 
       &.active {
-        color: #000;
-        font-weight: 600;
-
-        &::after {
-          content: "";
-          position: absolute;
-          bottom: -1px;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background-color: #000;
-        }
+        background: $primary-gradient;
+        color: $bg-white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
       }
 
-      &:hover:not(.active) {
-        color: #333;
+      &:not(.active):hover {
+        color: $text-gray-900;
+        background: rgba(255, 255, 255, 0.5);
       }
     }
   }
 
+  // Form Styling
   .form-label {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 0.25rem;
+    font-weight: $font-medium;
+    color: $text-gray-900;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
   }
 
   .form-control {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
-    font-size: 0.9rem;
+    border: 1px solid $glass-morphism-border;
+    border-radius: $border-radius-md;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all $transition-duration ease;
+    background: $bg-white;
 
     &:focus {
-      border-color: #000;
-      box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.15);
+      border-color: rgba(79, 70, 229, 0.5);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      background: $bg-white;
+    }
+
+    &::placeholder {
+      color: $text-gray-500;
     }
   }
 
-  .demo-accounts {
-    border-top: 1px solid #e9ecef;
-    padding-top: 0.75rem;
+  .btn {
+    border-radius: $border-radius-md;
+    font-weight: $font-medium;
+    transition: all $transition-duration ease;
 
-    p {
-      color: #6c757d;
-      font-size: 0.85rem;
-      margin-bottom: 0.5rem;
+    &.btn-dark {
+      background: $text-gray-900;
+      border: none;
+
+      &:hover {
+        background: lighten($text-gray-900, 10%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      }
     }
-  }
 
-  .btn-dark {
-    background-color: #000;
-    border-color: #000;
-    font-weight: 500;
-    font-size: 0.9rem;
+    &.btn-outline-dark, &.btn-outline-secondary {
+      border: 2px solid $text-gray-500;
+      color: $text-gray-600;
+      background: transparent;
 
-    &:hover {
-      background-color: #333;
-      border-color: #333;
+      &:hover {
+        background: $primary-gradient;
+        color: $bg-white;
+        border-color: transparent;
+        transform: translateY(-2px);
+      }
     }
   }
 
   .alert {
-    padding: 0.4rem 0.75rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    border-radius: 0.375rem;
+    border-radius: $border-radius-md;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: $font-medium;
+
+    &.alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: #065f46;
+    }
+
+    &.alert-danger {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+    }
+  }
+
+  // Demo buttons container
+  .d-flex.justify-content-between {
+    gap: 0.5rem;
+
+    .btn {
+      flex: 1;
+      font-size: 0.85rem;
+    }
   }
 }
 
-// Responsive design for modal
-@media (max-width: 768px) {
-  .auth-modal {
-    .modal-dialog {
-      margin: 0.5rem;
+// --- Toast Notifications ---
+.toast-container {
+  .toast {
+    background: $bg-white;
+    border-radius: $border-radius-lg;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid $glass-morphism-border;
+
+    .toast-header {
+      background: transparent;
+      border-bottom: 1px solid $glass-morphism-border;
+      padding: 0.75rem 1rem;
+
+      .me-auto {
+        font-weight: $font-bold;
+        color: $text-gray-900;
+      }
+
+      .btn-close {
+        font-size: 0.8rem;
+      }
     }
 
-    .modal-content {
-      border-radius: 8px;
+    .toast-body {
+      padding: 1rem;
+      color: $text-gray-600;
+      font-weight: $font-medium;
     }
 
-    .auth-tabs-nav .tab-nav-btn {
-      padding: 0.4rem;
-      font-size: 0.85rem;
+    // Toast variants
+    &.bg-success {
+      background: $success-gradient !important;
+      color: $bg-white;
+
+      .toast-header {
+        color: $bg-white;
+        border-bottom-color: rgba(255, 255, 255, 0.2);
+
+        .btn-close {
+          filter: invert(1);
+        }
+      }
+    }
+
+    &.bg-danger {
+      background: $accent-gradient !important;
+      color: $bg-white;
+
+      .toast-header {
+        color: $bg-white;
+        border-bottom-color: rgba(255, 255, 255, 0.2);
+
+        .btn-close {
+          filter: invert(1);
+        }
+      }
+    }
+
+    &.bg-warning {
+      background: linear-gradient(to right, #f59e0b, #d97706) !important;
+      color: $bg-white;
+
+      .toast-header {
+        color: $bg-white;
+        border-bottom-color: rgba(255, 255, 255, 0.2);
+
+        .btn-close {
+          filter: invert(1);
+        }
+      }
+    }
+
+    &.bg-info {
+      background: linear-gradient(to right, #0ea5e9, #0284c7) !important;
+      color: $bg-white;
+
+      .toast-header {
+        color: $bg-white;
+        border-bottom-color: rgba(255, 255, 255, 0.2);
+
+        .btn-close {
+          filter: invert(1);
+        }
+      }
+    }
+  }
+}
+
+// Scroll behavior for header
+@media (min-width: 993px) {
+  .main-header {
+    .navbar-collapse {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
     }
   }
 }

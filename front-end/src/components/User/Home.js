@@ -4,8 +4,9 @@ import "./Home.scss";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
 import { getCourses } from "../../middleware/courseAPI"; 
+import { checkMembership } from "../../middleware/membershipAPI";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faFire, faBookOpen, faHourglassHalf, faCheckCircle, faClock, faStar, faLock, faGraduationCap, faUsers, faQuestionCircle, faShieldAlt, faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy, faFire, faBookOpen, faHourglassHalf, faCheckCircle, faClock, faStar, faLock, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import Footer from "../Footer/footer";
 
 const Home = () => {
@@ -14,49 +15,16 @@ const Home = () => {
   const [courses, setCourses] = useState([]);
   const [lessons, setLessons] = useState([]);
   const [hasMembership, setHasMembership] = useState(false);
+  const [membershipInfo, setMembershipInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [activeTab, setActiveTab] = useState("baihoc");
   const [loadingCourses, setLoadingCourses] = useState(true);
 
-  
-  const demoData = {
-    user: {
-      name: "Student", 
-      xp: 850,
-      streak: 5,
-      level: 3,
-      progress: 50,
-    },
-    stats: {
-      khoahoc: { currentLevel: "Level 3", xpToNext: 850 },
-      streak: { days: 5, message: "Keep going!" },
-      luyentap: { lessonsCompleted: 15, averageScore: "80%" },
-      timeSpent: {time: "2h 30m", times:"This week"},
-      achievements: [
-        { title: "Bậc thầy ngữ pháp", description: "Hoàn thành 10 bài ngữ pháp", time: "2 ngày trước" },
-        { title: "Người xây dựng từ vựng", description: "Học được 50 từ mới", time: "1 tuần trước" },
-        { title: "Chiến binh chuỗi ngày", description: "Chuỗi học 7 ngày", time: "1 tuần trước" }
-      ],
-      weeklyGoal: {
-        lessons: { completed: 5, total: 7 },
-        studyTime: { completed: 180, total: 300, unit: "min" }
-      }
-    },
-    lessons: [
-      { id: 1, title: "Basic Greetings", description: "Learn common greetings and introductions.", level: "Beginner", duration: "15 min", progress: 75, rating: 4.8, status: "in-progress", action: "Continue" },
-      { id: 2, title: "Present Tense Verbs", description: "Master the use of present simple and continuous.", level: "Beginner", duration: "20 min", progress: 100, rating: 4.7, status: "completed", action: "Review" },
-      { id: 3, title: "Past Tense Stories", description: "Narrate events using past simple and continuous.", level: "Intermediate", duration: "22 min", progress: 0, rating: 4.9, status: "available", action: "Start Lesson" },
-      { id: 4, title: "Asking Questions", description: "Formulate effective questions in various contexts.", level: "Intermediate", duration: "18 min", progress: 0, rating: 4.6, status: "available", action: "Start Lesson" },
-      { id: 5, title: "Daily Conversations", description: "Practice everyday conversations with common phrases.", level: "Intermediate", duration: "25 min", progress: 0, rating: 4.8, status: "available", action: "Start Lesson" },
-      { id: 6, title: "Future Plans & Dreams", description: "Talk about your future aspirations and plans.", level: "Advanced", duration: "28 min", progress: 0, rating: 4.7, status: "available", action: "Start Lesson" },
-    ]
-  };
-
   const emptyData = {
     user: {
-      name: "Student", // Changed to match image
+      name: "Student",
       xp: 0,
       streak: 0,
       level: 1,
@@ -75,48 +43,84 @@ const Home = () => {
     },
     lessons: []
   };
-  // --- END DEMO DATA ---
 
-  // Load data based on account type and membership
+  // Temporary lessons data - TODO: Replace with API call
+  const tempLessons = [
+    { id: 1, title: "Basic Greetings", description: "Learn common greetings and introductions.", level: "Beginner", duration: "15 min", progress: 75, rating: 4.8, status: "in-progress", action: "Continue" },
+    { id: 2, title: "Present Tense Verbs", description: "Master the use of present simple and continuous.", level: "Beginner", duration: "20 min", progress: 100, rating: 4.7, status: "completed", action: "Review" },
+    { id: 3, title: "Past Tense Stories", description: "Narrate events using past simple and continuous.", level: "Intermediate", duration: "22 min", progress: 0, rating: 4.9, status: "available", action: "Start Lesson" },
+    { id: 4, title: "Asking Questions", description: "Formulate effective questions in various contexts.", level: "Intermediate", duration: "18 min", progress: 0, rating: 4.6, status: "available", action: "Start Lesson" },
+    { id: 5, title: "Daily Conversations", description: "Practice everyday conversations with common phrases.", level: "Intermediate", duration: "25 min", progress: 0, rating: 4.8, status: "available", action: "Start Lesson" },
+    { id: 6, title: "Future Plans & Dreams", description: "Talk about your future aspirations and plans.", level: "Advanced", duration: "28 min", progress: 0, rating: 4.7, status: "available", action: "Start Lesson" },
+  ];
+
+  // Load data based on membership
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
         
-        const accountType = localStorage.getItem("accountType") || "real";
-        const membershipStatus = localStorage.getItem("hasMembership") === "true";
+        const userName = localStorage.getItem("userName") || "Student";
+        const token = localStorage.getItem("accessToken");
         
-        setHasMembership(membershipStatus);
+        // DEBUG LOGS
+        console.log("=== MEMBERSHIP DEBUG START ===");
+        console.log("1. Token exists:", !!token);
+        console.log("2. Token preview:", token ? token.substring(0, 30) + "..." : "NO TOKEN");
         
-        if (accountType === "demo") {
-          setUser(demoData.user);
-          setStatsData(demoData.stats);
-          if (membershipStatus) {
-            setLessons(demoData.lessons);
+        // Initialize with empty data
+        setUser({ ...emptyData.user, name: userName });
+        setStatsData(emptyData.stats);
+        
+        // Check membership if user is logged in
+        if (token) {
+          console.log("3. Calling checkMembership API...");
+          const membershipData = await checkMembership();
+          
+          console.log("4. API Response:", membershipData);
+          console.log("5. hasMembership value:", membershipData.hasMembership);
+          console.log("6. hasMembership type:", typeof membershipData.hasMembership);
+          console.log("7. planName:", membershipData.planName);
+          console.log("8. status:", membershipData.status);
+          
+          setHasMembership(membershipData.hasMembership);
+          setMembershipInfo(membershipData);
+          
+          console.log("9. Setting hasMembership state to:", membershipData.hasMembership);
+          
+          // Load lessons if has membership
+          if (membershipData.hasMembership) {
+            console.log("10. User HAS membership - Loading lessons");
+            setLessons(tempLessons);
           } else {
-            
-            setLessons([]); 
-          }
-        } else {
-          // For 'real' accounts, start with empty data, but if they have membership, show demo lessons
-          setUser(emptyData.user);
-          setStatsData(emptyData.stats);
-          if (membershipStatus) {
-            setLessons(demoData.lessons); 
-          } else {
+            console.log("10. User DOES NOT have membership - No lessons");
             setLessons([]);
           }
+        } else {
+          console.log("3. No token found - User not logged in");
+          // Not logged in
+          setHasMembership(false);
+          setMembershipInfo(null);
+          setLessons([]);
         }
         
+        console.log("=== MEMBERSHIP DEBUG END ===");
+        
       } catch (error) {
-        console.error("Error loading data:", error);
+        console.error("!!! Error loading data:", error);
+        console.error("Error details:", error.message);
+        setUser(emptyData.user);
+        setStatsData(emptyData.stats);
+        setLessons([]);
+        setHasMembership(false);
+        setMembershipInfo(null);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   useEffect(() => {
     if (activeTab === "khoahoc") {
@@ -139,9 +143,9 @@ const Home = () => {
 
   const levels = [
     { id: "all", label: "Tất cả", desc: "Xem tất cả nội dung" },
-    { id: "beginner", label: "Beginner", desc: "Cấp độ cơ bản Level 1-3" },
-    { id: "intermediate", label: "Intermediate", desc: "Cấp độ trung cấp Level 4-6" },
-    { id: "advanced", label: "Advanced", desc: "Cấp độ nâng cao Level 7-10" }
+    { id: "beginner", label: "Beginner", desc: "Cấp độ cơ bản" },
+    { id: "intermediate", label: "Intermediate", desc: "Cấp độ trung cấp" },
+    { id: "advanced", label: "Advanced", desc: "Cấp độ nâng cao" }
   ];
 
   const getFilteredLessons = () => {
@@ -151,7 +155,6 @@ const Home = () => {
       return lessons;
     }
     
-    // Filter by level, ensure case-insensitive comparison
     return lessons.filter(lesson => {
       const lessonLevel = lesson.level?.toLowerCase() || '';
       return lessonLevel === selectedLevel.toLowerCase();
@@ -177,50 +180,13 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      {/* <section className="hero-section">
-        <Container>
-          <Row className="align-items-center">
-            <Col lg={6}> 
-              <h1 className="hero-title">Master English with Interactive Lessons</h1>
-              <p className="hero-description">
-                Learn English naturally with our AI-powered lessons, real conversations,
-                and personalized practice exercises. Join millions of learners worldwide.
-              </p>
-              <div className="hero-buttons">
-                <Button 
-                  variant="light" 
-                  size="lg" 
-                  className="me-3 start-learning-btn"
-                  onClick={() => navigate("/courses")}
-                >
-                  Start Learning Free
-                </Button>
-                <Button variant="outline-light" size="lg" className="watch-demo-btn">
-                  Watch Demo
-                </Button>
-              </div>
-              <div className="hero-stats mt-4">
-                <div className="stat-item"><strong>4.9/5</strong> rating</div>
-                <div className="stat-item"><strong>2M+</strong> learners</div>
-                <div className="stat-item"><strong>1,000+</strong> lessons</div>
-              </div>
-            </Col>
-            <Col lg={6}>
-              <div className="hero-image-container">
-                <img src="https://via.placeholder.com/600x400/e0e7ff/667eea?text=EnglishMaster+Hero" alt="EnglishMaster" className="hero-logo" />
-              </div>
-            </Col>
-          </Row>
-        </Container>
-      </section> */}
-
       <Container>
-        {/* Welcome Section - Matches second screenshot */}
+        {/* Welcome Section */}
         <Row className="welcome-section">
           <Col>
-            <h1>Chào mừng trở lại, {user?.name || 'User'}!</h1>
+            <h1>Chào mừng, {user?.name || 'User'}!</h1>
             <Row className="stats-row">
-              <Col md={4} className="mb-4">
+              <Col md={3} className="mb-4">
                 <Card className="stat-card">
                   <Card.Body>
                     <FontAwesomeIcon icon={faTrophy} size="2x" className="mb-2" style={{color: '#667eea'}}/>
@@ -229,7 +195,7 @@ const Home = () => {
                   </Card.Body>
                 </Card>
               </Col>
-              <Col md={4} className="mb-4">
+              <Col md={3} className="mb-4">
                 <Card className="stat-card">
                   <Card.Body>
                     <FontAwesomeIcon icon={faFire} size="2x" className="mb-2" style={{color: '#ffc107'}}/>
@@ -238,7 +204,7 @@ const Home = () => {
                   </Card.Body>
                 </Card>
               </Col>
-              <Col md={4} className="mb-4">
+              <Col md={3} className="mb-4">
                 <Card className="stat-card">
                   <Card.Body>
                     <FontAwesomeIcon icon={faBookOpen} size="2x" className="mb-2" style={{color: '#28a745'}}/>
@@ -251,7 +217,7 @@ const Home = () => {
           </Col>
         </Row>
 
-        {/* Tab Navigation - Matches second screenshot */}
+        {/* Tab Navigation */}
         <Row className="lessons-nav">
           <Col>
             <div className="tab-navigation mb-4">
@@ -276,9 +242,24 @@ const Home = () => {
                 <h2 className="text-left">Bài học của bạn</h2>
                 {hasMembership ? (
                   <div className="membership-lessons">
-                    <p className="text-success">
-                      <Badge bg="success">Premium</Badge> Bạn đang sử dụng gói membership
+                    <p className="text-success mb-2">
+                      <Badge bg="success">Premium</Badge> {membershipInfo?.planName ? `Gói ${membershipInfo.planName}` : 'Bạn đang sử dụng gói membership'}
                     </p>
+                    {membershipInfo?.endsAt && (
+                      <p className="text-muted mb-2" style={{fontSize: '0.85rem'}}>
+                        <FontAwesomeIcon icon={faClock} className="me-1" />
+                        Hết hạn: {new Date(membershipInfo.endsAt).toLocaleDateString('vi-VN', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    )}
+                    {membershipInfo?.status && (
+                      <Badge bg={membershipInfo.status === 'active' ? 'success' : 'warning'} className="mb-3">
+                        {membershipInfo.status === 'active' ? 'Đang hoạt động' : membershipInfo.status}
+                      </Badge>
+                    )}
                     <div className="quick-stats mt-3">
                       <div className="stat-item">
                         <FontAwesomeIcon icon={faCheckCircle} className="me-2" style={{color: '#28a745'}}/>
@@ -338,7 +319,7 @@ const Home = () => {
                   <>
                     <div className="divider"></div>
                     <div className="lessons-grid">
-                      <h5 className="mb-3">Bài học có sẵn ({filteredLessons.length} bài):</h5>
+                      <h5 className="mb-3">Bài học đang  ({filteredLessons.length} bài):</h5>
                       {filteredLessons.length > 0 ? (
                         <Row>
                           {filteredLessons.map((lesson) => (
@@ -437,7 +418,7 @@ const Home = () => {
           </Row>
         )}
 
-        {/* Khóa học Tab Content - Matches third screenshot */}
+        {/* Khóa học Tab Content */}
         {activeTab === "khoahoc" && (
           <div className="course-list">
             {loadingCourses ? (
@@ -512,9 +493,11 @@ const Home = () => {
                         if (skill.title === "Luyện viết") {
                           navigate("/writingpractice"); 
                         } else if (skill.title === "Flashcards") {
-                          navigate("/flashcards");
+                          navigate(`/flashcards`);
                         } else if (skill.title === "Ngữ pháp") {
                           navigate("/grammar");
+                         } else if (skill.title === "Quizz") {
+                          navigate("/quiz");
                         } else {
                           alert(`Chức năng "${skill.title}" đang được phát triển!`);
                         }
@@ -530,7 +513,7 @@ const Home = () => {
           </div>
         )}
 
-        {/* Thống kê Tab Content - Matches fourth and fifth screenshots */}
+        {/* Thống kê Tab Content */}
         {activeTab === "thongke" && (
           <div className="stats-section">
             <Row>
@@ -666,7 +649,6 @@ const Home = () => {
           </div>
         )}
       </Container>
-      <Footer />
     </div>
   );
 };

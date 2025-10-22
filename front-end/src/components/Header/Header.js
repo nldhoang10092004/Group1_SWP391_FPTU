@@ -2,60 +2,105 @@ import React, { useState, useEffect } from "react";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
-import { Modal, Button, Form, Dropdown } from "react-bootstrap";
-// Xóa bỏ các import Material-UI Search
+import { Modal, Button, Form, Dropdown, Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { loginApi, registerApi } from "../../middleware/auth";
-import { sendOtpApi } from "../../middleware/auth";
-import "./Header.scss"; // Đảm bảo đường dẫn đúng
+import { loginApi, registerApi, sendOtpApi } from "../../middleware/auth"; // Adjust path as needed
+import "./Header.scss"; // Make sure your SCSS file is linked
 
 const Header = () => {
   const navigate = useNavigate();
+
+  // 🟢 Toast Notification States
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("danger"); // success, danger, warning
+
+  // 🟢 Modal & Auth Tabs
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
 
-  const [email, setEmail] = useState("");
+  // 🟢 Login states
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginMessage, setLoginMessage] = useState("");
   const [loginErrorMessage, setLoginErrorMessage] = useState("");
 
+  // 🟢 Register states
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
-  const [accountType, setAccountType] = useState("student"); // Giữ nguyên nếu có ý định dùng sau này
+  const [registerOtp, setRegisterOtp] = useState("");
   const [registerMessage, setRegisterMessage] = useState("");
   const [registerErrorMessage, setRegisterErrorMessage] = useState("");
   const [otpMessage, setOtpMessage] = useState("");
   const [otpError, setOtpError] = useState("");
-  const [registerOtp, setRegisterOtp] = useState("");
-  const [isOtpValid, setIsOtpValid] = useState(false); // Giữ nguyên
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // 🟢 User info
   const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem("user");
-      if (!savedUser || savedUser === "undefined" || savedUser === "null")
-        return null;
-      return JSON.parse(savedUser);
-    } catch {
-      return null;
-    }
+    const savedUser = localStorage.getItem("user");
+    return savedUser && savedUser !== "undefined" && savedUser !== "null"
+      ? JSON.parse(savedUser)
+      : null;
   });
 
+  const [avatarUrl, setAvatarUrl] = useState(
+    localStorage.getItem("avatarUrl") || "/default-avatar.png"
+  );
+  
+  const [username, setUsername] = useState(() => {
+    const savedUserName = localStorage.getItem("userName");
+    if (savedUserName) return savedUserName;
+    
+    const savedUser = localStorage.getItem("user");
+    if (savedUser && savedUser !== "undefined" && savedUser !== "null") {
+      const parsedUser = JSON.parse(savedUser);
+      return parsedUser.username || parsedUser.email?.split("@")[0] || "";
+    }
+    return "";
+  });
+
+  // 🟢 Hàm hiển thị Toast
+  const showToastNotification = (message, type = "danger") => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
+
+  // 🟢 Đồng bộ dữ liệu từ localStorage
   useEffect(() => {
-    const openAuthModal = (e) => {
-      const tab = e.detail?.tab || "login";
-      setActiveTab(tab);
-      setShowAuthModal(true);
+    const syncUserData = () => {
+      const savedAvatar = localStorage.getItem("avatarUrl");
+      const savedUserName = localStorage.getItem("userName");
+      const savedUser = localStorage.getItem("user");
+      
+      if (savedAvatar) setAvatarUrl(savedAvatar);
+      
+      if (savedUserName) {
+        setUsername(savedUserName);
+      } else if (savedUser && savedUser !== "undefined") {
+        const parsedUser = JSON.parse(savedUser);
+        setUsername(parsedUser.username || parsedUser.email?.split("@")[0] || "");
+      }
     };
 
-    window.addEventListener("openAuthModal", openAuthModal);
+    syncUserData();
+    
+    window.addEventListener("storage", syncUserData);
+    window.addEventListener("avatarUpdated", syncUserData);
+
     return () => {
-      window.removeEventListener("openAuthModal", openAuthModal);
+      window.removeEventListener("storage", syncUserData);
+      window.removeEventListener("avatarUpdated", syncUserData);
     };
   }, []);
 
+  // 🟢 Reset form
   const resetLoginForm = () => {
-    setEmail("");
+    setEmailOrUsername("");
     setPassword("");
     setLoginMessage("");
     setLoginErrorMessage("");
@@ -66,66 +111,112 @@ const Header = () => {
     setRegisterEmail("");
     setRegisterPassword("");
     setRegisterConfirmPassword("");
+    setRegisterOtp("");
     setRegisterMessage("");
     setRegisterErrorMessage("");
-    setAccountType("student");
     setOtpMessage("");
     setOtpError("");
-    setRegisterOtp("");
   };
 
-  const handleAuthClick = () => setShowAuthModal(true);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("accessToken"); 
-    setUser(null);
-    navigate("/"); 
-    window.location.reload(); 
-  };
-
+  // 🟢 Đăng nhập
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    
+    setLoginMessage("");
+    setLoginErrorMessage("");
+    
     try {
-      const response = await loginApi(email, password);
-      console.log("Login API response:", response.data);
+      console.log("🔐 Đang đăng nhập với:", { emailOrUsername, password: "***" });
+      
+      const response = await loginApi(emailOrUsername, password);
+      
+      console.log("✅ Response từ API:", response.data);
+      
+      const { accountID, accessToken, expiresIn, email: userEmail, username: userName } = response.data;
 
-      const { accountID, accessToken, expiresIn } = response.data;
-
-      if (!accessToken) {
-        throw new Error("AccessToken missing in response");
+      // ✅ FIX: Xử lý khi backend không trả về email/username
+      let displayName = "";
+      let userEmailFinal = "";
+      
+      if (userName) {
+        displayName = userName;
+      } else if (userEmail) {
+        displayName = userEmail.split("@")[0];
+        userEmailFinal = userEmail;
+      } else {
+        displayName = emailOrUsername.includes("@") 
+          ? emailOrUsername.split("@")[0] 
+          : emailOrUsername;
+        userEmailFinal = emailOrUsername.includes("@") ? emailOrUsername : "";
       }
-
-      const loggedUser = { accountID, accessToken, expiresIn, email: email }; 
+      
+      const loggedUser = { 
+        accountID, 
+        accessToken, 
+        expiresIn, 
+        email: userEmailFinal || emailOrUsername,
+        username: userName || displayName
+      };
+      
       localStorage.setItem("user", JSON.stringify(loggedUser));
       localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("userName", displayName);
 
       setUser(loggedUser);
+      setUsername(displayName);
       setLoginMessage("Đăng nhập thành công!");
+      showToastNotification("🎉 Đăng nhập thành công! Chào mừng bạn quay lại.", "success");
 
       setTimeout(() => {
-        resetLoginForm();
         setShowAuthModal(false);
-        navigate("/home"); // Chuyển hướng sau khi đăng nhập
+        resetLoginForm();
+        navigate("/home");
+        window.location.reload();
       }, 1500);
-    } catch (error) {
-      console.error("Login error:", error);
-      setLoginErrorMessage(
-        error.response?.data?.message || error.message || "Đăng nhập thất bại"
-      );
+    } catch (err) {
+      console.error("❌ Lỗi đăng nhập:", err);
+      console.error("❌ Response data:", err.response?.data);
+      console.error("❌ Status:", err.response?.status);
+      
+      const errorMsg = err.response?.data?.message || 
+                      err.response?.data?.error ||
+                      err.response?.data ||
+                      err.message ||
+                      "Đăng nhập thất bại! Vui lòng kiểm tra lại thông tin.";
+      
+      setLoginErrorMessage(errorMsg);
+      showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
+  // 🟢 Đăng ký
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
 
     if (!registerOtp) {
-      setRegisterErrorMessage("Vui lòng nhập OTP");
+      const msg = "Vui lòng nhập mã OTP";
+      setRegisterErrorMessage(msg);
+      showToastNotification(msg, "warning");
       return;
     }
 
+    if (registerPassword !== registerConfirmPassword) {
+      const msg = "Mật khẩu xác nhận không khớp!";
+      setRegisterErrorMessage(msg);
+      showToastNotification(msg, "warning");
+      return;
+    }
+    
+    setRegisterMessage("");
+    setRegisterErrorMessage("");
+
     try {
+      console.log("📝 Đang đăng ký với:", { 
+        email: registerEmail, 
+        username: registerName,
+        otp: registerOtp 
+      });
+
       const response = await registerApi({
         email: registerEmail,
         username: registerName,
@@ -134,123 +225,194 @@ const Header = () => {
         otp: registerOtp,
       });
 
-      const { accountID, accessToken, expiresIn } = response.data;
+      console.log("✅ Đăng ký thành công:", response.data);
 
-      const registeredUser = {
-        accountID,
-        accessToken,
-        expiresIn
-      }; // Thêm email
+      const { accountID, accessToken, expiresIn, username: userName } = response.data;
+
+      const newUser = { 
+        accountID, 
+        accessToken, 
+        expiresIn, 
+        email: registerEmail,
+        username: userName || registerName
+      };
+      
+      localStorage.setItem("user", JSON.stringify(newUser));
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("user", JSON.stringify(registeredUser));
+      localStorage.setItem("userName", userName || registerName);
 
-      setUser(registeredUser);
+      setUser(newUser);
+      setUsername(userName || registerName);
       setRegisterMessage("Đăng ký thành công!");
+      showToastNotification("🎉 Đăng ký thành công! Chào mừng bạn đến với EnglishMaster.", "success");
 
       setTimeout(() => {
-        resetRegisterForm();
         setShowAuthModal(false);
-        navigate("/home"); // Chuyển hướng sau khi đăng ký
+        resetRegisterForm();
+        navigate("/home");
+        window.location.reload();
       }, 1500);
-    } catch (error) {
-      setRegisterErrorMessage(
-        error.response?.data?.message || "Đăng ký thất bại"
-      );
+    } catch (err) {
+      console.error("❌ Lỗi đăng ký:", err);
+      console.error("❌ Response data:", err.response?.data);
+      
+      const errorMsg = err.response?.data?.message || 
+                      err.response?.data?.error ||
+                      err.response?.data ||
+                      err.message ||
+                      "Đăng ký thất bại!";
+      
+      setRegisterErrorMessage(errorMsg);
+      showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
+  // 🟢 Gửi OTP
   const handleSendOtp = async () => {
     if (!registerEmail) {
-      setOtpError("Vui lòng nhập email trước khi gửi OTP");
+      const msg = "Vui lòng nhập email trước khi gửi OTP!";
+      setOtpError(msg);
+      showToastNotification(msg, "warning");
       return;
     }
+
     try {
-      setOtpError(""); // Clear previous errors
       setOtpMessage("Đang gửi OTP...");
-      const res = await sendOtpApi(registerEmail);
-      setOtpMessage("OTP đã được gửi đến email của bạn!");
-      console.log("OTP:", res.data.otp); // debug OTP
-    } catch (error) {
-      setOtpError(error.response?.data?.message || "Gửi OTP thất bại");
+      setOtpError("");
+      
+      console.log("📧 Đang gửi OTP đến:", registerEmail);
+      
+      await sendOtpApi(registerEmail);
+      
+      const successMsg = "✅ OTP đã được gửi đến email của bạn!";
+      setOtpMessage(successMsg);
+      showToastNotification(successMsg, "success");
+    } catch (err) {
+      console.error("❌ Lỗi gửi OTP:", err);
+      
+      const errorMsg = err.response?.data?.message || 
+                      err.response?.data?.error ||
+                      "Gửi OTP thất bại!";
+      
+      setOtpError(errorMsg);
       setOtpMessage("");
+      showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
+  // 🟢 Đăng xuất
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("avatarUrl");
+    localStorage.removeItem("userName");
+    setUser(null);
+    setAvatarUrl("/default-avatar.png");
+    setUsername("");
+    showToastNotification("👋 Đã đăng xuất thành công!", "success");
+    setTimeout(() => {
+      navigate("/");
+      window.location.reload();
+    }, 1000);
+  };
+
+  // 🟢 Demo login
   const handleDemoStudent = () => {
-    setEmail("students@gmail.com");
+    setEmailOrUsername("students@gmail.com");
     setPassword("1234567890");
+    showToastNotification("📝 Đã điền thông tin demo học viên", "info");
   };
 
   const handleDemoTeacher = () => {
-    setEmail("teacher@emt.com");
+    setEmailOrUsername("teacher@emt.com");
     setPassword("password123");
+    showToastNotification("📝 Đã điền thông tin demo giảng viên", "info");
   };
 
   return (
     <>
+      {/* 🔔 Toast Notification */}
+      <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
+        <Toast 
+          show={showToast} 
+          onClose={() => setShowToast(false)} 
+          delay={4000} 
+          autohide
+          bg={toastType}
+        >
+          <Toast.Header>
+            <strong className="me-auto">
+              {toastType === "success" ? "Thành công" : 
+               toastType === "danger" ? "Lỗi" : 
+               toastType === "warning" ? "Cảnh báo" : "Thông báo"}
+            </strong>
+          </Toast.Header>
+          <Toast.Body className={toastType === "danger" || toastType === "success" ? "text-white" : ""}>
+            {toastMessage}
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
+
       <Navbar expand="lg" className="main-header">
         <Container>
           <Navbar.Brand href="/" className="logo">
             <span className="logo-icon">📖</span> EnglishMaster
           </Navbar.Brand>
+
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            {/* Custom Search Bar */}
-            <div className="search-bar ms-auto me-auto">
-              <input
-                type="text"
-                placeholder="Tìm kiếm bài học, giảng viên, lớp học..."
-              />
+            <div className="search-bar ms-auto"> {/* Removed me-auto to align right for actions */}
+              <input type="text" placeholder="Tìm kiếm giảng viên, khóa ..." />
             </div>
 
             <Nav className="header-actions">
-              <span className="notification-icon">🔔</span>
               {!user ? (
-                <div>
-                <Button
-                  className="login-btn"
-                  onClick={() => {
-                    handleAuthClick();
-                    setActiveTab("login");
-                    resetRegisterForm(); 
-                  }}
-                >
-                  Đăng nhập
-                </Button>
-                <Button
-                  className="login-btn"
-                  onClick={() => {
-                    handleAuthClick();
-                    setActiveTab("register");
-                    resetRegisterForm(); 
-                  }}
-                >
-                  Đăng kí
-                </Button>
-              </div>
+                <div className="auth-buttons"> 
+                  <Button
+                    className="login-btn"
+                    onClick={() => {
+                      setShowAuthModal(true);
+                      setActiveTab("login");
+                      resetLoginForm();
+                    }}
+                  >
+                    Đăng nhập
+                  </Button>
+                  
+                  <Button
+                    className="register-btn" 
+                    onClick={() => {
+                      setShowAuthModal(true);
+                      setActiveTab("register");
+                      resetRegisterForm();
+                    }}
+                  >
+                    Đăng ký
+                  </Button>
+                </div>
               ) : (
-                // User dropdown
                 <Dropdown align="end">
                   <Dropdown.Toggle
-                    variant="link" // Use link variant for custom styling
+                    variant="link"
                     id="dropdown-user"
                     className="user-dropdown-toggle d-flex align-items-center"
                   >
                     <img
-                      src={user.avatar || "/default-avatar.png"} // Sử dụng ảnh avatar nếu có
+                      src={avatarUrl}
                       alt="avatar"
                       className="user-avatar"
+                      onError={(e) => (e.target.src = "/default-avatar.png")}
                     />
-                    <span className="user-name">
-                      {user.name || user.email || "Người dùng"}
+                    <span className="user-name ms-2">
+                      {username || user.username || user.email?.split("@")[0] || "Người dùng"}
                     </span>
                   </Dropdown.Toggle>
 
                   <Dropdown.Menu>
                     <Dropdown.Item onClick={() => navigate("/profile")}>
-                      Xem Hồ sơ
+                      Hồ sơ cá nhân
                     </Dropdown.Item>
-                    <Dropdown.Item onClick={() => navigate("/settings")}>
+                    <Dropdown.Item onClick={() => navigate("/profile")}>
                       Cài đặt
                     </Dropdown.Item>
                     <Dropdown.Divider />
@@ -265,219 +427,197 @@ const Header = () => {
         </Container>
       </Navbar>
 
-      {/* Auth Modal */}
+      {/* 🟢 Modal đăng nhập / đăng ký */}
       <Modal
         show={showAuthModal}
-        onHide={() => setShowAuthModal(false)}
+        onHide={() => {
+          setShowAuthModal(false);
+          resetLoginForm();
+          resetRegisterForm();
+        }}
         centered
         className="auth-modal"
         size="md"
       >
-        <Modal.Header closeButton className="px-3 py-2">
-          <Modal.Title className="fs-6">English Master Hub</Modal.Title>
+        <Modal.Header closeButton>
+          <Modal.Title>English Master Hub</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="p-3">
+        <Modal.Body>
           <p className="text-center mb-3 small">
             Đăng nhập hoặc tạo tài khoản để bắt đầu hành trình học tiếng Anh
           </p>
 
           <div className="auth-tabs-nav mb-3">
             <button
-              className={`tab-nav-btn ${
-                activeTab === "login" ? "active" : ""
-              }`}
+              className={`tab-nav-btn ${activeTab === "login" ? "active" : ""}`}
               onClick={() => {
                 setActiveTab("login");
-                resetRegisterForm(); // Reset register form when switching to login
+                resetRegisterForm();
               }}
             >
               Đăng nhập
             </button>
             <button
-              className={`tab-nav-btn ${
-                activeTab === "register" ? "active" : ""
-              }`}
+              className={`tab-nav-btn ${activeTab === "register" ? "active" : ""}`}
               onClick={() => {
                 setActiveTab("register");
-                resetLoginForm(); // Reset login form when switching to register
+                resetLoginForm();
               }}
             >
               Đăng ký
             </button>
           </div>
 
-          <div className="auth-tab-content">
-            {activeTab === "login" ? (
-              // LOGIN FORM
-              <Form onSubmit={handleLoginSubmit}>
-                <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Email</Form.Label>
+          {activeTab === "login" ? (
+            <Form onSubmit={handleLoginSubmit}>
+              <Form.Group className="mb-2">
+                <Form.Label>Email hoặc Username</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Nhập email hoặc username"
+                  value={emailOrUsername}
+                  onChange={(e) => setEmailOrUsername(e.target.value)}
+                  required
+                  size="sm"
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Mật khẩu</Form.Label>
+                <div className="d-flex gap-2">
                   <Form.Control
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    size="sm"
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Mật khẩu</Form.Label>
-                  <Form.Control
-                    type="password"
+                    type={showLoginPassword ? "text" : "password"}
+                    placeholder="Nhập mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     size="sm"
                   />
-                </Form.Group>
-
-                <div className="mb-2 text-end">
-                  <a href="/forgotpassword" className="text-muted small">
-                    Quên mật khẩu?
-                  </a>
-                </div>
-
-                <div className="demo-accounts mb-3 py-2">
-                  <p className="text-center mb-1 small">Tài khoản demo:</p>
-                  <div className="d-flex justify-content-center gap-2">
-                    <Button
-                      variant="outline-dark"
-                      size="sm"
-                      onClick={handleDemoStudent}
-                    >
-                      Học viên
-                    </Button>
-                    <Button
-                      variant="outline-dark"
-                      size="sm"
-                      onClick={handleDemoTeacher}
-                    >
-                      Giảng viên
-                    </Button>
-                  </div>
-                </div>
-
-                <Button variant="dark" type="submit" className="w-100 mb-2 py-1">
-                  Đăng nhập
-                </Button>
-
-                <div className="text-center mb-2">
-                  <Button
-                    variant="outline-danger"
-                    className="w-100 py-1"
+                  <Button 
+                    variant="outline-secondary" 
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
                     size="sm"
                   >
-                    Đăng nhập bằng Google
+                    <i className={`fas ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
                   </Button>
                 </div>
+              </Form.Group>
 
-                {loginMessage && (
-                  <div className="alert alert-success py-1 small mb-2">
-                    {loginMessage}
-                  </div>
-                )}
-                {loginErrorMessage && (
-                  <div className="alert alert-danger py-1 small mb-2">
-                    {loginErrorMessage}
-                  </div>
-                )}
-              </Form>
-            ) : (
-              // REGISTER FORM
-              <Form onSubmit={handleRegisterSubmit}>
-                <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Email</Form.Label>
-                  <Form.Control
-                    type="email"
-                    value={registerEmail}
-                    onChange={(e) => setRegisterEmail(e.target.value)}
-                    required
-                    size="sm"
-                  />
-                </Form.Group>
+              <div className="d-flex justify-content-between mb-3">
+                <Button variant="outline-dark" size="sm" onClick={handleDemoStudent}>
+                  Học viên Demo
+                </Button>
+                <Button variant="outline-dark" size="sm" onClick={handleDemoTeacher}>
+                  Giảng viên Demo
+                </Button>
+              </div>
 
-                <Form.Group className="mb-2 d-flex align-items-center gap-2">
-                  <div className="flex-grow-1">
-                    <Form.Label className="small mb-1">Mã Xác Nhận</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Nhập mã xác nhận"
-                      value={registerOtp}
-                      onChange={(e) => setRegisterOtp(e.target.value)}
-                      required
-                      size="sm"
-                    />
-                  </div>
-                  <div style={{ marginTop: "22px" }}>
-                    <Button
-                      variant="outline-dark"
-                      size="sm"
-                      type="button"
-                      className="px-2 py-1"
-                      onClick={handleSendOtp}
-                    >
-                      Gửi mã xác nhận
-                    </Button>
-                  </div>
-                </Form.Group>
-                {otpMessage && <div className="text-success small mb-2">{otpMessage}</div>}
-                {otpError && <div className="text-danger small mb-2">{otpError}</div>}
+              <Button type="submit" className="w-100" variant="dark">
+                Đăng nhập
+              </Button>
 
-                <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Username</Form.Label>
+              {loginMessage && <div className="alert alert-success mt-2 mb-0 py-2">{loginMessage}</div>}
+              {loginErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{loginErrorMessage}</div>}
+            </Form>
+          ) : (
+            <Form onSubmit={handleRegisterSubmit}>
+              <Form.Group className="mb-2">
+                <Form.Label>Email</Form.Label>
+                <Form.Control 
+                  type="email"
+                  placeholder="Nhập email"
+                  value={registerEmail} 
+                  onChange={(e) => setRegisterEmail(e.target.value)} 
+                  required 
+                  size="sm" 
+                />
+              </Form.Group>
+              
+              <Form.Group className="mb-2">
+                <Form.Label>Mã Xác Nhận (OTP)</Form.Label>
+                <div className="d-flex gap-2">
                   <Form.Control
                     type="text"
-                    value={registerName}
-                    onChange={(e) => setRegisterName(e.target.value)}
+                    placeholder="Nhập mã OTP"
+                    value={registerOtp}
+                    onChange={(e) => setRegisterOtp(e.target.value)}
                     required
                     size="sm"
                   />
-                </Form.Group>
+                  <Button 
+                    variant="outline-dark" 
+                    onClick={handleSendOtp}
+                    size="sm"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Gửi OTP
+                  </Button>
+                </div>
+                {otpMessage && <div className="text-success small mt-1">{otpMessage}</div>}
+                {otpError && <div className="text-danger small mt-1">{otpError}</div>}
+              </Form.Group>
 
-                <Form.Group className="mb-2">
-                  <Form.Label className="small mb-1">Password</Form.Label>
+              <Form.Group className="mb-2">
+                <Form.Label>Username</Form.Label>
+                <Form.Control 
+                  type="text"
+                  placeholder="Nhập username"
+                  value={registerName} 
+                  onChange={(e) => setRegisterName(e.target.value)} 
+                  required 
+                  size="sm" 
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-2">
+                <Form.Label>Mật khẩu</Form.Label>
+                <div className="d-flex gap-2">
                   <Form.Control
-                    type="password"
+                    type={showRegisterPassword ? "text" : "password"} 
+                    placeholder="Nhập mật khẩu"
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
                     size="sm"
                   />
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label className="small mb-1">
-                    Xác nhận mật khẩu
-                  </Form.Label>
-                  <Form.Control
-                    type="password"
-                    value={registerConfirmPassword}
-                    onChange={(e) =>
-                      setRegisterConfirmPassword(e.target.value)
-                    }
-                    required
+                  <Button 
+                    variant="outline-secondary" 
+                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
                     size="sm"
+                  >
+                    <i className={`fas ${showRegisterPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
+                  </Button>
+                </div>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Xác nhận mật khẩu</Form.Label>
+                <div className="d-flex gap-2">
+                  <Form.Control 
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Nhập lại mật khẩu"
+                    value={registerConfirmPassword} 
+                    onChange={(e) => setRegisterConfirmPassword(e.target.value)} 
+                    required 
+                    size="sm" 
                   />
-                </Form.Group>
+                  <Button 
+                    variant="outline-secondary" 
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    size="sm"
+                  >
+                    <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
+                  </Button>
+                </div>
+              </Form.Group>
 
-                <Button variant="dark" type="submit" className="w-100 mb-2 py-1">
-                  Đăng ký
-                </Button>
+              <Button type="submit" className="w-100" variant="dark">
+                Đăng ký
+              </Button>
 
-                {registerMessage && (
-                  <div className="alert alert-success py-1 small mb-2">
-                    {registerMessage}
-                  </div>
-                )}
-                {registerErrorMessage && (
-                  <div className="alert alert-danger py-1 small mb-2">
-                    {registerErrorMessage}
-                  </div>
-                )}
-              </Form>
-            )}
-          </div>
+              {registerMessage && <div className="alert alert-success mt-2 mb-0 py-2">{registerMessage}</div>}
+              {registerErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{registerErrorMessage}</div>}
+            </Form>
+          )}
         </Modal.Body>
       </Modal>
     </>

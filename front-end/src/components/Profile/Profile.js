@@ -3,12 +3,15 @@ import { Container, Row, Col, Card, Button, Form, Modal, Alert } from "react-boo
 import { FaCog, FaLock, FaCamera, FaTrash, FaUpload, FaArrowLeft } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { getUser, updateUser, updateAvatar, changePassword } from "../../middleware/userAPI";
+import { Container, Row, Col, Card, Button, Form, Modal, Alert } from "react-bootstrap";
+import { FaCog, FaLock, FaCamera, FaTrash, FaUpload, FaArrowLeft } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import { getUser, updateUser, updateAvatar, changePassword } from "../../middleware/userAPI";
 import "./Profile.scss";
 
 const Profile = () => {
   const navigate = useNavigate();
   
-  // ✅ FIX 1: Khởi tạo state với object thay vì null
   const [user, setUser] = useState({
     fullName: "",
     email: "",
@@ -25,277 +28,145 @@ const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
-  
-  // ✅ FIX 2: Thêm state loading và error
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const userId = 123;
 
-  const token = localStorage.getItem("accessToken");
-  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  let backPath = "/home";
-
-  // ✅ FIX 3: Cải thiện useEffect với xử lý lỗi đầy đủ
   useEffect(() => {
-    // Kiểm tra token ngay từ đầu
-    if (!token) {
-      setError("Vui lòng đăng nhập để xem trang này");
-      setLoading(false);
-      setTimeout(() => navigate("/login"), 2000);
-      return;
-    }
-
-    let isMounted = true;
-    let avatarObjectUrl = null;
-
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        console.log("🔍 Đang tải dữ liệu user...");
-        console.log("🔍 Stored User:", storedUser);
-        
-        const data = await getUser(token);
-        console.log("✅ Dữ liệu user từ API:", data);
-
-        if (isMounted) {
-          // ✅ FIX: Lấy email từ data.email hoặc storedUser
-          const userEmail = data.email || storedUser?.email || storedUser?.username || "";
-          
-          setUser({
-            fullName: data.fullName || storedUser?.fullName || storedUser?.username || "",
-            email: userEmail,
-            bio: data.bio || "",
-            address: data.address || "",
-            dob: data.dob ? data.dob.split('T')[0] : "", // ✅ Format ngày từ API
-            gender: data.gender || "",
-            phone: data.phone || "",
-          });
-          
-          console.log("✅ User state đã set:", {
-            fullName: data.fullName,
-            email: userEmail,
-          });
-        }
-
-        // Lấy avatar
-        try {
-          const res = await fetch(
-            `${process.env.REACT_APP_API_URL || "https://localhost:7010"}/api/user/profile/avatar`,
-            { 
-              headers: { Authorization: `Bearer ${token}` },
-              mode: 'cors'
-            }
-          );
-          
-          if (res.ok) {
-            const blob = await res.blob();
-            avatarObjectUrl = URL.createObjectURL(blob);
-            if (isMounted) setAvatarUrl(avatarObjectUrl);
-            console.log("✅ Avatar đã tải");
-          } else if (res.status === 401) {
-            throw new Error("Token hết hạn");
-          } else {
-            console.warn("⚠️ Không lấy được avatar, dùng default");
-          }
-        } catch (avatarErr) {
-          console.warn("⚠️ Lỗi avatar:", avatarErr.message);
-          // Không throw error, chỉ dùng avatar mặc định
-        }
-
-      } catch (err) {
-        console.error("❌ Lỗi khi tải user:", err);
-        
-        // Xử lý các loại lỗi khác nhau
-        if (err.response?.status === 401 || err.message === "Token hết hạn") {
-          setError("Phiên đăng nhập đã hết hạn. Đang chuyển về trang đăng nhập...");
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("user");
-          setTimeout(() => navigate("/login"), 2000);
-        } else if (err.code === "ERR_NETWORK") {
-          setError("Không thể kết nối tới server. Vui lòng kiểm tra kết nối mạng hoặc đảm bảo backend đang chạy.");
-        } else if (err.response?.status === 404) {
-          setError("Không tìm thấy thông tin người dùng.");
-        } else {
-          setError(`Không thể tải dữ liệu: ${err.response?.data?.message || err.message || "Lỗi không xác định"}`);
-        }
-      } finally {
-        if (isMounted) setLoading(false);
+        const userData = await getUser(userId);
+        setUser(userData);
+      } catch (error) {
+        console.error("Không thể tải dữ liệu người dùng");
       }
     };
+    fetchData();
+  }, []);
 
-    fetchUserData();
+  useEffect(() => { 
+    // Khi có backend thật: fetch("/api/user").then(res => res.json()).then(data => setUser(data)); 
+    setUser({ 
+      name: "Demo Student", 
+      email: "students@gmail.com", 
+      avatar: "/default-avatar.png", 
+      bio: "", 
+      address: "Hà Nội", 
+      birthday: "2000-01-01", 
+      phone: "0987654321" 
+    }); 
+  }, []);
 
-    return () => {
-      isMounted = false;
-      if (avatarObjectUrl) URL.revokeObjectURL(avatarObjectUrl);
-    };
-  }, [token, navigate]); // ✅ Bỏ storedUser khỏi dependency
+  if (!user) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
-  // ✅ FIX 4: Hiển thị loading state
-  if (loading) {
-    return (
-      <Container className="text-center mt-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="mt-3">Đang tải dữ liệu...</p>
-      </Container>
-    );
-  }
-
-  // ✅ FIX 5: Hiển thị error state
-  if (error) {
-    return (
-      <Container className="text-center mt-5">
-        <Alert variant="danger">
-          <Alert.Heading>Có lỗi xảy ra</Alert.Heading>
-          <p>{error}</p>
-          <hr />
-          <div className="d-flex justify-content-center gap-2">
-            <Button variant="outline-danger" onClick={() => window.location.reload()}>
-              Thử lại
-            </Button>
-            <Button variant="outline-secondary" onClick={() => navigate("/home")}>
-              Về trang chủ
-            </Button>
-          </div>
-        </Alert>
-      </Container>
-    );
-  }
-
-  // 🟢 Chọn ảnh đại diện mới
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // ✅ Kiểm tra kích thước file
-      if (file.size > 5 * 1024 * 1024) {
-        alert("⚠️ File quá lớn! Vui lòng chọn ảnh dưới 5MB.");
-        return;
-      }
-
-      setSelectedFile(file);
-      if (previewImage) URL.revokeObjectURL(previewImage);
-      setPreviewImage(URL.createObjectURL(file));
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => setSelectedImage(event.target.result);
+      reader.readAsDataURL(e.target.files[0]);
     }
   };
 
-  // 🟢 Xóa ảnh preview
-  const handleRemoveAvatar = () => {
-    if (previewImage) URL.revokeObjectURL(previewImage);
-    setSelectedFile(null);
-    setPreviewImage(null);
-  };
-
-  // 🟢 Cập nhật avatar lên backend
-  const handleUpdateAvatar = async () => {
-    if (!selectedFile) {
-      alert("Vui lòng chọn ảnh!");
-      return;
-    }
-
-    try {
-      console.log("📤 Đang upload avatar...");
-      await updateAvatar(selectedFile, token);
-
-      if (avatarUrl && avatarUrl !== "/default-avatar.png") {
-        URL.revokeObjectURL(avatarUrl);
-      }
-      
-      const newAvatarUrl = URL.createObjectURL(selectedFile);
-      setAvatarUrl(newAvatarUrl);
-
-      setSelectedFile(null);
-      setPreviewImage(null);
-      setShowAvatarModal(false);
-      alert("✅ Cập nhật avatar thành công!");
-      console.log("✅ Avatar đã cập nhật");
-    } catch (err) {
-      console.error("❌ Lỗi update avatar:", err);
-      const errorMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
-      alert(`❌ Lỗi khi cập nhật avatar: ${errorMsg}`);
-    }
-  };
-
-  // 🟢 Lưu thông tin profile
   const handleSaveProfile = async () => {
     try {
-      console.log("📤 Đang lưu thông tin profile...");
-      const updatedUser = {
-        fullName: user.fullName,
-        phone: user.phone,
-        bio: user.bio,
-        dob: user.dob,
-        gender: user.gender,
-        address: user.address,
-      };
-      
-      await updateUser(updatedUser, token);
-      alert("✅ Cập nhật thông tin thành công!");
-      console.log("✅ Profile đã cập nhật");
-    } catch (err) {
-      console.error("❌ Lỗi update profile:", err);
-      const errorMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
-      alert(`❌ Lỗi khi cập nhật thông tin: ${errorMsg}`);
+      const updatedUser = { ...user, avatar: selectedImage || user.avatar };
+      await updateUser(userId, updatedUser);
+      alert("Cập nhật thông tin thành công!");
+    } catch (error) {
+      alert("Lỗi khi cập nhật thông tin!");
     }
   };
 
-  // 🟢 Đổi mật khẩu
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
-    // ✅ Validate đầu vào
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      alert("⚠️ Vui lòng điền đầy đủ thông tin!");
-      return;
-    }
-
     if (newPassword !== confirmPassword) {
-      alert("⚠️ Mật khẩu xác nhận không khớp!");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      alert("⚠️ Mật khẩu mới phải có ít nhất 6 ký tự!");
+      alert("Mật khẩu xác nhận không khớp!");
       return;
     }
 
     try {
-      console.log("📤 Đang đổi mật khẩu...");
-      await changePassword(currentPassword, newPassword, confirmPassword, token);
-      alert("✅ Đổi mật khẩu thành công!");
+      await changePassword(userId, currentPassword, newPassword);
+      alert("Đổi mật khẩu thành công!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      console.log("✅ Mật khẩu đã đổi");
-    } catch (err) {
-      console.error("❌ Lỗi đổi mật khẩu:", err);
-      const errorMsg = err.response?.data?.message || "Mật khẩu hiện tại không đúng";
-      alert(`❌ Lỗi khi đổi mật khẩu: ${errorMsg}`);
+    } catch (error) {
+      alert("Lỗi khi đổi mật khẩu!");
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="profile-page">
+        <Container>
+          <div className="loading-container">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p>Đang tải dữ liệu...</p>
+          </div>
+        </Container>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="profile-page">
+        <Container>
+          <div className="error-container">
+            <Alert variant="danger">
+              <Alert.Heading>Có lỗi xảy ra</Alert.Heading>
+              <p>{error}</p>
+              <hr />
+              <div className="d-flex justify-content-center gap-2">
+                <Button variant="outline-danger" onClick={() => window.location.reload()}>
+                  Thử lại
+                </Button>
+                <Button variant="outline-secondary" onClick={() => navigate("/home")}>
+                  Về trang chủ
+                </Button>
+              </div>
+            </Alert>
+          </div>
+        </Container>
+      </div>
+    );
+  }
+
   return (
     <div className="profile-page">
-      <Container className="profile-container py-4">
-        <div className="mb-3">
-          <Link to={backPath} className="back-link d-inline-flex align-items-center">
-            <FaArrowLeft className="me-2" /> Quay lại
-          </Link>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="toast-notification">
+          <div className={`toast ${toast.type}`}>
+            <div className="toast-header">
+              <strong className="toast-title me-auto">
+                {toast.type === "success" ? "✅ Thành công" : 
+                 toast.type === "error" ? "❌ Lỗi" : 
+                 toast.type === "warning" ? "⚠️ Cảnh báo" : "ℹ️ Thông báo"}
+              </strong>
+              <button 
+                className="btn-close"
+                onClick={() => setToast({ show: false, message: "", type: "" })}
+              >
+                ×
+              </button>
+            </div>
+            <div className="toast-body">
+              {toast.message}
+            </div>
+          </div>
         </div>
+      )}
 
+      <Container className="profile-container py-4">
         <Row>
           <Col md={4}>
             <Card className="profile-card mb-4">
               <Card.Body className="text-center">
                 <div className="avatar-section mb-3">
-                  <div 
-                    className="avatar-wrapper" 
-                    onClick={() => setShowAvatarModal(true)}
-                    style={{ cursor: 'pointer' }}
-                  >
+                  <div className="avatar-wrapper">
                     <img
                       src={previewImage || avatarUrl}
                       alt="Avatar"
@@ -336,11 +207,10 @@ const Profile = () => {
 
                   <Form.Group className="mb-3">
                     <Form.Label><strong>Email</strong></Form.Label>
-                    <Form.Control 
-                      type="text" 
-                      value={user.email || ""} 
-                      disabled 
-                      style={{ backgroundColor: '#e9ecef' }}
+                    <Form.Control
+                      type="text"
+                      value={user.email}
+                      onChange={(e) => setUser({ ...user, email: e.target.value })}
                     />
                   </Form.Group>
 

@@ -1,7 +1,6 @@
 import axios from "axios";
 
-// 🧩 URL Backend thật (đổi lại nếu bạn chạy local)
-const API_URL = "https://localhost:7010/api/auth";
+const API_URL = `${process.env.REACT_APP_API_URL}/api/auth`;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -10,8 +9,26 @@ const api = axios.create({
   },
 });
 
+// ✨ INTERCEPTOR để bắt lỗi và hiển thị popup
+api.interceptors.response.use(
+  (response) => response, // Nếu thành công, trả về bình thường
+  (error) => {
+    // Nếu lỗi
+    const message =
+      error.response?.data?.message || // Lấy message từ backend nếu có
+      error.response?.data?.error ||   // Hoặc lấy error
+      error.message ||                 // Hoặc message mặc định
+      "Đã có lỗi xảy ra";
+
+    // Hiển thị popup
+    alert(`Lỗi: ${message}`);
+
+    // Từ chối Promise để FE vẫn biết là lỗi
+    return Promise.reject(error);
+  }
+);
+
 // === ĐĂNG NHẬP ===
-// POST /api/auth/login
 export const loginApi = (emailOrUsername, password) => {
   return api.post("/login", {
     emailOrUsername,
@@ -19,26 +36,18 @@ export const loginApi = (emailOrUsername, password) => {
   });
 };
 
-
 export const sendOtpApi = (email) => {
   return api.post("/send-otp", { email });
 };
 
-// POST /api/auth/register
 export const registerApi = ({ email, username, password, confirmPassword, otp }) => {
   return api.post("/register", { email, username, password, confirmPassword, otp });
 };
 
-
-
-// === QUÊN MẬT KHẨU ===
-// POST /api/auth/forgot-password
 export const forgotPasswordApi = (email) => {
   return api.post("/forgot-password", { email });
 };
 
-// === ĐẶT LẠI MẬT KHẨU ===
-// POST /api/auth/reset-password
 export const resetPasswordApi = (token, newPassword, confirmNewPassword) => {
   return api.post("/reset-password", {
     token,
@@ -47,14 +56,12 @@ export const resetPasswordApi = (token, newPassword, confirmNewPassword) => {
   });
 };
 
-// === LÀM MỚI TOKEN ===
-// POST /api/auth/refresh
 export const refreshTokenApi = () => {
   return api.post("/refresh");
 };
 
-// === ĐĂNG XUẤT ===
-// POST /api/auth/logout
 export const logoutApi = () => {
   return api.post("/logout");
 };
+
+export default api;
