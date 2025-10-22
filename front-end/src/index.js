@@ -60,12 +60,7 @@ root.render(
         <Route path="/flashcards" element={<FlashcardList />} />
         <Route path="/flashcards/:setId" element={<Flashcard />} />
         <Route path="grammar" element={<Grammar />} />
-        <Route path="payment-success" element={<PaymentSuccessSubscription />} />
-        <Route path="/teacher/create-quiz" element={<CreateEditQuizz />} />
-        <Route path="/teacher/edit-quiz/:id" element={<CreateEditQuizz />} />
-        <Route path="/teacher/create-flashcard" element={<CreateEditFlashcard />} />
-        <Route path="/teacher/edit-flashcard/:id" element={<CreateEditFlashcard />} />
-        <Route path="/admin/ashboard" element={<AdminDashboard />} />
+        <Route path="payment-success" element={<Pdashboard" element={<AdminDashboard />} />
         <Route path="/quiz/start/:quizId" element={<StartQuiz />} />
 
         <Route path="profile" element={
