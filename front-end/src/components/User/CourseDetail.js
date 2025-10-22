@@ -1,374 +1,392 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Badge, Button, Accordion, Alert } from "react-bootstrap";
+import { Container, Row, Col, Card, Badge, Button, Accordion, Alert, Tabs, Tab, Spinner } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCourseById, getVideoById } from "../../middleware/courseAPI";
+import { getQuizzesByCourse } from "../../middleware/QuizAPI";
 import { checkMembership } from "../../middleware/membershipAPI";
+import { getFlashcardSetsByCourseId } from "../../middleware/flashcardAPI";
 import "./CourseDetail.scss";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState("video");
+
   const [course, setCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [hasMembership, setHasMembership] = useState(false);
-  const [loadingVideo, setLoadingVideo] = useState(false);
   const [videoError, setVideoError] = useState(null);
+  const [loadingVideo, setLoadingVideo] = useState(false);
+
+  const [quizzes, setQuizzes] = useState([]);
+  const [loadingQuizzes, setLoadingQuizzes] = useState(false);
+  const [quizError, setQuizError] = useState(null);
+  const [flashcardSets, setFlashcardSets] = useState([]);
+  const [loadingFlashcards, setLoadingFlashcards] = useState(false);
+  const [flashcardError, setFlashcardError] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: "", type: "" });
+
+  const showToast = (message, type = "info") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "" }), 4000);
+  };
+
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        setError(null);
-
-        // 1️⃣ Kiểm tra membership
         const membershipData = await checkMembership();
-        const hasMember = membershipData.hasMembership || false;
-        setHasMembership(hasMember);
+        setHasMembership(membershipData.hasMembership || false);
 
-        // 2️⃣ Tải course
         const courseData = await getCourseById(id);
         setCourse(courseData);
 
-        // 3️⃣ Chọn video đầu tiên và load nó
+        // Load video đầu tiên
         if (courseData.chapters?.length > 0) {
-          let firstVideo = null;
           for (const chapter of courseData.chapters) {
             if (chapter.videos?.length > 0) {
-              firstVideo = chapter.videos[0];
-              if (firstVideo) break;
-            }
-          }
-          
-          // Load video đầu tiên
-          if (firstVideo) {
-            try {
+              const firstVideo = chapter.videos[0];
               const videoData = await getVideoById(firstVideo.videoID);
               if (videoData.canWatch) {
                 setSelectedVideo({
                   ...firstVideo,
                   videoURL: videoData.videoURL,
                   canWatch: videoData.canWatch,
-                  requiresMembership: videoData.requiresMembership
                 });
               }
-            } catch (err) {
-              console.error("Error loading first video:", err);
+              break;
             }
           }
         }
       } catch (err) {
-        console.error("Error loading course:", err);
-        setError("Không thể tải thông tin khóa học. Vui lòng thử lại sau.");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
-
     loadData();
   }, [id]);
 
-  const handleVideoSelect = async (video) => {
-    // Nếu video đã có URL, không cần gọi API lại
-    if (video.videoURL && video.canWatch !== undefined) {
-      setSelectedVideo(video);
-      return;
-    }
-
-    // Reset errors và set loading
-    setVideoError(null);
-    setLoadingVideo(true);
-    
+  // 🔹 Lấy danh sách quiz theo course
+  const handleLoadQuizzes = async () => {
     try {
-      // Lấy token từ localStorage
-      const token = localStorage.getItem('authToken');
-      
-      if (!token) {
-        setVideoError("Vui lòng đăng nhập để xem video này");
-        setSelectedVideo(null);
-        setLoadingVideo(false);
-        return;
-      }
-      
-      // Gọi API để lấy video URL thật từ backend
-      const videoData = await getVideoById(video.videoID);
-      
-      // Kiểm tra xem có quyền xem không
-      if (!videoData.canWatch) {
-        setVideoError("Bạn cần đăng ký Membership để xem video này");
-        setSelectedVideo(null);
-        return;
-      }
-      
-      // Update video với URL thật từ backend
-      const updatedVideo = {
-        ...video,
-        videoURL: videoData.videoURL,
-        canWatch: videoData.canWatch,
-        requiresMembership: videoData.requiresMembership
-      };
-      
-      setSelectedVideo(updatedVideo);
-      
-      // Update video trong course để lần sau không cần gọi API nữa
-      setCourse(prevCourse => {
-        const updatedCourse = { ...prevCourse };
-        updatedCourse.chapters = prevCourse.chapters.map(chapter => ({
-          ...chapter,
-          videos: chapter.videos.map(v => 
-            v.videoID === video.videoID ? updatedVideo : v
-          )
-        }));
-        return updatedCourse;
-      });
-      
-    } catch (error) {
-      console.error("Error fetching video:", error);
-      
-      if (error.message === 'UNAUTHORIZED') {
-        setVideoError("Vui lòng đăng nhập để xem video này");
-      } else if (error.message === 'FORBIDDEN') {
-        setVideoError("Bạn cần đăng ký Membership để xem video này");
-      } else {
-        setVideoError("Không thể tải video. Vui lòng thử lại sau.");
-      }
-      
-      setSelectedVideo(null);
+      setLoadingQuizzes(true);
+      setQuizError(null);
+      const data = await getQuizzesByCourse(id);
+      setQuizzes(Array.isArray(data) ? data : [data]);
+    } catch (err) {
+      console.error("Error fetching quizzes:", err);
+      setQuizError("Không thể tải danh sách quiz. Vui lòng thử lại sau.");
     } finally {
-      setLoadingVideo(false);
+      setLoadingQuizzes(false);
     }
+  };
+
+  // 🔹 Lấy danh sách flashcard sets theo course
+  const handleLoadFlashcards = async () => {
+    try {
+      setLoadingFlashcards(true);
+      setFlashcardError(null);
+      const data = await getFlashcardSetsByCourseId(id);
+      setFlashcardSets(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching flashcards:", err);
+      setFlashcardError("Không thể tải danh sách flashcard. Vui lòng thử lại sau.");
+    } finally {
+      setLoadingFlashcards(false);
+    }
+  };
+  // 🔹 Gọi flashcard khi chuyển sang tab flashcard
+  useEffect(() => {
+    if (activeTab === "flashcard" && flashcardSets.length === 0) {
+      handleLoadFlashcards();
+    }
+  }, [activeTab]);
+
+  // 🔹 Gọi lại quiz khi chuyển sang tab quiz
+  useEffect(() => {
+    if (activeTab === "quiz" && quizzes.length === 0) {
+      handleLoadQuizzes();
+    }
+  }, [activeTab]);
+
+  const handleViewFlashcards = (setId, title) => {
+    showToast(`Đang mở bộ flashcard: ${title}`, "info");
+    navigate(`/flashcards/${setId}`);
   };
 
   const getVideoEmbedUrl = (url) => {
     if (!url) return null;
-    
-    // Fix Google Drive uc?export=preview links
-    if (url.includes('drive.google.com/uc?export=preview')) {
+    if (url.includes("drive.google.com/uc?export=preview")) {
       const fileId = url.match(/[?&]id=([^&]+)/)?.[1];
-      if (fileId) {
-        return `https://drive.google.com/file/d/${fileId}/preview`;
-      }
+      if (fileId) return `https://drive.google.com/file/d/${fileId}/preview`;
     }
-    
-    // Return original URL for other cases
     return url;
   };
 
   if (isLoading) {
     return (
-      <div className="course-detail-page">
-        <Container className="py-5 text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <p className="mt-3">Đang tải khóa học...</p>
-        </Container>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="course-detail-page">
-        <Container className="py-5">
-          <Alert variant="danger">
-            <Alert.Heading>Lỗi!</Alert.Heading>
-            <p>{error}</p>
-            <Button variant="outline-danger" onClick={() => navigate("/")}>
-              Quay về trang chủ
-            </Button>
-          </Alert>
-        </Container>
+      <div className="course-detail-page text-center py-5">
+        <Spinner animation="border" role="status" />
+        <p>Đang tải khóa học...</p>
       </div>
     );
   }
 
   if (!course) {
     return (
-      <div className="course-detail-page">
-        <Container className="py-5">
-          <Alert variant="warning">
-            <Alert.Heading>Không tìm thấy khóa học</Alert.Heading>
-            <p>Khóa học bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
-            <Button variant="outline-warning" onClick={() => navigate("/")}>
-              Quay về trang chủ
-            </Button>
-          </Alert>
-        </Container>
-      </div>
+      <Container className="py-5 text-center">
+        <Alert variant="warning">Không tìm thấy khóa học</Alert>
+        <Button onClick={() => navigate("/")}>Quay về trang chủ</Button>
+      </Container>
     );
   }
-
-  const totalVideos = course.chapters?.reduce((sum, ch) => sum + (ch.videos?.length || 0), 0) || 0;
-  const previewVideos = course.chapters?.reduce(
-    (sum, ch) => sum + (ch.videos?.filter(v => v.isPreview).length || 0),
-    0
-  ) || 0;
+  // 👉 Tính tổng video và preview
+  const totalVideos =
+    course.chapters?.reduce(
+      (sum, ch) => sum + (ch.videos?.length || 0),
+      0
+    ) || 0;
+  const previewVideos =
+    course.chapters?.reduce(
+      (sum, ch) => sum + (ch.videos?.filter((v) => v.isPreview).length || 0),
+      0
+    ) || 0;
 
   return (
     <div className="course-detail-page">
       <Container className="py-4">
-        <Button variant="link" onClick={() => navigate("/")} className="back-button">
+        <Button variant="link" onClick={() => navigate("/")} className="mb-3">
           ← Quay lại trang chủ
         </Button>
-        
-        <Row>
-          {/* Main Content */}
-          <Col lg={8}>
-            {/* Video Player */}
-            <Card className="video-player-card mb-4">
-              <Card.Body className="p-0">
-                {loadingVideo ? (
-                  <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-3">Đang tải video...</p>
-                  </div>
-                ) : videoError ? (
-                  <Alert variant="warning" className="m-3">
-                    <Alert.Heading>Không thể xem video</Alert.Heading>
-                    <p>{videoError}</p>
-                    {videoError.includes("Membership") && (
-                      <Button 
-                        variant="primary" 
+
+        {/* 🟩 Tabs Navigation */}
+        <Tabs
+          id="course-tabs"
+          activeKey={activeTab}
+          onSelect={(k) => setActiveTab(k)}
+          className="mb-4"
+        >
+          <Tab eventKey="video" title="🎬 Video">
+            <Row>
+              <Col lg={8}>
+                <Card className="video-player-card mb-4">
+                  <Card.Body className="p-0">
+                    {loadingVideo ? (
+                      <div className="text-center py-5">
+                        <Spinner animation="border" />
+                        <p>Đang tải video...</p>
+                      </div>
+                    ) : videoError ? (
+                      <Alert variant="danger" className="m-3">
+                        {videoError}
+                      </Alert>
+                    ) : selectedVideo ? (
+                      <div className="video-container">
+                        <iframe
+                          width="100%"
+                          height="450"
+                          src={getVideoEmbedUrl(selectedVideo.videoURL)}
+                          title={selectedVideo.videoName}
+                          frameBorder="0"
+                          allowFullScreen
+                        ></iframe>
+                        <div className="p-3">
+                          <h5>{selectedVideo.videoName}</h5>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-center py-5">Chưa chọn video</p>
+                    )}
+                  </Card.Body>
+                </Card>
+
+                {/* 🟨 Giới thiệu khóa học + Membership info */}
+                <Card className="course-overview-card">
+                  <Card.Body>
+                    <h5>Giới thiệu khóa học</h5>
+                    <p>
+                      Khóa học <strong>{course.courseName}</strong> gồm{" "}
+                      {course.chapters?.length} chương, tổng cộng{" "}
+                      {totalVideos} video học tập chất lượng cao.
+                    </p>
+
+                    {!hasMembership ? (
+                      <p className="mb-0">
+                        <Badge bg="success" className="me-1">
+                          Miễn phí
+                        </Badge>
+                        Bạn có thể xem trước {previewVideos} video miễn phí
+                        trước khi đăng ký membership.
+                      </p>
+                    ) : (
+                      <p className="mb-0 text-success">
+                        <Badge bg="success" className="me-1">
+                          Premium
+                        </Badge>
+                        Bạn đã có quyền truy cập toàn bộ khóa học!
+                      </p>
+                    )}
+                  </Card.Body>
+                </Card>
+              </Col>
+
+              {/* ====== Sidebar nội dung khóa học ====== */}
+              <Col lg={4}>
+                <Card className="course-content-card sticky-top">
+                  <Card.Header>
+                    <h5>Nội dung khóa học</h5>
+                  </Card.Header>
+                  <Card.Body className="p-0">
+                    <Accordion defaultActiveKey="0" flush>
+                      {course.chapters?.map((chapter, idx) => (
+                        <Accordion.Item
+                          eventKey={idx.toString()}
+                          key={chapter.chapterID}
+                        >
+                          <Accordion.Header>
+                            {chapter.chapterName}
+                          </Accordion.Header>
+                          <Accordion.Body className="p-0">
+                            {chapter.videos?.map((video) => (
+                              <div
+                                key={video.videoID}
+                                className={`p-2 video-item ${
+                                  selectedVideo?.videoID === video.videoID
+                                    ? "bg-light"
+                                    : ""
+                                }`}
+                                onClick={() => setSelectedVideo(video)}
+                              >
+                                🎥 {video.videoName}{" "}
+                                {video.isPreview ? (
+                                  <Badge bg="info" className="ms-2">
+                                    Preview
+                                  </Badge>
+                                ) : (
+                                  <Badge bg="warning" text="dark" className="ms-2">
+                                    Premium
+                                  </Badge>
+                                )}
+                              </div>
+                            ))}
+                          </Accordion.Body>
+                        </Accordion.Item>
+                      ))}
+                    </Accordion>
+                  </Card.Body>
+                  {!hasMembership && (
+                    <Card.Footer className="text-center">
+                      <Button
+                        variant="primary"
+                        className="w-100"
                         onClick={() => navigate("/membership")}
                       >
-                        Đăng ký Membership
+                        <i className="bi bi-unlock me-2"></i>
+                        Đăng ký Membership để mở khóa toàn bộ
                       </Button>
-                    )}
-                  </Alert>
-                ) : selectedVideo ? (
-                  <div className="video-container">
-                    <iframe
-                      width="100%"
-                      height="450"
-                      src={getVideoEmbedUrl(selectedVideo.videoURL)}
-                      title={selectedVideo.videoName}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                    <div className="video-info p-3">
-                      <h4>{selectedVideo.videoName}</h4>
-                      {selectedVideo.isPreview && !hasMembership && (
-                        <Badge bg="success">Xem trước miễn phí</Badge>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="no-video-selected text-center py-5">
-                    <i className="bi bi-play-circle" style={{ fontSize: '4rem', color: '#ccc' }}></i>
-                    <h5 className="mt-3">Chọn một video để bắt đầu học</h5>
-                    <p className="text-muted">Hãy chọn video từ danh sách bên phải</p>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-
-            {/* Course Overview */}
-            <Card className="course-overview-card">
-              <Card.Body>
-                <h5>Giới thiệu khóa học</h5>
-                <p>
-                  Khóa học <strong>{course.courseName}</strong> bao gồm {course.chapters?.length} chương, 
-                  tổng cộng {totalVideos} video học tập chất lượng cao.
-                </p>
-                {!hasMembership && (
-                  <p className="mb-0">
-                    <Badge bg="success" className="me-1">Miễn phí</Badge>
-                    Bạn có thể xem trước {previewVideos} video miễn phí trước khi đăng ký membership.
-                  </p>
-                )}
-                {hasMembership && (
-                  <p className="mb-0 text-success">
-                    <Badge bg="success" className="me-1">Premium</Badge>
-                    Bạn đã có quyền truy cập toàn bộ khóa học!
-                  </p>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-
-          {/* Sidebar - Course Content */}
-          <Col lg={4}>
-            <Card className="course-content-card sticky-top">
-              <Card.Header>
-                <h5>Nội dung khóa học</h5>
-              </Card.Header>
-              <Card.Body className="p-0">
-                <Accordion defaultActiveKey="0" flush>
-                  {course.chapters?.map((chapter, idx) => (
-                    <Accordion.Item eventKey={idx.toString()} key={chapter.chapterID}>
-                      <Accordion.Header>
-                        <div>
-                          <strong>{chapter.chapterName}</strong>
-                          <small className="text-muted d-block mt-1">
-                            {chapter.videos?.length || 0} video{chapter.videos?.length !== 1 ? 's' : ''}
-                          </small>
-                        </div>
-                      </Accordion.Header>
-                      <Accordion.Body className="p-0">
-                        {chapter.videos?.map(video => {
-                          return (
-                            <div
-                              key={video.videoID}
-                              className={`video-item ${selectedVideo?.videoID === video.videoID ? 'active' : ''}`}
-                              onClick={() => handleVideoSelect(video)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <div className="video-item-content d-flex align-items-start">
-                                <i 
-                                  className="bi bi-play-circle me-3" 
-                                  style={{ fontSize: '1.2rem', marginTop: '0.1rem' }}
-                                ></i>
-                                <div className="flex-grow-1">
-                                  <div className="video-name">{video.videoName}</div>
-                                  <div className="mt-1">
-                                    {video.isPreview ? (
-                                      <Badge bg="info" className="me-1">Preview</Badge>
-                                    ) : (
-                                      <Badge bg="warning" text="dark" className="me-1">Premium</Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }) || (
-                          <div className="p-3 text-muted text-center">
-                            <i className="bi bi-film me-2"></i>
-                            Chưa có video trong chương này
-                          </div>
-                        )}
-                      </Accordion.Body>
-                    </Accordion.Item>
-                  )) || (
-                    <div className="p-3 text-muted text-center">
-                      <i className="bi bi-collection me-2"></i>
-                      Khóa học chưa có nội dung
-                    </div>
+                    </Card.Footer>
                   )}
-                </Accordion>
-              </Card.Body>
-              
-              {!hasMembership && (
-                <Card.Footer className="text-center">
-                  <Button 
-                    variant="primary" 
-                    className="w-100 membership-cta-btn"
-                    onClick={() => navigate("/membership")}
-                  >
-                    <i className="bi bi-unlock me-2"></i>
-                    Đăng ký Membership để mở khóa toàn bộ
+                </Card>
+              </Col>
+            </Row>
+          </Tab>
+
+          {/* ---- Tab QUIZ ---- */}
+          <Tab eventKey="quiz" title="🧠 Quiz">
+            {!hasMembership ? (
+              <div className="text-center py-5">
+                <Alert variant="warning" className="d-inline-block">
+                  ❗ Bạn cần đăng ký gói thành viên để truy cập quiz.
+                </Alert>
+                <div className="mt-3">
+                  <Button variant="primary" onClick={() => navigate("/membership")}>
+                    Xem các gói thành viên
                   </Button>
-                </Card.Footer>
-              )}
-            </Card>
-          </Col>
-        </Row>
+                </div>
+              </div>
+            ) : loadingQuizzes ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" /> <p>Đang tải quiz...</p>
+              </div>
+            ) : quizError ? (
+              <Alert variant="danger" className="m-3">{quizError}</Alert>
+            ) : quizzes.length === 0 ? (
+              <div className="text-center py-5 text-muted">
+                <i className="bi bi-file-earmark"></i>
+                <p>Chưa có quiz nào cho khóa học này</p>
+              </div>
+            ) : (
+              <Row>
+                {quizzes.map((quiz) => (
+                  <Col md={6} lg={4} key={quiz.quizID} className="mb-3">
+                    <Card className="quiz-card">
+                      <Card.Body>
+                        <h6>{quiz.title}</h6>
+                        <Button
+                          variant="success"
+                          onClick={() => navigate(`/quiz/start/${quiz.quizID}`)}
+                        >
+                          Bắt đầu Quiz
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </Tab>
+
+          {/* ---- Tab FLASHCARD ---- */}
+          <Tab eventKey="flashcard" title="📚 Flashcard">
+            {!hasMembership ? (
+              <div className="text-center py-5">
+                <Alert variant="warning" className="d-inline-block">
+                  ❗ Bạn cần đăng ký gói thành viên để truy cập flashcard.
+                </Alert>
+                <div className="mt-3">
+                  <Button variant="primary" onClick={() => navigate("/membership")}>
+                    Xem các gói thành viên
+                  </Button>
+                </div>
+              </div>
+            ) : loadingFlashcards ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" /> <p>Đang tải flashcards...</p>
+              </div>
+            ) : flashcardError ? (
+              <Alert variant="danger" className="m-3">{flashcardError}</Alert>
+            ) : flashcardSets.length === 0 ? (
+              <div className="text-center py-5 text-muted">
+                <i className="bi bi-collection"></i>
+                <p>Chưa có bộ flashcard nào cho khóa học này</p>
+              </div>
+            ) : (
+              <Row>
+                {flashcardSets.map((set) => (
+                  <Col md={6} lg={4} key={set.setID} className="mb-3">
+                    <Card className="flashcard-card h-100 shadow-sm">
+                      <Card.Body>
+                        <h6 className="fw-bold">{set.title}</h6>
+                        <p className="text-muted small">{set.description}</p>
+                        <Button
+                          variant="primary"
+                          onClick={() => handleViewFlashcards(set.setID, set.title)}
+                        >
+                          Học Flashcard
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </Tab>
+        </Tabs>
       </Container>
     </div>
   );

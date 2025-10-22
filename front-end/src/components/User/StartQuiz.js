@@ -134,7 +134,7 @@ const StartQuiz = () => {
 
   // Handle back to quiz list
   const handleBackToList = () => {
-    navigate("/quiz");
+    navigate(-1);
   };
 
   // Loading state
@@ -156,7 +156,7 @@ const StartQuiz = () => {
     return (
       <div className="start-quiz-page">
         <Container>
-          <Button variant="link" onClick={() => navigate("/quiz")} className="back-button">
+          <Button variant="link" onClick={() => navigate("/")} className="back-button">
             <FontAwesomeIcon icon={faArrowLeft} />
             Quay lại danh sách quiz
           </Button>

@@ -1,7 +1,7 @@
 // src/middleware/QuizAPI.js
 import axios from "axios";
 
-const API_URL = "https://beerier-superlogically-maxwell.ngrok-free.dev/api/user/quiz";
+const API_URL = `${process.env.REACT_APP_API_URL}/api/user/quiz`;
 
 const api = axios.create({
   baseURL: API_URL,

@@ -1,7 +1,7 @@
 // src/middleware/userAPI.js
 import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL || "https://beerier-superlogically-maxwell.ngrok-free.dev//api";
+const API_URL = `${process.env.REACT_APP_API_URL}/api`;
 
 // 🧩 Hàm hiển thị thông báo lỗi rõ ràng
 const showErrorPopup = (error) => {

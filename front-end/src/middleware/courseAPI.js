@@ -1,5 +1,5 @@
 // middleware/courseAPI.js
-const BASE_URL = "https://beerier-superlogically-maxwell.ngrok-free.dev/api";
+const BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
 
 // ============= COURSE APIs =============
 const getAuthHeaders = () => {

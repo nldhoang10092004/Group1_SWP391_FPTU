@@ -101,7 +101,7 @@ const Flashcard = () => {
   const handleClose = () => {
     showToast("Đang quay về trang chủ...", "info");
     setTimeout(() => {
-      navigate("/flashcards");
+      navigate(-1);
     }, 1000);
   };
 

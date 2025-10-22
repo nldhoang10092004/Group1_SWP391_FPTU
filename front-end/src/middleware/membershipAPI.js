@@ -1,6 +1,6 @@
 // src/middleware/membershipAPI.js
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://beerier-superlogically-maxwell.ngrok-free.dev/api';
+const API_URL = `${process.env.REACT_APP_API_URL}/api`;
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("accessToken");

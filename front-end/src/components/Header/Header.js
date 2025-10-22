@@ -144,7 +144,6 @@ const Header = () => {
         displayName = userEmail.split("@")[0];
         userEmailFinal = userEmail;
       } else {
-        // Nếu backend không trả về gì, dùng input của user
         displayName = emailOrUsername.includes("@") 
           ? emailOrUsername.split("@")[0] 
           : emailOrUsername;
@@ -368,7 +367,7 @@ const Header = () => {
 
             <Nav className="header-actions">
               {!user ? (
-                <div className="auth-buttons"> {/* Use new class for styling */}
+                <div className="auth-buttons"> 
                   <Button
                     className="login-btn"
                     onClick={() => {

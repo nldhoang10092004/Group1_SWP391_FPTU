@@ -1,7 +1,7 @@
 // src/middleware/paymentAPI.js
 import axios from "axios";
 
-const API_BASE = "https://beerier-superlogically-maxwell.ngrok-free.dev/api/payment";
+const API_BASE = `${process.env.REACT_APP_API_URL}/api/payment`;
 
 /**
  * Tạo thanh toán - Backend trả về paymentUrl để redirect

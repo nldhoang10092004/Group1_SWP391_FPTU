@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import App from './App';
 import HomePage from './components/Home/HomePage';
 import Home from './components/User/Home'; 
-import LessonList from './components/User/LessonList';
 import ForgotPass from "./components/Password/Forgotpass";
 import ResetPassword from "./components/Password/ResetPassword";
 import Profile from "./components/Profile/Profile";
@@ -23,8 +22,6 @@ import PaymentSuccessSubscription from "./components/User/PaymentSuccessSubscrip
 import CreateEditQuizz from './components/Teacher/CreateEditQuizz';
 import CreateEditFlashcard from './components/Teacher/CreateEditFlashcard';
 import AdminDashboard  from "./components/Admin/AdminDashboard";
-import Quiz  from "./components/User/QuizList";
-import QuizList from './components/User/QuizList';
 import StartQuiz from "./components/User/StartQuiz";
 import FlashcardList from './components/User/FlashcardList';
 
@@ -52,7 +49,7 @@ root.render(
         <Route path="writingpractice" element={<WritingPractice />} />
         <Route path="forgotpassword" element={<ForgotPass />} />
         <Route path="reset-password" element={<ResetPassword />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="/teacher/dashboard" element={<Dashboard />} />
         <Route path="guide" element={<Guide />} />
         <Route path="createlesson" element={<CreateLesson />} />
         <Route path="editlesson" element={<EditLesson />} />
@@ -64,13 +61,11 @@ root.render(
         <Route path="/flashcards/:setId" element={<Flashcard />} />
         <Route path="grammar" element={<Grammar />} />
         <Route path="payment-success" element={<PaymentSuccessSubscription />} />
-        <Route path="/create-quiz" element={<CreateEditQuizz />} />
-        <Route path="/edit-quiz/:id" element={<CreateEditQuizz />} />
-        <Route path="/create-flashcard" element={<CreateEditFlashcard />} />
-        <Route path="/edit-flashcard/:id" element={<CreateEditFlashcard />} />
-        <Route path="admindashboard" element={<AdminDashboard />} />
-        <Route path="/quiz" element={<QuizList />} />
-        <Route path="/quiz/course/:id" element={<Quiz />} />
+        <Route path="/teacher/create-quiz" element={<CreateEditQuizz />} />
+        <Route path="/teacher/edit-quiz/:id" element={<CreateEditQuizz />} />
+        <Route path="/teacher/create-flashcard" element={<CreateEditFlashcard />} />
+        <Route path="/teacher/edit-flashcard/:id" element={<CreateEditFlashcard />} />
+        <Route path="/admin/ashboard" element={<AdminDashboard />} />
         <Route path="/quiz/start/:quizId" element={<StartQuiz />} />
 
         <Route path="profile" element={

@@ -1,7 +1,7 @@
 // src/middleware/planAPI.js
 import axios from "axios";
 
-const API_URL = "https://beerier-superlogically-maxwell.ngrok-free.dev/api/public/plan";
+const API_URL = `${process.env.REACT_APP_API_URL}/api/public/plan`;
 
 export const getPlans = async () => {
   try {
