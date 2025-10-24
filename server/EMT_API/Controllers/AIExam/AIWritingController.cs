@@ -25,9 +25,7 @@ namespace EMT_API.Controllers.AI
 
         private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // ================================
-        // 1️⃣ Sinh đề Writing Task 2
-        // ================================
+
         [HttpPost("generate")]
         public async Task<ActionResult<AIWritingPromptResponse>> GeneratePrompt()
         {
