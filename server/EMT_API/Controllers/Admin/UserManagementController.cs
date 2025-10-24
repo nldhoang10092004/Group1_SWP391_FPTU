@@ -166,30 +166,6 @@ public class UserManagementController : ControllerBase
         return Ok(new { message = "Account is activate!" });
     }
 
-    [HttpPut("{id}")]
-    [Authorize(Roles = "ADMIN")]
-    public async Task<IActionResult> UpdateUserAccount(int id, [FromBody] UpdateUserAccountRequest request)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var user = await _db.Accounts.FindAsync(id);
-        if (user == null)
-            return NotFound($"User với ID {id} không tồn tại.");
-
-        // Cập nhật những trường được gửi lên (nếu không null hoặc không rỗng)
-        if (!string.IsNullOrEmpty(request.Role))
-            user.Role = request.Role;
-        if (!string.IsNullOrEmpty(request.Status))
-            user.Status = request.Status;
-        if (!string.IsNullOrEmpty(request.FullName))
-            user.Username = request.FullName;
-        // Thêm cập nhật cho các trường khác nếu có
-
-        await _db.SaveChangesAsync();
-        return Ok(user);
-    }
-
     [HttpGet("search")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> SearchUsers([FromQuery] string? q, [FromQuery] string? role, [FromQuery] string? status)
