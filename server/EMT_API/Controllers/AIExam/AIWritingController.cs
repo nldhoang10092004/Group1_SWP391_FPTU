@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-
+using EMT_API.Utils;
 namespace EMT_API.Controllers.AI
 {
     [ApiController]
@@ -25,12 +25,13 @@ namespace EMT_API.Controllers.AI
 
         private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // ================================
-        // 1️⃣ Sinh đề Writing Task 2
-        // ================================
+
         [HttpPost("generate")]
         public async Task<ActionResult<AIWritingPromptResponse>> GeneratePrompt()
         {
+            bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, GetUserId());
+            if (!hasMembership)
+                return StatusCode(403, new { message = "Membership required or expired." });
             var (title, content) = await _ai.GenerateWritingPromptAsync();
             return Ok(new AIWritingPromptResponse
             {
@@ -42,6 +43,9 @@ namespace EMT_API.Controllers.AI
         [HttpPost("submit")]
         public async Task<ActionResult<AIWritingFeedbackResponse>> Submit([FromBody] AIWritingSubmitRequest req)
         {
+            bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, GetUserId());
+            if (!hasMembership)
+                return StatusCode(403, new { message = "Membership required or expired." });
             if (req == null || string.IsNullOrWhiteSpace(req.AnswerText))
                 return BadRequest("AnswerText cannot be empty.");
             if (string.IsNullOrWhiteSpace(req.PromptContent))
@@ -72,6 +76,13 @@ namespace EMT_API.Controllers.AI
                 Feedback = feedback
             });
         }
+
+        private async Task<bool> CheckMembership()
+        {
+            var userId = GetUserId();
+            return await MembershipUtil.HasActiveMembershipAsync(_db, userId);
+        }
+
 
     }
 }
