@@ -24,6 +24,7 @@ import CreateEditFlashcard from './components/Teacher/CreateEditFlashcard';
 import AdminDashboard  from "./components/Admin/AdminDashboard";
 import StartQuiz from "./components/User/StartQuiz";
 import FlashcardList from './components/User/FlashcardList';
+import SpeakingPractice from './components/User/SpeakingPractice';
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -67,6 +68,7 @@ root.render(
         <Route path="/teacher/edit-flashcard/:id" element={<CreateEditFlashcard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/quiz/start/:quizId" element={<StartQuiz />} />
+        <Route path="speakingpractice" element={<SpeakingPractice />} />
 
         <Route path="profile" element={
           <ProtectedRoute>
