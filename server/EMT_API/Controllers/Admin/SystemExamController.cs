@@ -25,7 +25,80 @@ namespace EMT_API.Controllers.Admin
         // ---------------------------
         // 1️⃣ Tạo bài kiểm tra toàn hệ thống
         // ---------------------------
-        
+        [HttpPost("Create")]
+        public async Task<IActionResult> CreateSystemExam([FromBody] CreateSystemExamRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Title))
+                return BadRequest("Exam title is required.");
+
+            // Nếu CourseID hiện vẫn đang NOT NULL, ta tạm gán CourseID = 1 hoặc một ID course mặc định
+            var quiz = new Models.Quiz
+            {
+                CourseID = null, // 👈 nếu bạn đã mở NULL thì có thể để CourseID = null
+                Title = request.Title,
+                Description = request.Description,
+                QuizType = 1, // 1 = System Exam
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.Quizzes.Add(quiz);
+            await _db.SaveChangesAsync();
+
+            // Nếu có nhóm câu hỏi
+            if (request.Groups != null && request.Groups.Any())
+            {
+                foreach (var groupReq in request.Groups)
+                {
+                    var group = new QuestionGroup
+                    {
+                        QuizID = quiz.QuizID
+                        // Không có GroupName/GroupDescription nên chỉ lưu QuizID
+                    };
+
+                    _db.QuestionGroups.Add(group);
+                    await _db.SaveChangesAsync();
+
+                    if (groupReq.Questions != null && groupReq.Questions.Any())
+                    {
+                        foreach (var q in groupReq.Questions)
+                        {
+                            var question = new Question
+                            {
+                                QuizID = quiz.QuizID,
+                                GroupID = group.GroupID,
+                                QuestionType = q.QuestionType,
+                                Content = q.Content,
+                                ScoreWeight = q.ScoreWeight,
+                                QuestionOrder = q.QuestionOrder
+                            };
+                            _db.Questions.Add(question);
+                        }
+                    }
+                }
+            }
+            else if (request.Questions != null && request.Questions.Any())
+            {
+                // Nếu không có nhóm thì tạo trực tiếp câu hỏi
+                foreach (var q in request.Questions)
+                {
+                    var question = new Question
+                    {
+                        QuizID = quiz.QuizID,
+                        GroupID = null,
+                        QuestionType = q.QuestionType,
+                        Content = q.Content,
+                        ScoreWeight = q.ScoreWeight,
+                        QuestionOrder = q.QuestionOrder
+                    };
+                    _db.Questions.Add(question);
+                }
+            }
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new { message = "System exam created successfully", quizId = quiz.QuizID });
+        }
         // ---------------------------
         // 2️⃣ Xem tất cả bài kiểm tra toàn hệ thống
         // ---------------------------
