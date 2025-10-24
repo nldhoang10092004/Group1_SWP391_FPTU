@@ -171,18 +171,16 @@ public class AuthController : ControllerBase
 
     // ---------------------------
     // LOGIN
-    // ---------------------------
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
-        // ✅ Validate input
+        // ✅ Validate input rút gọn
         if (string.IsNullOrWhiteSpace(req.EmailOrUsername) || string.IsNullOrWhiteSpace(req.Password))
             return BadRequest("Vui lòng nhập đầy đủ email/username và mật khẩu.");
 
-        // ✅ Username / email format: chỉ a-z A-Z 0-9 _ - @, tối thiểu 8 ký tự
-        var userPattern = @"^[a-zA-Z0-9_\-@]{8,}$";
-        if (!System.Text.RegularExpressions.Regex.IsMatch(req.EmailOrUsername, userPattern))
-            return BadRequest("Tên đăng nhập/email không hợp lệ (chỉ gồm chữ, số, _, -, @ và tối thiểu 8 ký tự).");
+        // ⛳ Chỉ kiểm tra độ dài >= 8, bỏ regex định dạng
+        if (req.EmailOrUsername.Trim().Length < 8)
+            return BadRequest("Email/username phải có tối thiểu 8 ký tự.");
 
         // ✅ Password format: tối thiểu 8 ký tự, có ít nhất 1 chữ thường + 1 chữ hoa
         var passPattern = @"^(?=.*[a-z])(?=.*[A-Z]).{8,}$";
@@ -211,7 +209,7 @@ public class AuthController : ControllerBase
 
         SetRefreshCookie(rt, exp);
 
-        // ✅ Xác định redirect URL theo Role
+        // ✅ Redirect theo role
         string redirectUrl = user.Role switch
         {
             "ADMIN" => "http://localhost:3000/admin/dashboard",
@@ -219,7 +217,6 @@ public class AuthController : ControllerBase
             _ => "http://localhost:3000/home"
         };
 
-        // ✅ Gửi response JSON cho FE
         return Ok(new
         {
             AccountID = user.AccountID,
@@ -229,6 +226,7 @@ public class AuthController : ControllerBase
             RedirectUrl = redirectUrl
         });
     }
+
 
 
     // ---------------------------

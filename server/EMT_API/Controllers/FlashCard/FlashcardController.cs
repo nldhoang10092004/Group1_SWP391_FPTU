@@ -1,5 +1,6 @@
 ﻿using EMT_API.Data;
 using EMT_API.DTOs.Flashcard;
+using EMT_API.DTOs.FlashCard;
 using EMT_API.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -156,6 +157,73 @@ namespace EMT_API.Controllers
             await _db.SaveChangesAsync();
 
             return Ok(new { message = "Flashcard item added successfully", itemId = item.ItemId });
+        }
+
+        [HttpPut("set/{setId:int}")]
+        public async Task<IActionResult> UpdateSet(int setId, [FromBody] UpdateFlashcardSetRequest request)
+        {
+            var set = await _db.FlashcardSets.FindAsync(setId);
+            if (set == null)
+                return NotFound();
+
+            set.Title = request.Title;
+            set.Description = request.Description;
+
+            _db.FlashcardSets.Update(set);
+            await _db.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpPut("item/{itemId:int}")]
+        public async Task<IActionResult> UpdateItem(int itemId, [FromBody] CreateFlashcardItemRequest request)
+        {
+            var item = await _db.FlashcardItems.FindAsync(itemId);
+            if (item == null)
+                return NotFound();
+
+            item.FrontText = request.FrontText;
+            item.BackText = request.BackText;
+            item.Example = request.Example;
+
+            _db.FlashcardItems.Update(item);
+            await _db.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpDelete("set/{setId:int}")]
+        public async Task<IActionResult> DeleteSet(int setId)
+        {
+            var set = await _db.FlashcardSets
+                .Include(s => s.FlashcardItems)
+                .FirstOrDefaultAsync(s => s.SetId == setId);
+
+            if (set == null)
+                return NotFound();
+
+            // Xóa tất cả flashcard item trước
+            if (set.FlashcardItems.Any())
+                _db.FlashcardItems.RemoveRange(set.FlashcardItems);
+
+            // Sau đó xóa flashcard set
+            _db.FlashcardSets.Remove(set);
+            await _db.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpDelete("item/{itemId:int}")]
+        public async Task<IActionResult> DeleteItem(int itemId)
+        {
+            var item = await _db.FlashcardItems.FindAsync(itemId);
+            if (item == null)
+                return NotFound();
+
+            _db.FlashcardItems.Remove(item);
+            await _db.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }
