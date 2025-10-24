@@ -134,7 +134,6 @@ const Header = () => {
       
       const { accountID, accessToken, expiresIn, email: userEmail, username: userName } = response.data;
 
-      // ✅ FIX: Xử lý khi backend không trả về email/username
       let displayName = "";
       let userEmailFinal = "";
       
@@ -168,11 +167,15 @@ const Header = () => {
       showToastNotification("🎉 Đăng nhập thành công! Chào mừng bạn quay lại.", "success");
 
       setTimeout(() => {
-        setShowAuthModal(false);
-        resetLoginForm();
-        navigate("/home");
-        window.location.reload();
-      }, 1500);
+  setShowAuthModal(false);
+  resetLoginForm();
+
+  const redirectUrl = response.data.redirectUrl || "/home";
+  navigate(redirectUrl);
+
+  window.location.href = redirectUrl;
+}, 1500);
+
     } catch (err) {
       console.error("❌ Lỗi đăng nhập:", err);
       console.error("❌ Response data:", err.response?.data);

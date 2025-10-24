@@ -9,7 +9,7 @@ import { faSave, faTimes, faEdit, faPlus, faQuestion, faInfoCircle, faTags, faBo
 
 const CreateEditFlashcard = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get ID from URL for edit mode
+  const { id } = useParams(); 
   const isEditMode = !!id;
 
   const [flashcardData, setFlashcardData] = useState({

@@ -11,7 +11,6 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Users, DollarSign, BookOpen, TrendingUp, AlertCircle, MessageSquare, Settings, ArrowLeft, Shield, UserCheck, UserX, Eye, Trash2, Edit, Plus, Download, Upload, Tag, Star, Calendar, Clock } from "lucide-react";
-import { authService } from "./utils/supabase/auth"; // Assuming this is needed, though not directly used in the mock
 import { toast } from "sonner";
 import './admin-dashboard-styles.scss';
 
