@@ -34,7 +34,7 @@ namespace EMT_API.Controllers.Admin
             // Nếu CourseID hiện vẫn đang NOT NULL, ta tạm gán CourseID = 1 hoặc một ID course mặc định
             var quiz = new Models.Quiz
             {
-                CourseID = null, // 👈 nếu bạn đã mở NULL thì có thể để CourseID = null
+                CourseID = 0, // 👈 nếu bạn đã mở NULL thì có thể để CourseID = null
                 Title = request.Title,
                 Description = request.Description,
                 QuizType = 1, // 1 = System Exam
