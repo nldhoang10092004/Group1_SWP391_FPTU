@@ -133,6 +133,9 @@ namespace EMT_API
             builder.Services.AddScoped<AIWritingService>();
             builder.Services.AddScoped<AISpeakingService>();
 
+            //Google Drive Service
+            builder.Services.AddSingleton<GoogleDriveService>();
+
 
             //Json accept /n
             builder.Services.AddControllers()
