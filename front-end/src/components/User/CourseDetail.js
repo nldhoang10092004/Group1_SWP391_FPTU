@@ -160,7 +160,7 @@ const CourseDetail = () => {
   return (
     <div className="course-detail-page">
       <Container className="py-4">
-        <Button variant="link" onClick={() => navigate("/")} className="mb-3">
+        <Button variant="link" onClick={() => navigate(-1)} className="mb-3">
           ← Quay lại trang chủ
         </Button>
 

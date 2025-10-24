@@ -102,7 +102,7 @@ const CreateEditQuiz = () => {
     const newQuestions = [...quizData.questions];
     newQuestions[qIndex].options = newQuestions[qIndex].options.filter((_, idx) => idx !== optIndex);
     if (newQuestions[qIndex].correctAnswer === newQuestions[qIndex].options[optIndex]) {
-        newQuestions[qIndex].correctAnswer = ""; // Clear correct answer if deleted
+        newQuestions[qIndex].correctAnswer = ""; 
     }
     setQuizData({ ...quizData, questions: newQuestions });
   };
@@ -137,7 +137,7 @@ const CreateEditQuiz = () => {
         await axios.post("http://localhost:5293/api/quizzes", quizData);
         setSuccess("Tạo Quiz thành công!");
       }
-      setTimeout(() => navigate("/dashboard"), 1500); // Redirect after a short delay
+      setTimeout(() => navigate("/teacher/dashboard"), 1500); // Redirect after a short delay
     } catch (err) {
       setError("Đã có lỗi xảy ra khi lưu Quiz.");
       console.error("Error saving quiz:", err);

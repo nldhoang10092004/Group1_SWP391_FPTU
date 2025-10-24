@@ -498,6 +498,8 @@ const Home = () => {
                           navigate("/grammar");
                          } else if (skill.title === "Quizz") {
                           navigate("/quiz");
+                          } else if (skill.title === "Luyện nói") {
+                          navigate("/speakingpractice");
                         } else {
                           alert(`Chức năng "${skill.title}" đang được phát triển!`);
                         }
