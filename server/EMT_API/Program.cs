@@ -129,6 +129,18 @@ namespace EMT_API
             builder.Services.AddHttpClient<PayOSService>();
             builder.Services.AddScoped<PayOSService>();
 
+            //AI Exam Services
+            builder.Services.AddScoped<AIWritingService>();
+
+            //Json accept /n
+            builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Encoder =
+            System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+    });
+
+
             // ===== CORS =====
             const string MyCors = "_myCors";
 
