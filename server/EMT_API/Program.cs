@@ -131,6 +131,8 @@ namespace EMT_API
 
             //AI Exam Services
             builder.Services.AddScoped<AIWritingService>();
+            builder.Services.AddScoped<AISpeakingService>();
+
 
             //Json accept /n
             builder.Services.AddControllers()
