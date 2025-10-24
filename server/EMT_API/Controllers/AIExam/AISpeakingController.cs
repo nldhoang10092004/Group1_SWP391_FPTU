@@ -25,23 +25,9 @@ namespace EMT_API.Controllers.AI
         private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
 
-        [HttpPost("transcribe")]
-        [Consumes("multipart/form-data")]
-        [RequestSizeLimit(25_000_000)]
-        public async Task<IActionResult> Transcribe([FromForm] AudioUploadRequest request)
-        {
-            bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, GetUserId());
-            if (!hasMembership)
-                return StatusCode(403, new { message = "Membership required or expired." });
-            var file = request.File;
-            if (file == null || file.Length == 0)
-                return BadRequest("Please upload a valid audio file.");
-
-            var transcript = await _ai.TranscribeAsync(file);
-            return Ok(new { transcript });
-        }
-
-
+        // ===========================
+        // 🔹 Generate vẫn giữ nguyên
+        // ===========================
         [HttpPost("generate")]
         public async Task<IActionResult> GeneratePrompt()
         {
@@ -53,26 +39,36 @@ namespace EMT_API.Controllers.AI
             return Ok(new { Title = title, Content = content });
         }
 
-        [HttpPost("grade")]
-        public async Task<IActionResult> Grade([FromBody] AISpeakingSubmitRequest req)
+
+        // ===========================
+        // 🔹 Submit gộp Transcribe + Grade
+        // ===========================
+        [HttpPost("submit")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(25_000_000)]
+        public async Task<IActionResult> Submit([FromForm] AISpeakingSubmitAudioRequest req)
         {
             bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, GetUserId());
             if (!hasMembership)
                 return StatusCode(403, new { message = "Membership required or expired." });
 
-            if (req == null || string.IsNullOrWhiteSpace(req.Transcript))
-                return BadRequest("Transcript cannot be empty.");
+            if (req.File == null || req.File.Length == 0)
+                return BadRequest("Please upload a valid audio file.");
+
             if (string.IsNullOrWhiteSpace(req.PromptContent))
-                return BadRequest("Missing AI-generated generated question.");
+                return BadRequest("Missing AI-generated prompt.");
 
-            if (string.IsNullOrWhiteSpace(req.Transcript))
-                return BadRequest("Transcript cannot be empty.");
+            // 1️⃣ Transcribe
+            var transcript = await _ai.TranscribeAsync(req.File);
 
+            // 2️⃣ Grade
             var (overall, fluency, lexical, grammar, pronunciation, feedback) =
-                await _ai.GradeSpeakingAsync(req.Transcript, req.PromptContent);
+                await _ai.GradeSpeakingAsync(transcript, req.PromptContent);
 
+            // 3️⃣ Trả về toàn bộ
             return Ok(new
             {
+                Transcript = transcript,
                 Score = overall,
                 Fluency = fluency,
                 LexicalResource = lexical,
