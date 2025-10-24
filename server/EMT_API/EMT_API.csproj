@@ -1,14 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>9a3c482b-c937-496c-b973-31db6beae285</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>9a3c482b-c937-496c-b973-31db6beae285</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<StartupObject>EMT_API.Program</StartupObject>
+	</PropertyGroup>
 
-  <ItemGroup>
+
+	<ItemGroup>
     <PackageReference Include="Deepgram" Version="6.6.0" />
     <PackageReference Include="Google.Apis.Auth" Version="1.72.0" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.72.0.3938" />
@@ -30,6 +32,8 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    <PackageReference Include="xunit.abstractions" Version="2.0.3" />
+    
   </ItemGroup>
 
   <ItemGroup>

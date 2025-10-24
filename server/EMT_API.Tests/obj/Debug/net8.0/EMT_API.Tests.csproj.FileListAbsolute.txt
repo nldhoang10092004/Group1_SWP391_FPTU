@@ -1,0 +1,7 @@
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API.Tests\bin\Debug\net8.0\CoverletSourceRootsMapping_EMT_API.Tests
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API.Tests\obj\Debug\net8.0\EMT_API.Tests.csproj.AssemblyReference.cache
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API.Tests\obj\Debug\net8.0\EMT_API.Tests.GeneratedMSBuildEditorConfig.editorconfig
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API.Tests\obj\Debug\net8.0\EMT_API.Tests.AssemblyInfoInputs.cache
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API.Tests\obj\Debug\net8.0\EMT_API.Tests.AssemblyInfo.cs
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API.Tests\obj\Debug\net8.0\EMT_API.Tests.csproj.CoreCompileInputs.cache
+D:\LearnCSharp\backend\Group1_SWP391_FPTU\server\EMT_API.Tests\obj\Debug\net8.0\EMT_API.Tests.sourcelink.json
