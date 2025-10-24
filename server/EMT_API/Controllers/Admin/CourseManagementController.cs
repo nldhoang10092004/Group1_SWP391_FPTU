@@ -70,66 +70,72 @@ public class CourseManagementController : ControllerBase
         return Ok(data);
     }
 
-    [HttpDelete("{courseId}")]
+    [HttpDelete("delete/{courseId}")]
     public async Task<IActionResult> DeleteCourse(int courseId)
     {
+        // 1️⃣ Lấy Course kèm theo toàn bộ dữ liệu liên quan
         var course = await _db.Courses
             .Include(c => c.CourseChapters)
-                .ThenInclude(ch => ch.CourseVideos)
+            .Include(c => c.CourseVideos)
             .Include(c => c.Quizzes)
                 .ThenInclude(q => q.QuestionGroups)
-                    .ThenInclude(qg => qg.Questions)
+                    .ThenInclude(g => g.Questions)
                         .ThenInclude(qs => qs.Options)
             .Include(c => c.Quizzes)
-                .ThenInclude(q => q.Attempts)
-                    .ThenInclude(a => a.Answers)
+                .ThenInclude(q => q.Questions)
+                    .ThenInclude(qs => qs.Options)
+            .Include(c => c.Requests)
             .FirstOrDefaultAsync(c => c.CourseID == courseId);
 
         if (course == null)
             return NotFound(new { message = "Course not found." });
 
-        // Xóa các phần con
-        foreach (var quiz in course.Quizzes.ToList())
+        // 2️⃣ Xóa các entity phụ trước để tránh lỗi ràng buộc
+
+        // Xóa tất cả Options của Question trong Quiz
+        foreach (var quiz in course.Quizzes)
         {
-            // Xóa Answers trong Attempt
-            foreach (var attempt in quiz.Attempts.ToList())
+            foreach (var questionGroup in quiz.QuestionGroups)
             {
-                _db.Answers.RemoveRange(attempt.Answers);
+                _db.Options.RemoveRange(
+                    questionGroup.Questions.SelectMany(q => q.Options)
+                );
+                _db.Questions.RemoveRange(questionGroup.Questions);
             }
 
-            // Xóa Attempt
-            _db.Attempts.RemoveRange(quiz.Attempts);
+            // Nếu có question không thuộc group
+            _db.Options.RemoveRange(
+                quiz.Questions.SelectMany(q => q.Options)
+            );
+            _db.Questions.RemoveRange(quiz.Questions);
 
-            // Xóa Option, Question, QuestionGroup
-            foreach (var group in quiz.QuestionGroups.ToList())
-            {
-                foreach (var question in group.Questions.ToList())
-                {
-                    _db.Options.RemoveRange(question.Options);
-                }
-                _db.Questions.RemoveRange(group.Questions);
-            }
             _db.QuestionGroups.RemoveRange(quiz.QuestionGroups);
-
-            // Xóa Quiz
-            _db.Quizzes.Remove(quiz);
         }
 
-        // Xóa video trong chapter
-        foreach (var chapter in course.CourseChapters.ToList())
-        {
-            _db.CourseVideos.RemoveRange(chapter.CourseVideos);
-        }
+        // Xóa tất cả Quiz (sau khi xóa question và option)
+        _db.Quizzes.RemoveRange(course.Quizzes);
 
-        // Xóa chapter
+        // Xóa các bảng con khác
+        _db.CourseVideos.RemoveRange(course.CourseVideos);
         _db.CourseChapters.RemoveRange(course.CourseChapters);
+        _db.Requests.RemoveRange(course.Requests);
 
-        // Cuối cùng xóa course
+        // 3️⃣ Cuối cùng, xóa Course
         _db.Courses.Remove(course);
 
-        await _db.SaveChangesAsync();
-
-        return Ok();
+        try
+        {
+            await _db.SaveChangesAsync();
+            return Ok(new { message = "Course and related data deleted successfully." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new
+            {
+                message = "Error deleting course. Please check related data constraints.",
+                error = ex.Message
+            });
+        }
     }
 }
 
