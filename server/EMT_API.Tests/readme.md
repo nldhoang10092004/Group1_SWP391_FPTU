@@ -137,3 +137,10 @@ TestResults.html → Dùng trong phần demo để show 18 test pass
 Swagger → Dùng minh họa 4 case chính (TC01–03–06)
 
 Coverage/index.html → Dùng cho phần “Tối ưu & Mocking”
+
+
+Prompt:
+1. Đây là Repo Github của Project 
+https://github.com/nldhoang10092004/Group1_SWP391_FPTU. Phân tích module Thi Speaking gồm Controller và 3 Service (Prompt, Grading, Transcription) của Backend. Xác định các hàm cần test, đầu vào, đầu ra, edge case và dependency phải mock
+2. Từ những phân tích  về cấu trúc Controller - Service và các service con trong đó, generate ra cho tôi các test case để test các chức năng của Controller, Service đó. Code: { Code của Controller, Service}
+3. Từ các phân tích test case, và code của service và controller, hãy viết các đoạn XUnit code để test từng test case.
