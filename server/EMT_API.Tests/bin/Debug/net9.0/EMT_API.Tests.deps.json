@@ -11,7 +11,7 @@
           "EMT_API": "1.0.0",
           "Microsoft.NET.Test.Sdk": "17.9.0",
           "Moq": "4.20.69",
-          "coverlet.collector": "6.0.0",
+          "coverlet.collector": "6.0.4",
           "xunit": "2.9.2",
           "xunit.runner.visualstudio": "2.5.7"
         },
@@ -65,7 +65,7 @@
           }
         }
       },
-      "coverlet.collector/6.0.0": {},
+      "coverlet.collector/6.0.4": {},
       "Deepgram/6.6.0": {
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.9",
@@ -2743,12 +2743,12 @@
       "path": "castle.core/5.1.1",
       "hashPath": "castle.core.5.1.1.nupkg.sha512"
     },
-    "coverlet.collector/6.0.0": {
+    "coverlet.collector/6.0.4": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-tW3lsNS+dAEII6YGUX/VMoJjBS1QvsxqJeqLaJXub08y1FSjasFPtQ4UBUsudE9PNrzLjooClMsPtY2cZLdXpQ==",
-      "path": "coverlet.collector/6.0.0",
-      "hashPath": "coverlet.collector.6.0.0.nupkg.sha512"
+      "sha512": "sha512-lkhqpF8Pu2Y7IiN7OntbsTtdbpR1syMsm2F3IgX6ootA4ffRqWL5jF7XipHuZQTdVuWG/gVAAcf8mjk8Tz0xPg==",
+      "path": "coverlet.collector/6.0.4",
+      "hashPath": "coverlet.collector.6.0.4.nupkg.sha512"
     },
     "Deepgram/6.6.0": {
       "type": "package",
