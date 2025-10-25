@@ -1,13 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "h39UTbaUxDg=",
+  "dgSpecHash": "Fv1ASPILaFg=",
   "success": true,
   "projectFilePath": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API.Tests\\EMT_API.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\LOQ\\.nuget\\packages\\azure.core\\1.44.1\\azure.core.1.44.1.nupkg.sha512",
     "C:\\Users\\LOQ\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
     "C:\\Users\\LOQ\\.nuget\\packages\\castle.core\\5.1.1\\castle.core.5.1.1.nupkg.sha512",
-    "C:\\Users\\LOQ\\.nuget\\packages\\coverlet.collector\\6.0.0\\coverlet.collector.6.0.0.nupkg.sha512",
+    "C:\\Users\\LOQ\\.nuget\\packages\\coverlet.collector\\6.0.4\\coverlet.collector.6.0.4.nupkg.sha512",
     "C:\\Users\\LOQ\\.nuget\\packages\\deepgram\\6.6.0\\deepgram.6.6.0.nupkg.sha512",
     "C:\\Users\\LOQ\\.nuget\\packages\\google.apis\\1.72.0\\google.apis.1.72.0.nupkg.sha512",
     "C:\\Users\\LOQ\\.nuget\\packages\\google.apis.auth\\1.72.0\\google.apis.auth.1.72.0.nupkg.sha512",
