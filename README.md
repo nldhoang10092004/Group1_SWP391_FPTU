@@ -9,6 +9,7 @@ Hệ thống học tiếng Anh trực tuyến toàn diện với membership-base
 - [Công nghệ sử dụng](#công-nghệ-sử-dụng)
 - [Cấu trúc dự án](#cấu-trúc-dự-án)
 - [Cài đặt và Chạy dự án](#cài-đặt-và-chạy-dự-án)
+  - [Backend Testing](#4-chạy-unit-tests-cho-backend)
 - [Cấu hình Database](#cấu-hình-database)
 - [API Documentation](#api-documentation)
 - [Đóng góp](#đóng-góp)
@@ -80,6 +81,12 @@ Hệ thống học tiếng Anh trực tuyến toàn diện với membership-base
 - **JWT Bearer Authentication** - Security
 - **Swagger/OpenAPI** - API Documentation
 
+### Testing
+- **xUnit** - Unit Testing Framework
+- **Moq** - Mocking Framework
+- **coverlet.collector** - Code Coverage Collection
+- **ReportGenerator** - HTML Coverage Reports
+
 ### Database
 - **SQL Server** - Relational Database
 - **Entity Framework Core** - Database Access Layer
@@ -102,15 +109,22 @@ Group1_SWP391_FPTU/
 │   └── package.json           # Frontend Dependencies
 │
 ├── server/                     # ASP.NET Core Backend
-│   └── EMT_API/
-│       ├── Controllers/       # API Controllers
-│       ├── Models/            # Entity Models
-│       ├── DTOs/              # Data Transfer Objects
-│       ├── Services/          # Business Logic Services
-│       ├── Security/          # JWT và Authentication
-│       ├── Data/              # DbContext và Configurations
-│       ├── Middlewares/       # Custom Middlewares
-│       └── Program.cs         # Application Entry Point
+│   ├── EMT_API/
+│   │   ├── Controllers/       # API Controllers
+│   │   ├── Models/            # Entity Models
+│   │   ├── DTOs/              # Data Transfer Objects
+│   │   ├── Services/          # Business Logic Services
+│   │   ├── Security/          # JWT và Authentication
+│   │   ├── Data/              # DbContext và Configurations
+│   │   ├── Middlewares/       # Custom Middlewares
+│   │   └── Program.cs         # Application Entry Point
+│   │
+│   └── EMT_API.Tests/         # Unit Tests
+│       ├── Controllers/       # Controller Tests
+│       ├── Services/          # Service Tests
+│       ├── TestResults/       # Test Output (generated)
+│       ├── coveragereport/    # Coverage HTML Report (generated)
+│       └── EMT_API.Tests.csproj
 │
 ├── EMTDatabase.sql            # Database Schema Script
 └── README.md                  # This file
@@ -172,6 +186,102 @@ dotnet run
 API sẽ chạy tại: `https://localhost:7010`
 
 Swagger UI: `https://localhost:7010/swagger`
+
+### 4. Chạy Unit Tests cho Backend
+
+Backend sử dụng **xUnit** framework để testing với **Moq** cho mocking và **coverlet** để thu thập code coverage.
+
+#### 4.1. Chạy tất cả tests
+
+```bash
+# Di chuyển vào thư mục test
+cd server/EMT_API.Tests
+
+# Chạy tất cả tests
+dotnet test
+```
+
+#### 4.2. Chạy tests với code coverage
+
+```bash
+# Chạy tests và thu thập code coverage
+dotnet test --collect:"XPlat Code Coverage" --results-directory ./TestResults
+```
+
+Lệnh này sẽ:
+- Chạy tất cả unit tests
+- Thu thập code coverage data
+- Lưu coverage data vào thư mục `TestResults/` dưới dạng file `coverage.cobertura.xml`
+
+#### 4.3. Tạo HTML Coverage Report
+
+Để xem coverage report dưới dạng HTML đẹp mắt, bạn cần cài đặt `reportgenerator`:
+
+```bash
+# Cài đặt reportgenerator tool (chỉ cần chạy 1 lần)
+dotnet tool install -g dotnet-reportgenerator-globaltool
+
+# Tạo HTML report từ coverage data
+cd server/EMT_API.Tests
+reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" -targetdir:"coveragereport" -reporttypes:Html
+```
+
+**Xem Coverage Report**: Mở file `server/EMT_API.Tests/coveragereport/index.html` trong trình duyệt để xem chi tiết coverage.
+
+#### 4.4. Chạy tests cụ thể
+
+```bash
+# Chạy tests trong một class cụ thể
+dotnet test --filter "FullyQualifiedName~AISpeakingControllerTests"
+
+# Chạy một test method cụ thể
+dotnet test --filter "FullyQualifiedName~AISpeakingControllerTests.GeneratePrompt_ShouldReturn200_WhenUserHasMembership"
+```
+
+#### 4.5. Xem danh sách tests có sẵn
+
+```bash
+# List tất cả tests
+dotnet test --list-tests
+```
+
+#### 4.6. Chạy tests với output chi tiết
+
+```bash
+# Verbose output
+dotnet test --logger "console;verbosity=detailed"
+```
+
+#### 4.7. Tổng hợp một lệnh để chạy tests và tạo coverage report
+
+```bash
+# Từ thư mục server/EMT_API.Tests
+dotnet test --collect:"XPlat Code Coverage" --results-directory ./TestResults && \
+reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" -targetdir:"coveragereport" -reporttypes:Html
+```
+
+Sau khi chạy xong, mở file `coveragereport/index.html` để xem coverage report.
+
+#### 4.8. Cấu trúc Test Project
+
+```
+server/EMT_API.Tests/
+├── Controllers/          # Tests cho API Controllers
+│   └── AISpeakingControllerTests.cs
+├── Services/            # Tests cho Business Logic Services
+│   ├── TranscriptionModuleTests.cs
+│   ├── GradingModuleTests.cs
+│   └── PromptModuleTests.cs
+├── TestResults/         # Output của test runs (được tạo tự động)
+├── coveragereport/      # HTML coverage report (được tạo bởi reportgenerator)
+└── EMT_API.Tests.csproj # Test project file
+```
+
+**Lưu ý về Tests**:
+- Các test hiện tại chủ yếu test AI Speaking features (Controllers và Services)
+- Tests sử dụng mock data, không cần database thật hoặc API keys thật
+- Một số tests có thể fail nếu thiếu API keys (Deepgram, OpenAI) trong config
+- Test coverage report giúp xác định phần code nào đã được test và phần nào chưa
 
 ## 🗄 Cấu hình Database
 
