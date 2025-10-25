@@ -1,39 +1,33 @@
 {
   "format": 1,
   "restore": {
-    "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API.Tests\\EMT_API.Tests.csproj": {}
+    "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API.Tests/EMT_API.Tests.csproj": {}
   },
   "projects": {
-    "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API.Tests\\EMT_API.Tests.csproj": {
+    "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API.Tests/EMT_API.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API.Tests\\EMT_API.Tests.csproj",
+        "projectUniqueName": "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API.Tests/EMT_API.Tests.csproj",
         "projectName": "EMT_API.Tests",
-        "projectPath": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API.Tests\\EMT_API.Tests.csproj",
-        "packagesPath": "C:\\Users\\LOQ\\.nuget\\packages\\",
-        "outputPath": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API.Tests\\obj\\",
+        "projectPath": "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API.Tests/EMT_API.Tests.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API.Tests/obj/",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\LOQ\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/home/runner/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API\\EMT_API.csproj": {
-                "projectPath": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API\\EMT_API.csproj"
+              "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API/EMT_API.csproj": {
+                "projectPath": "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API/EMT_API.csproj"
               }
             }
           }
@@ -93,32 +87,26 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API\\EMT_API.csproj": {
+    "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API/EMT_API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API\\EMT_API.csproj",
+        "projectUniqueName": "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API/EMT_API.csproj",
         "projectName": "EMT_API",
-        "projectPath": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API\\EMT_API.csproj",
-        "packagesPath": "C:\\Users\\LOQ\\.nuget\\packages\\",
-        "outputPath": "D:\\LearnCSharp\\backend\\Group1_SWP391_FPTU\\server\\EMT_API\\obj\\",
+        "projectPath": "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API/EMT_API.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/Group1_SWP391_FPTU/Group1_SWP391_FPTU/server/EMT_API/obj/",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\LOQ\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/home/runner/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -231,7 +219,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
