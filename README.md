@@ -256,11 +256,14 @@ dotnet test --logger "console;verbosity=detailed"
 
 ```bash
 # Từ thư mục server/EMT_API.Tests
-dotnet test --collect:"XPlat Code Coverage" --results-directory ./TestResults && \
+# Chạy tests với coverage (tiếp tục dù tests fail)
+dotnet test --collect:"XPlat Code Coverage" --results-directory ./TestResults ; \
 reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" -targetdir:"coveragereport" -reporttypes:Html
 ```
 
 Sau khi chạy xong, mở file `coveragereport/index.html` để xem coverage report.
+
+**Lưu ý**: Lệnh trên sử dụng `;` thay vì `&&` để đảm bảo coverage report được tạo ngay cả khi có tests fail.
 
 #### 4.8. Cấu trúc Test Project
 
