@@ -8,6 +8,10 @@ frontend/.vite/
 server/EMT_API/bin/
 server/EMT_API/obj/
 server/EMT_API/wwwroot/avatars/
+server/EMT_API.Tests/bin/
+server/EMT_API.Tests/obj/
+server/EMT_API.Tests/TestResults/
+server/EMT_API.Tests/coveragereport/
 
 # Common
 *.log
