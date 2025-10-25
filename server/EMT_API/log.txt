@@ -70,3 +70,17 @@
 }
 2025-10-24 22:05:49.150 [Information] PostAsync<R, S, T>: Using default timeout: 30000
 2025-10-24 22:05:52.581 [Information] TranscribeFile: https://api.deepgram.com/v1/listen Succeeded
+2025-10-25 09:01:53.028 [Information] DeepgramHttpClientOptions: OnPrem: False
+2025-10-25 09:01:53.048 [Information] DeepgramHttpClientOptions: APIVersion: v1
+2025-10-25 09:01:53.049 [Information] DeepgramHttpClientOptions: API KEY set from parameter
+2025-10-25 09:01:53.051 [Information] DeepgramHttpClientOptions: REST BaseAddress does not contain API version: api.deepgram.com
+2025-10-25 09:01:53.053 [Information] DeepgramHttpClientOptions: BaseAddress contains no protocol: api.deepgram.com/v1
+2025-10-25 09:01:53.054 [Information] DeepgramHttpClientOptions: BaseAddress: https://api.deepgram.com/v1
+2025-10-25 09:01:53.254 [Information] HttpClientFactory.Create: HttpClient ID: DEEPGRAM_HTTP_CLIENT
+2025-10-25 09:18:05.147 [Information] DeepgramHttpClientOptions: OnPrem: False
+2025-10-25 09:18:05.165 [Information] DeepgramHttpClientOptions: APIVersion: v1
+2025-10-25 09:18:05.166 [Information] DeepgramHttpClientOptions: API KEY set from parameter
+2025-10-25 09:18:05.167 [Information] DeepgramHttpClientOptions: REST BaseAddress does not contain API version: api.deepgram.com
+2025-10-25 09:18:05.169 [Information] DeepgramHttpClientOptions: BaseAddress contains no protocol: api.deepgram.com/v1
+2025-10-25 09:18:05.170 [Information] DeepgramHttpClientOptions: BaseAddress: https://api.deepgram.com/v1
+2025-10-25 09:18:05.183 [Information] HttpClientFactory.Create: HttpClient ID: DEEPGRAM_HTTP_CLIENT
