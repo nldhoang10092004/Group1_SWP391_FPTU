@@ -256,7 +256,7 @@ dotnet test --logger "console;verbosity=detailed"
 
 ```bash
 # Từ thư mục server/EMT_API.Tests
-# Chạy tests với coverage (tiếp tục dù tests fail)
+# Chạy tests với coverage (tiếp tục dù tests fail với dấu ;)
 dotnet test --collect:"XPlat Code Coverage" --results-directory ./TestResults ; \
 reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" -targetdir:"coveragereport" -reporttypes:Html
 ```
