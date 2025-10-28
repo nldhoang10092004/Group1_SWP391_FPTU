@@ -23,8 +23,8 @@ namespace EMT_API.Controllers.TeacherSide
         {
             var uid = GetUserId();
             var course = await _db.Courses.AsNoTracking()
-                .FirstOrDefaultAsync(c => c.CourseId == courseId);
-            return course != null && course.TeacherId == uid;
+                .FirstOrDefaultAsync(c => c.CourseID == courseId);
+            return course != null && course.TeacherID == uid;
         }
 
         // Helper: check quyền sở hữu set (nếu set thuộc course)
