@@ -85,14 +85,21 @@ namespace EMT_API.Controllers
             // Nếu có CourseId → yêu cầu membership
             if (set.CourseId.HasValue)
             {
-                var userId = GetUserId();
-                if (userId == null)
-                    return Unauthorized(new { message = "Login required to access this flashcard set." });
+                if (User.IsInRole("ADMIN") || User.IsInRole("TEACHER"))
+                {
+                }
+                else
+                {
+                    var userId = GetUserId();
+                    if (userId == null)
+                        return Unauthorized(new { message = "Login required to access this flashcard set." });
 
-                bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, userId.Value);
-                if (!hasMembership)
-                    return StatusCode(403, new { message = "Membership required or expired." });
+                    bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, userId.Value);
+                    if (!hasMembership)
+                        return StatusCode(403, new { message = "Membership required or expired." });
+                }
             }
+
 
             var dto = new FlashcardSetDetailDto
             {

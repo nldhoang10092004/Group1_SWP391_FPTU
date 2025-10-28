@@ -5,7 +5,8 @@ import Navbar from "react-bootstrap/Navbar";
 import { Modal, Button, Form, Dropdown, Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { loginApi, registerApi, sendOtpApi } from "../../middleware/auth"; // Adjust path as needed
-import "./Header.scss"; // Make sure your SCSS file is linked
+import "./Header.scss"; 
+import api from "../../middleware/axiosInstance";
 
 const Header = () => {
   const navigate = useNavigate();
