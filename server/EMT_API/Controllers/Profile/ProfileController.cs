@@ -89,14 +89,20 @@ namespace EMT_API.Controllers.Profile
             if (!string.IsNullOrEmpty(detail.AvatarURL))
                 await _r2.DeleteFileAsync(detail.AvatarURL);
 
+            // 🧠 Sinh tên file ngẫu nhiên kiểu GUID (32 ký tự)
+            var ext = Path.GetExtension(req.File.FileName).ToLowerInvariant();
+            var randomName = $"{Guid.NewGuid():N}{ext}";
+            var keyPath = $"avatars/{randomName}";
+
             await using var stream = req.File.OpenReadStream();
-            var newUrl = await _r2.UploadAvatarAsync(stream, req.File.FileName, req.File.ContentType);
+            var newUrl = await _r2.UploadAvatarAsync(stream, keyPath, req.File.ContentType);
 
             detail.AvatarURL = newUrl;
             await _db.SaveChangesAsync();
 
             return Ok(new { message = "Avatar updated", avatarUrl = newUrl });
         }
+
 
         [HttpPut("password")]
         public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequest req)
