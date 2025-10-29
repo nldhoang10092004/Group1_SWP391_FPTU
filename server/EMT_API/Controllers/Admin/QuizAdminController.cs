@@ -79,48 +79,48 @@ namespace EMT_API.Controllers.Admin
         // ===========================================
         // 🔹 4️⃣ Xóa quiz (phải xóa item nhỏ trước)
         // ===========================================
-        [HttpDelete("{quizId:int}")]
-        public async Task<IActionResult> DeleteQuiz(int quizId)
-        {
-            var quiz = await _db.Quizzes
-                .Include(q => q.QuestionGroups)
-                    .ThenInclude(g => g.Questions)
-                        .ThenInclude(qs => qs.Options)
-                .Include(q => q.Questions)
-                    .ThenInclude(qs => qs.Options)
-                .FirstOrDefaultAsync(q => q.QuizID == quizId);
+        //[HttpDelete("{quizId:int}")]
+        //public async Task<IActionResult> DeleteQuiz(int quizId)
+        //{
+        //    var quiz = await _db.Quizzes
+        //        .Include(q => q.QuestionGroups)
+        //            .ThenInclude(g => g.Questions)
+        //                .ThenInclude(qs => qs.Options)
+        //        .Include(q => q.Questions)
+        //            .ThenInclude(qs => qs.Options)
+        //        .FirstOrDefaultAsync(q => q.QuizID == quizId);
 
-            if (quiz == null)
-                return NotFound(new { message = "Quiz not found" });
+        //    if (quiz == null)
+        //        return NotFound(new { message = "Quiz not found" });
 
-            // Xóa sâu: Option → Question → QuestionGroup → Quiz
-            if (quiz.QuestionGroups != null)
-            {
-                foreach (var group in quiz.QuestionGroups)
-                {
-                    foreach (var question in group.Questions)
-                    {
-                        _db.Options.RemoveRange(question.Options);
-                    }
-                    _db.Questions.RemoveRange(group.Questions);
-                }
-                _db.QuestionGroups.RemoveRange(quiz.QuestionGroups);
-            }
+        //    // Xóa sâu: Option → Question → QuestionGroup → Quiz
+        //    if (quiz.QuestionGroups != null)
+        //    {
+        //        foreach (var group in quiz.QuestionGroups)
+        //        {
+        //            foreach (var question in group.Questions)
+        //            {
+        //                _db.Options.RemoveRange(question.Options);
+        //            }
+        //            _db.Questions.RemoveRange(group.Questions);
+        //        }
+        //        _db.QuestionGroups.RemoveRange(quiz.QuestionGroups);
+        //    }
 
-            if (quiz.Questions != null)
-            {
-                foreach (var question in quiz.Questions)
-                {
-                    _db.Options.RemoveRange(question.Options);
-                }
-                _db.Questions.RemoveRange(quiz.Questions);
-            }
+        //    if (quiz.Questions != null)
+        //    {
+        //        foreach (var question in quiz.Questions)
+        //        {
+        //            _db.Options.RemoveRange(question.Options);
+        //        }
+        //        _db.Questions.RemoveRange(quiz.Questions);
+        //    }
 
-            _db.Quizzes.Remove(quiz);
-            await _db.SaveChangesAsync();
+        //    _db.Quizzes.Remove(quiz);
+        //    await _db.SaveChangesAsync();
 
-            return Ok(new { message = "Quiz deleted successfully" });
-        }
+        //    return Ok(new { message = "Quiz deleted successfully" });
+        //} (Đang chưa chắc lắm sẽ sửa lại sau.)
 
         // ===========================================
         // 🔹 5️⃣ Xem chi tiết quiz (bao gồm đáp án)

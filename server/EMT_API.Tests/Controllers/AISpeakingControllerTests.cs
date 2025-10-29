@@ -133,7 +133,7 @@ namespace EMT_API.Tests.Controllers
             var req = new AISpeakingSubmitAudioRequest
             {
                 File = CreateFakeFile(),
-                PromptContent = "Describe a person you admire"
+               PromptContent = "Describe a person you admire"
             };
             _output.WriteLine("Input: UserId=1 (has membership), File='fake.mp3', Prompt='Describe a person you admire'");
             var result = await c.Submit(req);
