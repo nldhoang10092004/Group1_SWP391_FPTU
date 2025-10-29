@@ -40,7 +40,7 @@ export const getFlashcardSetsByCourseId = async (courseId) => {
   }
 };
 
-// 🟢 Lấy flashcard set theo setId (phải login)
+// 🟢 Lấy flashcard set theo setId
 export const getFlashcardSetById = async (setId) => {
   try {
     const res = await api.get(`/set/${setId}`, { headers: getAuthHeaders() });
@@ -64,7 +64,31 @@ export const createFlashcardSet = async (data) => {
   }
 };
 
-// 🟢 Thêm flashcard item (thẻ) vào set
+// 🟡 Cập nhật flashcard set theo setId
+export const updateFlashcardSet = async (setId, data) => {
+  try {
+    const res = await api.put(`/set/${setId}`, data, { headers: getAuthHeaders() });
+    console.log("📘 updateFlashcardSet response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("❌ updateFlashcardSet error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+// 🔴 Xóa flashcard set theo setId
+export const deleteFlashcardSet = async (setId) => {
+  try {
+    const res = await api.delete(`/set/${setId}`, { headers: getAuthHeaders() });
+    console.log("📘 deleteFlashcardSet response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("❌ deleteFlashcardSet error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+// 🟢 Tạo flashcard item (thẻ)
 export const createFlashcardItem = async (data) => {
   try {
     const res = await api.post(`/item`, data, { headers: getAuthHeaders() });
@@ -72,6 +96,30 @@ export const createFlashcardItem = async (data) => {
     return res.data;
   } catch (err) {
     console.error("❌ createFlashcardItem error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+// 🟡 Cập nhật flashcard item theo itemId
+export const updateFlashcardItem = async (itemId, data) => {
+  try {
+    const res = await api.put(`/item/${itemId}`, data, { headers: getAuthHeaders() });
+    console.log("📘 updateFlashcardItem response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("❌ updateFlashcardItem error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+// 🔴 Xóa flashcard item theo itemId
+export const deleteFlashcardItem = async (itemId) => {
+  try {
+    const res = await api.delete(`/item/${itemId}`, { headers: getAuthHeaders() });
+    console.log("📘 deleteFlashcardItem response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("❌ deleteFlashcardItem error:", err.response?.data || err.message);
     throw err;
   }
 };

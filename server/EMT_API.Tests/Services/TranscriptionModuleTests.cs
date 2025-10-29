@@ -39,7 +39,7 @@ namespace EMT_API.Tests.Services
         }
 
         [Fact(DisplayName = "TC15 - Transcribe: Constructor throws when missing key")]
-        public void Constructor_ShouldThrow_WhenMissingKey()
+            public void Constructor_ShouldThrow_WhenMissingKey()
         {
             _output.WriteLine("Input: Missing Deepgram API key");
             var cfg = new ConfigurationBuilder().Build();

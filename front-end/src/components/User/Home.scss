@@ -53,10 +53,8 @@ $border-radius-md: 0.75rem; // rounded-xl
     h1 {
       font-size: 2.5rem;
       font-weight: $font-bold;
-      color: $text-gray-900;
+      color: black;
       margin-bottom: 2rem;
-      background: $primary-gradient;
-      -webkit-text-fill-color: transparent;
     }
 
     .stats-row {

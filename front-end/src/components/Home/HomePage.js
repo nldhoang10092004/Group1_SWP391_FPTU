@@ -3,6 +3,7 @@ import { Container, Row, Col, Button, Modal, Navbar, Nav } from "react-bootstrap
 import "./HomePage.scss"; // Import the SCSS file
 import "bootstrap/dist/css/bootstrap.min.css"; 
 import { getAllCoursesWithDetails } from '../../middleware/courseAPI';
+import { useNavigate } from "react-router-dom";
 
 const HomePage = ({ onShowAuthModal }) => {
   // State cho free videos
@@ -16,6 +17,7 @@ const HomePage = ({ onShowAuthModal }) => {
   // State cho premium courses
   const [premiumCourses, setPremiumCourses] = useState([]);
   const [loadingPremiumCourses, setLoadingPremiumCourses] = useState(true);
+  const navigate = useNavigate();
   
   // Membership Features (no change, but can be styled)
   const membershipFeatures = [
@@ -398,54 +400,43 @@ const HomePage = ({ onShowAuthModal }) => {
             )}
             
             {!loadingPremiumCourses && premiumCourses.length > 0 && (
-              premiumCourses.slice(0, 3).map((course) => ( // Display max 3 courses for demo
-                <Col lg={4} md={6} sm={12} key={course.id} className="mb-4 d-flex"> {/* d-flex for equal height */}
-                  <div className="premium-course-box">
-                    <div className="course-content">
-                      <div className="course-header">
-                        <span className="lock-icon">🔒</span> {/* This lock is part of blurred content */}
-                        <span className={`course-level-tag level-${course.level.toLowerCase()}`}>
-                          {course.level}
-                        </span>
-                      </div>
-                      <div className="course-info">
-                        <h3 className="course-title">{course.name}</h3>
-                        <p className="course-subtitle">{course.subtitle}</p>
-                        <div className="course-stats">
-                          <div className="stat-item">
-                            <span className="icon">📚</span>
-                            <span>{course.lessons}</span>
-                          </div>
-                          <div className="stat-item">
-                            <span className="icon">👥</span>
-                            <span>{course.students}</span>
-                          </div>
-                          {course.chaptersCount > 0 && (
-                            <div className="stat-item">
-                              <span className="icon">📖</span>
-                              <span>{course.chaptersCount} chương</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    {/* The membership lock overlay */}
-                    <div 
-                      className="membership-lock" 
-                      onClick={() => {
-                        handleShowPopup("Khóa học Premium", "Vui lòng đăng ký membership để mở khóa khóa học này.", "info");
-                        // Optionally, also open auth modal
-                        // window.dispatchEvent(new CustomEvent("openAuthModal", { detail: { tab: "register" } }));
-                      }}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <span className="lock-icon">🔒</span>
-                      <span className="lock-text">Mở khóa với membership</span>
-                    </div>
-                  </div>
-                </Col>
-              ))
+              premiumCourses.slice(0, 3).map((course) => (
+  <Col lg={4} md={6} sm={12} key={course.id} className="mb-4 d-flex">
+    <div 
+      className="premium-course-box"
+      onClick={() => navigate(`/course/${course.id}`)} // Điều hướng sang chi tiết khóa học
+      style={{ cursor: "pointer" }}
+    >
+      <div className="course-content">
+        <div className="course-header">
+          <span className={`course-level-tag level-${course.level.toLowerCase()}`}>
+            {course.level}
+          </span>
+        </div>
+        <div className="course-info">
+          <h3 className="course-title">{course.name}</h3>
+          <p className="course-subtitle">{course.subtitle}</p>
+          <div className="course-stats">
+            <div className="stat-item">
+              <span className="icon">📚</span>
+              <span>{course.lessons}</span>
+            </div>
+            <div className="stat-item">
+              <span className="icon">👥</span>
+              <span>{course.students}</span>
+            </div>
+            {course.chaptersCount > 0 && (
+              <div className="stat-item">
+                <span className="icon">📖</span>
+                <span>{course.chaptersCount} chương</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </Col>
+))
             )}
           </Row>
 

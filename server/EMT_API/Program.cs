@@ -136,6 +136,8 @@ namespace EMT_API
             //Google Drive Service
             builder.Services.AddSingleton<GoogleDriveService>();
 
+            //Cloudflare R2 Service
+            builder.Services.AddSingleton<CloudflareService>();
 
             //Json accept /n
             builder.Services.AddControllers()
