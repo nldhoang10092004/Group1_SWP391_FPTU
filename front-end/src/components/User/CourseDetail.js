@@ -116,7 +116,7 @@ const CourseDetail = () => {
 
   const handleViewFlashcards = (setId, title) => {
     showToast(`Đang mở bộ flashcard: ${title}`, "info");
-    navigate(`/flashcards/${setId}`);
+    navigate(`/flashcard/${setId}`);
   };
 
   const getVideoEmbedUrl = (url) => {

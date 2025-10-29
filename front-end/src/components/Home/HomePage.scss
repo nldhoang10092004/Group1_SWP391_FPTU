@@ -192,68 +192,6 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-// --- Header (Assuming it's a separate component, but styling general elements) ---
-.main-header {
-  position: sticky;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000;
-  background: $glass-morphism-bg; // Glass premium sticky header
-  backdrop-filter: blur($backdrop-blur);
-  border-bottom: 1px solid $glass-morphism-border;
-  padding: 1rem 0;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-
-  .navbar-brand {
-    display: flex;
-    align-items: center;
-    font-size: 1.5rem;
-    font-weight: $font-bold;
-    color: $text-gray-900;
-
-    .logo-icon {
-      width: 40px;
-      height: 40px;
-      margin-right: 0.5rem;
-      background: $primary-gradient; // Gradient icon
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-size: 2.2rem;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-shadow: 0 0 10px rgba(139, 92, 246, 0.5); // Colored shadow
-    }
-  }
-
-  .nav-icons {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-
-    .icon-btn {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: $text-gray-600;
-      transition: color $transition-duration ease, transform $transition-duration ease;
-
-      &:hover {
-        color: #4f46e5; // Indigo-600 for hover
-        transform: scale(1.1);
-      }
-    }
-
-    .login-btn {
-      @extend .btn-primary-gradient; // Reuse primary button styling
-      padding: 0.5rem 1.5rem;
-      font-size: 1rem;
-    }
-  }
-}
-
 // --- Hero Section ---
 .new-hero-section {
   position: relative;
@@ -273,9 +211,7 @@ h1, h2, h3, h4, h5, h6 {
     z-index: -1;
   }
 
-  // Animated Mesh Gradient Background (Placeholder/concept - complex to implement purely with CSS)
-  // For a real mesh gradient, you'd use a library or SVG.
-  // This just gives a radial feel.
+ 
   &::after {
     content: '';
     position: absolute;
@@ -345,11 +281,11 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 1.5rem;
     color: $text-gray-900;
 
-    .highlight-text {
-      background: $primary-gradient; // Gradient text for "không giới hạn"
-      display: inline-block; // Ensure gradient applies correctly
-      text-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
-    }
+    // .highlight-text {
+    //   background: $primary-gradient; // Gradient text for "không giới hạn"
+    //   display: inline-block; // Ensure gradient applies correctly
+    //   text-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+    // }
   }
 
  .hero-description {
@@ -412,9 +348,6 @@ h1, h2, h3, h4, h5, h6 {
       font-size: 1.5rem;
       display: block;
       margin-bottom: 0.3rem;
-      background: $primary-gradient;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
     }
 
     .stat-value {
@@ -458,9 +391,6 @@ h1, h2, h3, h4, h5, h6 {
       .feature-icon {
         font-size: 2.5rem;
         margin-bottom: 1rem;
-        background: $primary-gradient; 
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
       }
 
       h3 {
@@ -542,9 +472,6 @@ h1, h2, h3, h4, h5, h6 {
       font-size: 2.5rem;
       display: block;
       margin-bottom: 1rem;
-      background: $accent-gradient;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
     }
 
     h3 {
@@ -729,8 +656,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .premium-course-box {
-    background: $glass-morphism-bg;
-    backdrop-filter: blur($backdrop-blur);
+    // background: $glass-morphism-bg;
+    // backdrop-filter: blur($backdrop-blur);
     border: 1px solid $glass-morphism-border;
     border-radius: $border-radius-lg;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
@@ -748,47 +675,17 @@ h1, h2, h3, h4, h5, h6 {
     }
 
     .course-content {
-      filter: blur(4px); // Blur effect for locked content
-      pointer-events: none; // Prevent interaction with blurred content
-      opacity: 0.6;
+      // filter: blur(4px); // Blur effect for locked content
+      // pointer-events: none; // Prevent interaction with blurred content
+      // opacity: 0.6;
       transition: filter $transition-duration ease, opacity $transition-duration ease;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
     }
 
-    .membership-lock {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.7); // Light overlay
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      cursor: pointer;
-      transition: background-color $transition-duration ease;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.85);
-      }
-
-      .lock-icon {
-        font-size: 3rem;
-        color: #ef4444; // Red-600
-        margin-bottom: 0.5rem;
-        animation: pulse 2s infinite ease-in-out;
-      }
-
-      .lock-text {
-        font-size: 1.25rem;
-        font-weight: $font-bold;
-        color: $text-gray-900;
-        text-align: center;
-      }
+   
+     
     }
 
     @keyframes pulse {
@@ -968,7 +865,7 @@ h1, h2, h3, h4, h5, h6 {
       }
     }
   }
-}
+
 
 // --- Footer ---
 .main-footer {

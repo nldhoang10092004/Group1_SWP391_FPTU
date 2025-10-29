@@ -28,17 +28,14 @@ $border-radius-md: 0.75rem; // rounded-xl
 
 // --- Header Container ---
 .main-header {
-  position: sticky;
+  position: static;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 1000;
-  background: $glass-morphism-bg;
-  backdrop-filter: blur($backdrop-blur);
   border-bottom: 1px solid $glass-morphism-border;
   padding: 0.75rem 0;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-  transition: all $transition-duration ease;
 
   &.scrolled {
     background: rgba(255, 255, 255, 0.95);
@@ -51,33 +48,20 @@ $border-radius-md: 0.75rem; // rounded-xl
     align-items: center;
     font-size: 1.5rem;
     font-weight: $font-bold;
-    color: $text-gray-900;
     text-decoration: none;
-    transition: all $transition-duration ease;
-
-    &:hover {
-      color: $text-gray-900;
-      transform: translateY(-1px);
-    }
 
     .logo-icon {
       width: 40px;
       height: 40px;
       margin-right: 0.75rem;
-      background: $primary-gradient;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
       font-size: 2rem;
       line-height: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      text-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-      transition: all $transition-duration ease;
     }
 
     &:hover .logo-icon {
-      text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
       transform: scale(1.05);
     }
   }

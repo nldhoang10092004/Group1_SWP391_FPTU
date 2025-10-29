@@ -493,7 +493,7 @@ const Home = () => {
                         if (skill.title === "Luyện viết") {
                           navigate("/writingpractice"); 
                         } else if (skill.title === "Flashcards") {
-                          navigate(`/flashcards`);
+                          navigate(`/flashcard`);
                         } else if (skill.title === "Ngữ pháp") {
                           navigate("/grammar");
                          } else if (skill.title === "Quizz") {

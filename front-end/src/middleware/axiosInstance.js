@@ -4,6 +4,7 @@ const api = axios.create({
   baseURL: "https://localhost:7010/api",
 });
 
+// Thêm interceptor request
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
@@ -13,6 +14,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Thêm interceptor response
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -47,3 +49,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export default api;

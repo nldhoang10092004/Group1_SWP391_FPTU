@@ -5,7 +5,8 @@ import Navbar from "react-bootstrap/Navbar";
 import { Modal, Button, Form, Dropdown, Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { loginApi, registerApi, sendOtpApi } from "../../middleware/auth"; // Adjust path as needed
-import "./Header.scss"; // Make sure your SCSS file is linked
+import "./Header.scss"; 
+import api from "../../middleware/axiosInstance";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -473,54 +474,69 @@ const Header = () => {
 
           {activeTab === "login" ? (
             <Form onSubmit={handleLoginSubmit}>
-              <Form.Group className="mb-2">
-                <Form.Label>Email hoặc Username</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Nhập email hoặc username"
-                  value={emailOrUsername}
-                  onChange={(e) => setEmailOrUsername(e.target.value)}
-                  required
-                  size="sm"
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Mật khẩu</Form.Label>
-                <div className="d-flex gap-2">
-                  <Form.Control
-                    type={showLoginPassword ? "text" : "password"}
-                    placeholder="Nhập mật khẩu"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    size="sm"
-                  />
-                  <Button 
-                    variant="outline-secondary" 
-                    onClick={() => setShowLoginPassword(!showLoginPassword)}
-                    size="sm"
-                  >
-                    <i className={`fas ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
-                  </Button>
-                </div>
-              </Form.Group>
+  <Form.Group className="mb-2">
+    <Form.Label>Email hoặc Username</Form.Label>
+    <Form.Control
+      type="text"
+      placeholder="Nhập email hoặc username"
+      value={emailOrUsername}
+      onChange={(e) => setEmailOrUsername(e.target.value)}
+      required
+      size="sm"
+    />
+  </Form.Group>
+  <Form.Group className="mb-3">
+    <Form.Label>Mật khẩu</Form.Label>
+    <div className="d-flex gap-2">
+      <Form.Control
+        type={showLoginPassword ? "text" : "password"}
+        placeholder="Nhập mật khẩu"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        size="sm"
+      />
+      <Button 
+        variant="outline-secondary" 
+        onClick={() => setShowLoginPassword(!showLoginPassword)}
+        size="sm"
+      >
+        <i className={`fas ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
+      </Button>
+    </div>
+  </Form.Group>
 
-              <div className="d-flex justify-content-between mb-3">
-                <Button variant="outline-dark" size="sm" onClick={handleDemoStudent}>
-                  Học viên Demo
-                </Button>
-                <Button variant="outline-dark" size="sm" onClick={handleDemoTeacher}>
-                  Giảng viên Demo
-                </Button>
-              </div>
+  <div className="d-flex justify-content-between mb-3">
+    <Button variant="outline-dark" size="sm" onClick={handleDemoStudent}>
+      Học viên Demo
+    </Button>
+    <Button variant="outline-dark" size="sm" onClick={handleDemoTeacher}>
+      Giảng viên Demo
+    </Button>
+  </div>
 
-              <Button type="submit" className="w-100" variant="dark">
-                Đăng nhập
-              </Button>
+  <Button type="submit" className="w-100" variant="dark">
+    Đăng nhập
+  </Button>
 
-              {loginMessage && <div className="alert alert-success mt-2 mb-0 py-2">{loginMessage}</div>}
-              {loginErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{loginErrorMessage}</div>}
-            </Form>
+  {/* 🔹 Thêm nút Quên mật khẩu ở đây */}
+  <div className="text-center mt-2">
+    <Button 
+      variant="link" 
+      size="sm" 
+      onClick={() => {
+        setShowAuthModal(false);
+        navigate("/forgotpassword");
+      }}
+    >
+      Quên mật khẩu?
+    </Button>
+  </div>
+
+  {loginMessage && <div className="alert alert-success mt-2 mb-0 py-2">{loginMessage}</div>}
+  {loginErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{loginErrorMessage}</div>}
+</Form>
+
           ) : (
             <Form onSubmit={handleRegisterSubmit}>
               <Form.Group className="mb-2">
