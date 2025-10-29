@@ -16,7 +16,7 @@ import {
   createFlashcardItem,
   updateFlashcardItem,
   deleteFlashcardItem,
-} from "../../middleware/flashcardAPI";
+} from "../../middleware/teacher/flashcardTeacherAPI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,

@@ -656,8 +656,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .premium-course-box {
-    background: $glass-morphism-bg;
-    backdrop-filter: blur($backdrop-blur);
+    // background: $glass-morphism-bg;
+    // backdrop-filter: blur($backdrop-blur);
     border: 1px solid $glass-morphism-border;
     border-radius: $border-radius-lg;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
@@ -675,47 +675,17 @@ h1, h2, h3, h4, h5, h6 {
     }
 
     .course-content {
-      filter: blur(4px); // Blur effect for locked content
-      pointer-events: none; // Prevent interaction with blurred content
-      opacity: 0.6;
+      // filter: blur(4px); // Blur effect for locked content
+      // pointer-events: none; // Prevent interaction with blurred content
+      // opacity: 0.6;
       transition: filter $transition-duration ease, opacity $transition-duration ease;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
     }
 
-    .membership-lock {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.7); // Light overlay
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      cursor: pointer;
-      transition: background-color $transition-duration ease;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.85);
-      }
-
-      .lock-icon {
-        font-size: 3rem;
-        color: #ef4444; // Red-600
-        margin-bottom: 0.5rem;
-        animation: pulse 2s infinite ease-in-out;
-      }
-
-      .lock-text {
-        font-size: 1.25rem;
-        font-weight: $font-bold;
-        color: $text-gray-900;
-        text-align: center;
-      }
+   
+     
     }
 
     @keyframes pulse {
@@ -895,7 +865,7 @@ h1, h2, h3, h4, h5, h6 {
       }
     }
   }
-}
+
 
 // --- Footer ---
 .main-footer {

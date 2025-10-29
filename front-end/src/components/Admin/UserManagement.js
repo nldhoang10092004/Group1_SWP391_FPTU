@@ -15,7 +15,7 @@ import {
   createUser,
   assignRole,
   searchUsers
-} from "../../middleware/userManagementAPI";
+} from "../../middleware/admin/userManagementAPI";
 
 export function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -197,7 +197,7 @@ export function UserManagement() {
                 <div className="position-relative">
                   <Search className="position-absolute" size={18} style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6c757d' }} />
                   <Input
-                    placeholder="Tìm theo username hoặc email..."
+                    placeholder="Tìm theo username..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}

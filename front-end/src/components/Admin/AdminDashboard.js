@@ -32,13 +32,14 @@ import { TeacherManagement } from "./TeacherManagement";
 import { CourseManagement } from "./CourseManagement";
 import { ReviewManagement } from "./ReviewManagement";
 import { ExamManagement } from "./ExamManagement";
+import { FlashcardManagement } from "./FlashcardManagement";
 import { VoucherManagement } from "./VoucherManagement";
-import { getDashboardOverview } from "../../middleware/dashboardAdminAPI";
+import { getDashboardOverview } from "../../middleware/admin/dashboardAdminAPI";
 import {
   getAllUsers,
   getStudents,
   getTeachers,
-} from "../../middleware/userManagementAPI";
+} from "../../middleware/admin/userManagementAPI";
 import "./admin-dashboard-styles.scss";
 
 export function AdminDashboard({ onClose }) {
@@ -173,6 +174,7 @@ export function AdminDashboard({ onClose }) {
     { id: "users", icon: Users, label: "Người dùng" },
     { id: "teachers", icon: GraduationCap, label: "Giảng viên" },
     { id: "courses", icon: BookOpen, label: "Khóa học" },
+    { id: "flashcard", icon: BookOpen, label: "Flashcard" },
     { id: "reviews", icon: Star, label: "Đánh giá" },
     { id: "exams", icon: Award, label: "Kiểm tra" },
     { id: "vouchers", icon: Ticket, label: "Voucher" },
@@ -382,6 +384,8 @@ export function AdminDashboard({ onClose }) {
         return <CourseManagement />;
       case "reviews":
         return <ReviewManagement />;
+      case "flashcard":
+        return <FlashcardManagement />;
       case "exams":
         return <ExamManagement />;
       case "vouchers":

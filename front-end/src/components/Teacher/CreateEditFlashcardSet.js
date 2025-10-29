@@ -5,11 +5,11 @@ import {
   createFlashcardSet,
   updateFlashcardSet,
   getFlashcardSetById,
-} from "../../middleware/flashcardAPI";
+} from "../../middleware/teacher/flashcardTeacherAPI";
 import { getCourses } from "../../middleware/courseAPI";
 
 const CreateEditFlashcardSet = () => {
-  const { id } = useParams(); // nếu id = "create" => tạo mới
+  const { id } = useParams(); 
   const navigate = useNavigate();
   const isEditMode = id && id !== "create";
 
@@ -48,9 +48,7 @@ const CreateEditFlashcardSet = () => {
   }, []);
 
   // 🟢 Nếu là edit mode -> load flashcard set theo ID
-  // 🟢 Nếu là edit mode -> load flashcard set theo ID
   useEffect(() => {
-    // Chỉ gọi API khi id tồn tại và KHÔNG phải "create"
     if (id && id !== "create") {
       (async () => {
         try {
@@ -96,7 +94,7 @@ const CreateEditFlashcardSet = () => {
         setMessage({ type: "success", text: "Tạo mới thành công!" });
       }
 
-      setTimeout(() => navigate("/flashcards"), 1200);
+      setTimeout(() => navigate(-1), 1200);
     } catch (err) {
       console.error("❌ Lỗi khi lưu flashcard set:", err);
       setMessage({ type: "danger", text: "Có lỗi khi lưu flashcard set." });

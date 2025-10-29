@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Eye, Trash } from "lucide-react";
-import { getAllCourses, deleteCourse } from "../../middleware/courseManagementAPI";
+import { getAllCourses, deleteCourse } from "../../middleware/admin/courseManagementAPI";
 
 export function CourseManagement() {
   const [courses, setCourses] = useState([]);
