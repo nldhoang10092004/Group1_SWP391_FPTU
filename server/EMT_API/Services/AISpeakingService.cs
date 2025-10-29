@@ -36,7 +36,7 @@ namespace EMT_API.Services
             GradeSpeakingAsync(string transcript, string topic)
             => await _grader.GradeSpeakingAsync(transcript, topic);
 
-        internal class TranscriptionModule
+        public class TranscriptionModule
         {
             private readonly IListenRESTClient _deepgramClient;
             private readonly ILogger _logger;
@@ -84,7 +84,7 @@ namespace EMT_API.Services
             }
         }
 
-        internal class PromptModule
+        public class PromptModule
         {
             private readonly HttpClient _http;
             private readonly string _openAiKey;
@@ -153,7 +153,7 @@ The topic should ask the candidate to describe or talk about something personal,
         }
 
 
-        internal class GradingModule
+        public class GradingModule
         {
             private readonly HttpClient _http;
             private readonly string _openAiKey;

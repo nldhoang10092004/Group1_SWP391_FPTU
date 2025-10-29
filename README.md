@@ -111,6 +111,24 @@ Group1_SWP391_FPTU/
 │       ├── Data/              # DbContext và Configurations
 │       ├── Middlewares/       # Custom Middlewares
 │       └── Program.cs         # Application Entry Point
+    
+ │        └── EMT_API.Tests/                         # 🔍 Unit Test Project (xUnit)
+ │            ├── Services/                         # Test các module chính trong EMT_API.Services
+  │           │   ├── PromptModuleTests.cs          # Test sinh đề Speaking bằng AI (OpenAI/Gemini)
+ │            │   ├── GradingModuleTests.cs         # Test chấm điểm AI Writing/Speaking
+ │            │   ├── TranscriptionModuleTests.cs   # Test Deepgram speech-to-text
+│             │   └── AITestIntegration.cs          # (Tuỳ chọn) test flow tích hợp đầy đủ
+            │
+            ├── Controllers/                      # Test các API Controller (Integration test)
+            │   ├── AISpeakingControllerTests.cs
+            │   └── MembershipControllerTests.cs
+            │
+            ├── TestUtils/                        # Helper, mock data, fake services
+            │   └── MockHttpHandler.cs
+            │
+            ├── EMT_API.Tests.csproj              # Project file (tham chiếu EMT_API)
+            └── TestReport/                       # Output HTML/TRX của test result
+
 │
 ├── EMTDatabase.sql            # Database Schema Script
 └── README.md                  # This file
