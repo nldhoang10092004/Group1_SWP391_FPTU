@@ -1,4 +1,4 @@
-﻿using EMT_API.Data;
+using EMT_API.Data;
 using EMT_API.DTOs.Admin;
 using EMT_API.DTOs.Public;
 using EMT_API.Models;
@@ -39,6 +39,114 @@ public class CourseManagementController : ControllerBase
             .ToListAsync();
 
         return Ok(data);
+    }
+
+    [HttpGet("detail/{courseId:int}")]
+    public async Task<IActionResult> GetCourseDetail(int courseId)
+    {
+        var course = await _db.Courses
+            .Include(c => c.Teacher)
+                .ThenInclude(t => t.TeacherNavigation)
+            .Include(c => c.CourseChapters)
+            .Include(c => c.CourseVideos)
+            .Include(c => c.Quizzes)
+                .ThenInclude(q => q.QuestionGroups)
+                    .ThenInclude(g => g.Questions)
+                        .ThenInclude(qs => qs.Options)
+            .Include(c => c.Quizzes)
+                .ThenInclude(q => q.Questions)
+                    .ThenInclude(qs => qs.Options)
+            .FirstOrDefaultAsync(c => c.CourseID == courseId);
+
+        if (course == null)
+            return NotFound(new { message = "Course not found." });
+
+        var response = new
+        {
+            course.CourseID,
+            course.CourseName,
+            Description = course.Description,
+            Teacher = course.Teacher != null && course.Teacher.TeacherNavigation != null
+                ? new
+                {
+                    course.Teacher.TeacherID,
+                    TeacherName = course.Teacher.TeacherNavigation.Username
+                }
+                : null,
+            course.CreateAt,
+
+            // Danh sách chương học
+            Chapters = course.CourseChapters
+                .Select(ch => new
+                {
+                    ch.ChapterID,
+                    ch.ChapterName,
+                    // Không có ChapterOrder, chỉ hiển thị ID theo thứ tự
+                })
+                .OrderBy(ch => ch.ChapterID)
+                .ToList(),
+
+            // Danh sách video
+            Videos = course.CourseVideos
+                .Select(v => new
+                {
+                    v.VideoID,
+                    v.VideoName,
+                    v.VideoURL,
+                    v.IsPreview,
+                    v.ChapterID,
+                    v.CourseID,
+                    v.ResourceJson
+                })
+                .ToList(),
+
+            // Danh sách quiz
+            Quizzes = course.Quizzes.Select(q => new
+            {
+                q.QuizID,
+                q.Title,
+                q.Description,
+                q.CreatedAt,
+
+                // Các nhóm câu hỏi
+                QuestionGroups = q.QuestionGroups.Select(g => new
+                {
+                    g.GroupID, // ✅ đúng với model mặc định trong EF
+                    Questions = g.Questions.Select(qq => new
+                    {
+                        qq.QuestionID,
+                        qq.Content,      // ✅ đúng với model Question
+                        qq.QuestionType,
+                        qq.ScoreWeight,
+                        Options = qq.Options.Select(o => new
+                        {
+                            o.OptionID,
+                            o.Content,    // ✅ đúng với model Option
+                            o.IsCorrect
+                        })
+                    })
+                }),
+
+                // Câu hỏi không thuộc nhóm
+                Questions = q.Questions
+                    .Where(qq => qq.GroupID == null)
+                    .Select(qq => new
+                    {
+                        qq.QuestionID,
+                        qq.Content,
+                        qq.QuestionType,
+                        qq.ScoreWeight,
+                        Options = qq.Options.Select(o => new
+                        {
+                            o.OptionID,
+                            o.Content,
+                            o.IsCorrect
+                        })
+                    })
+            })
+        };
+
+        return Ok(response);
     }
 
     // -----------------------------
