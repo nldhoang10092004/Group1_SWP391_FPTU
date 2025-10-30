@@ -17,6 +17,8 @@
     {
         public int GroupID { get; set; }
         public string? Instruction { get; set; }
+
+        public List<AssetDto>? Assets { get; set; }
         public List<QuestionDto> Questions { get; set; } = new();
     }
 
@@ -26,12 +28,24 @@
         public string Content { get; set; } = string.Empty;
         public List<OptionDto> Options { get; set; } = new();
         public byte QuestionType { get; internal set; }
+
+        public List<AssetDto>? Assets { get; set; }
     }
 
     public class OptionDto
     {
         public int OptionID { get; set; }
         public string Content { get; set; } = string.Empty;
+    }
+
+    public class AssetDto
+    {
+        public int AssetID { get; set; }
+        public byte AssetType { get; set; } // 1=Group, 2=Question
+        public string? Url { get; set; }
+        public string? ContentText { get; set; }
+        public string? Caption { get; set; }
+        public string? MimeType { get; set; }
     }
 
 }
