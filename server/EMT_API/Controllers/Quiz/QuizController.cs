@@ -80,6 +80,14 @@ namespace EMT_API.Controllers.Quiz
             if (quiz == null)
                 return NotFound(new { message = "Quiz not found" });
 
+            var groupIds = quiz.QuestionGroups.Select(g => g.GroupID).ToList();
+            var questionIds = quiz.QuestionGroups.SelectMany(g => g.Questions.Select(q => q.QuestionID)).ToList();
+
+            var assets = await _db.Assets
+                .Where(a =>
+                 (a.OwnerType == 1 && groupIds.Contains(a.OwnerID)) || // group asset
+                 (a.OwnerType == 2 && questionIds.Contains(a.OwnerID))) // question asset
+                .ToListAsync();
             var dto = new QuizDetailDto
             {
                 QuizID = quiz.QuizID,
@@ -95,6 +103,16 @@ namespace EMT_API.Controllers.Quiz
                 {
                     GroupID = g.GroupID,
                     Instruction = g.Instruction,
+                    Assets = assets.Where(a => a.OwnerType == 1 && a.OwnerID == g.GroupID)
+                    .Select(a => new AssetDto
+                    {
+                        AssetID = a.AssetID,
+                        AssetType = a.AssetType,
+                        Url = a.Url,
+                        ContentText = a.ContentText,
+                        Caption = a.Caption,
+                        MimeType = a.MimeType
+                    }).ToList(),
                     Questions = g.Questions.Select(qs => new QuestionDto
                     {
                         QuestionID = qs.QuestionID,
@@ -122,7 +140,17 @@ namespace EMT_API.Controllers.Quiz
                         {
                             OptionID = o.OptionID,
                             Content = o.Content
-                        }).ToList()
+                        }).ToList(),
+                        Assets = assets.Where(a => a.OwnerType == 2 && a.OwnerID == qs.QuestionID)
+                    .Select(a => new AssetDto
+                    {
+                        AssetID = a.AssetID,
+                        AssetType = a.AssetType,
+                        Url = a.Url,
+                        ContentText = a.ContentText,
+                        Caption = a.Caption,
+                        MimeType = a.MimeType
+                    }).ToList()
                     }).ToList();
 
                 dto.Groups.Add(new QuestionGroupDto

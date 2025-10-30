@@ -18,15 +18,19 @@ namespace EMT_API.Services
             _publicBaseUrl = config["R2:PublicBaseUrl"];
 
             _s3 = new AmazonS3Client(
-                accessKey, secretKey,
+                accessKey,
+                secretKey,
                 new AmazonS3Config
                 {
                     ServiceURL = $"https://{accountId}.r2.cloudflarestorage.com",
-                    ForcePathStyle = true
+                    ForcePathStyle = true,
+                    UseHttp = false
                 });
         }
 
-        // Upload avatar
+        // ===================================================
+        // 🔹 Upload avatar
+        // ===================================================
         public async Task<string> UploadAvatarAsync(Stream fileStream, string fileName, string contentType)
         {
             var key = $"avatars/{Guid.NewGuid():N}{Path.GetExtension(fileName)}";
@@ -37,29 +41,80 @@ namespace EMT_API.Services
                 Key = key,
                 InputStream = fileStream,
                 ContentType = contentType,
-                CannedACL = S3CannedACL.PublicRead // Cho phép truy cập public
+                CannedACL = S3CannedACL.PublicRead
             };
 
-            await _s3.PutObjectAsync(request);
+            // ⚙️ Fix lỗi STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER
+            request.DisablePayloadSigning = true;
 
+            await _s3.PutObjectAsync(request);
             return $"{_publicBaseUrl}/{key}";
         }
 
-        // Xoá file cũ theo URL
+        // ===================================================
+        // 🔹 Upload audio cho quiz
+        // ===================================================
+        public async Task<string> UploadQuizAudioAsync(Stream fileStream, string fileName, string contentType)
+        {
+            var key = $"audios/{Guid.NewGuid():N}{Path.GetExtension(fileName)}";
+
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key,
+                InputStream = fileStream,
+                ContentType = contentType,
+                CannedACL = S3CannedACL.PublicRead
+            };
+
+            request.DisablePayloadSigning = true;
+
+            await _s3.PutObjectAsync(request);
+            return $"{_publicBaseUrl}/{key}";
+        }
+
+        // ===================================================
+        // 🔹 Upload hình ảnh cho quiz
+        // ===================================================
+        public async Task<string> UploadQuizImageAsync(Stream fileStream, string fileName, string contentType)
+        {
+            var allowed = new[] { "image/jpeg", "image/png", "image/webp" };
+            if (!allowed.Contains(contentType.ToLower()))
+                throw new InvalidOperationException("Invalid image file type.");
+
+            var key = $"images/{Guid.NewGuid():N}{Path.GetExtension(fileName)}";
+
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key,
+                InputStream = fileStream,
+                ContentType = contentType,
+                CannedACL = S3CannedACL.PublicRead
+            };
+
+            request.DisablePayloadSigning = true;
+
+            await _s3.PutObjectAsync(request);
+            return $"{_publicBaseUrl}/{key}";
+        }
+
+        // ===================================================
+        // 🔹 Xoá file cũ theo URL
+        // ===================================================
         public async Task DeleteFileAsync(string fileUrl)
         {
             if (string.IsNullOrWhiteSpace(fileUrl))
                 return;
 
             var key = fileUrl.Replace($"{_publicBaseUrl}/", "");
-
             try
             {
                 await _s3.DeleteObjectAsync(_bucket, key);
             }
             catch
             {
-                // Không cần throw nếu file không tồn tại
+                // bỏ qua lỗi file không tồn tại
             }
         }
     }
