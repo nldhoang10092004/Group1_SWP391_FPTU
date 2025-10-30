@@ -48,4 +48,10 @@
         public string? MimeType { get; set; }
     }
 
+    public class AssetUploadRequest
+    {
+        public IFormFile File { get; set; } = null!;
+
+        public string Type { get; set; } = null!;
+    }
 }
