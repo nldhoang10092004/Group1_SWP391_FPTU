@@ -99,6 +99,26 @@ namespace EMT_API.Services
             return $"{_publicBaseUrl}/{key}";
         }
 
+        public async Task<string> UploadVideoAsync(Stream fileStream, string fileName, string contentType)
+        {
+            var key = $"videos/{Guid.NewGuid():N}{Path.GetExtension(fileName)}";
+
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key,
+                InputStream = fileStream,
+                ContentType = contentType,
+                CannedACL = S3CannedACL.PublicRead
+            };
+
+            request.DisablePayloadSigning = true;
+
+            await _s3.PutObjectAsync(request);
+            return $"{_publicBaseUrl}/{key}";
+        }
+
+
         // ===================================================
         // 🔹 Xoá file cũ theo URL
         // ===================================================
