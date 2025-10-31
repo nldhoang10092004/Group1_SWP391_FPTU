@@ -1,15 +1,11 @@
-import { useState } from "react";
-import { CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Input } from "./ui/input";
-import { Ticket, Plus, Tag, Calendar, Edit, Trash2 } from "lucide-react";
-import { Toast, ToastContainer } from "react-bootstrap";
-
+import { useState, useEffect } from "react";
+import { Plus, Trash } from "lucide-react";
+import { getAllVouchers, createVoucher, deleteVoucher } from "../../middleware/admin/voucherManagementAPI";
+import "./management-styles.scss";
 
 export function VoucherManagement() {
   const [vouchers, setVouchers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
@@ -24,217 +20,134 @@ export function VoucherManagement() {
 
   const showPopup = (message, type = "success") => {
     setToast({ show: true, message, type });
-    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+    setTimeout(() => setToast({ show: false, message: "" }), 3000);
+  };
+
+  useEffect(() => {
+    loadVouchers();
+  }, []);
+
+  const loadVouchers = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getAllVouchers();
+      setVouchers(data);
+    } catch (error) {
+      showPopup("Không thể tải danh sách voucher", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCreateVoucher = async () => {
-    if (!newVoucher.code || !newVoucher.description || !newVoucher.expiresAt) {
-      showPopup("Vui lòng điền đầy đủ thông tin", "error");
-      return;
-    }
-
-    const voucher = {
-      id: 'voucher_' + Date.now(),
-      ...newVoucher,
-      currentUses: 0,
-      isActive: true
-    };
-
-    setVouchers(prev => [...prev, voucher]);
-    showPopup("Đã tạo voucher hệ thống", "success");
-    setShowCreateModal(false);
-    setNewVoucher({ code: '', description: '', discountType: 'percentage', discountValue: 0, maxUses: 100, expiresAt: '' });
-  };
-
-  const handleDeleteVoucher = (voucherId) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa voucher này?")) {
-      setVouchers(prev => prev.filter(v => v.id !== voucherId));
-      showPopup("Đã xóa voucher", "success");
+    try {
+      // Convert expiresAt to ISO string if it's not empty
+      const voucherData = {
+        ...newVoucher,
+        expiresAt: newVoucher.expiresAt ? new Date(newVoucher.expiresAt).toISOString() : null,
+      };
+      await createVoucher(voucherData);
+      showPopup("Tạo voucher thành công!", "success");
+      setShowCreateModal(false);
+      setNewVoucher({ code: '', description: '', discountType: 'percentage', discountValue: 0, maxUses: 100, expiresAt: '' });
+      loadVouchers();
+    } catch (error) {
+      showPopup(error.response?.data?.message || error.message || "Lỗi khi tạo voucher", "error");
     }
   };
+
+  const handleDeleteVoucher = async (voucherId) => {
+    if (!window.confirm("Bạn có chắc muốn xóa voucher này không?")) return;
+    try {
+      await deleteVoucher(voucherId);
+      showPopup("Đã xóa voucher thành công", "success");
+      setVouchers(vouchers.filter(v => v.id !== voucherId));
+    } catch (error) {
+      showPopup("Không thể xóa voucher", "error");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="admin-loading-spinner">
+        <div className="admin-spinner"></div>
+        <p>Đang tải dữ liệu voucher...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4">
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className="fixed top-4 right-4 z-50 max-w-md">
-          <div className={`p-4 rounded-lg shadow-lg ${toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
-            <div className="flex justify-between items-center">
-              <strong className="mr-2">Thông báo</strong>
-              <button onClick={() => setToast(prev => ({ ...prev, show: false }))} className="text-white hover:text-gray-200">
-                ×
-              </button>
-            </div>
-            <div className="mt-2">{toast.message}</div>
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white rounded-lg shadow">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Quản lý Voucher</CardTitle>
-              <CardDescription>Tạo và quản lý voucher giảm giá</CardDescription>
-            </div>
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="mr-2" size={16} />
-              Tạo voucher
-            </Button>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          {vouchers.length === 0 ? (
-            <div className="text-center py-12">
-              <Ticket size={48} className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">Chưa có voucher nào</p>
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus size={16} className="mr-2" />
-                Tạo voucher đầu tiên
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã voucher</TableHead>
-                  <TableHead>Mô tả</TableHead>
-                  <TableHead>Giảm giá</TableHead>
-                  <TableHead>Sử dụng</TableHead>
-                  <TableHead>Hết hạn</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Hành động</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {vouchers.map((voucher) => (
-                  <TableRow key={voucher.id}>
-                    <TableCell className="font-bold font-mono">{voucher.code}</TableCell>
-                    <TableCell>{voucher.description}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Tag size={14} />
-                        {voucher.discountType === 'percentage'
-                          ? `${voucher.discountValue}%`
-                          : `${voucher.discountValue.toLocaleString()}đ`}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {voucher.currentUses}/{voucher.maxUses}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Calendar size={14} />
-                        {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={voucher.isActive ? 'bg-green-500' : 'bg-gray-500'}>
-                        {voucher.isActive ? 'Hoạt động' : 'Tạm dừng'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="outline" size="sm">
-                          <Edit size={16} />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteVoucher(voucher.id)}>
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </div>
-
-      {/* Create Voucher Modal */}
+    <div className="management-page-container">
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Tạo voucher hệ thống</h2>
-              <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700">
-                ×
-              </button>
+        <div className="management-modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="management-modal-content" onClick={e => e.stopPropagation()}>
+            <h3 className="card-title mb-6">Tạo voucher mới</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input type="text" placeholder="Mã voucher (ví dụ: SALE50)" value={newVoucher.code} onChange={e => setNewVoucher({ ...newVoucher, code: e.target.value.toUpperCase() })} className="form-input md:col-span-2" />
+              <textarea placeholder="Mô tả" value={newVoucher.description} onChange={e => setNewVoucher({ ...newVoucher, description: e.target.value })} className="form-input md:col-span-2" rows="2"></textarea>
+              <select value={newVoucher.discountType} onChange={e => setNewVoucher({ ...newVoucher, discountType: e.target.value })} className="form-input">
+                <option value="percentage">Phần trăm (%)</option>
+                <option value="fixed_amount">Số tiền cố định</option>
+              </select>
+              <input type="number" placeholder="Giá trị giảm" value={newVoucher.discountValue} onChange={e => setNewVoucher({ ...newVoucher, discountValue: Number(e.target.value) })} className="form-input" />
+              <input type="number" placeholder="Số lần sử dụng tối đa" value={newVoucher.maxUses} onChange={e => setNewVoucher({ ...newVoucher, maxUses: Number(e.target.value) })} className="form-input" />
+              <input type="date" placeholder="Ngày hết hạn" value={newVoucher.expiresAt} onChange={e => setNewVoucher({ ...newVoucher, expiresAt: e.target.value })} className="form-input" />
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Mã voucher *</label>
-                <Input
-                  value={newVoucher.code}
-                  onChange={(e) => setNewVoucher(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                  placeholder="VD: NEWYEAR2024"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Mô tả *</label>
-                <Input
-                  value={newVoucher.description}
-                  onChange={(e) => setNewVoucher(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Mô tả về voucher"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Loại giảm giá</label>
-                  <select
-                    className="w-full border rounded-md p-2"
-                    value={newVoucher.discountType}
-                    onChange={(e) => setNewVoucher(prev => ({ ...prev, discountType: e.target.value }))}
-                  >
-                    <option value="percentage">Phần trăm (%)</option>
-                    <option value="fixed">Số tiền (VND)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Giá trị giảm</label>
-                  <Input
-                    type="number"
-                    value={newVoucher.discountValue}
-                    onChange={(e) => setNewVoucher(prev => ({ ...prev, discountValue: parseInt(e.target.value) }))}
-                    placeholder={newVoucher.discountType === 'percentage' ? '30' : '100000'}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Số lần sử dụng tối đa</label>
-                  <Input
-                    type="number"
-                    value={newVoucher.maxUses}
-                    onChange={(e) => setNewVoucher(prev => ({ ...prev, maxUses: parseInt(e.target.value) }))}
-                    placeholder="100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Ngày hết hạn *</label>
-                  <Input
-                    type="date"
-                    value={newVoucher.expiresAt}
-                    onChange={(e) => setNewVoucher(prev => ({ ...prev, expiresAt: e.target.value }))}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-                Hủy
-              </Button>
-              <Button onClick={handleCreateVoucher}>Tạo voucher</Button>
+            <div className="flex justify-end gap-4 mt-6">
+              <button onClick={() => setShowCreateModal(false)} className="secondary-button">Hủy</button>
+              <button onClick={handleCreateVoucher} className="primary-button">Tạo voucher</button>
             </div>
           </div>
         </div>
       )}
+
+      <div className="management-card">
+        <div className="management-card-header flex justify-between items-center">
+          <div>
+            <h2 className="card-title">Quản lý Voucher</h2>
+            <p className="card-description">Tổng số: {vouchers.length} voucher</p>
+          </div>
+          <button onClick={() => setShowCreateModal(true)} className="primary-button flex items-center gap-2">
+            <Plus size={18} />
+            Tạo voucher
+          </button>
+        </div>
+
+        <div className="management-card-content">
+          <table className="management-table">
+            <thead>
+              <tr>
+                <th>Mã Voucher</th>
+                <th>Mô tả</th>
+                <th>Giá trị</th>
+                <th>Đã dùng / Tối đa</th>
+                <th>Ngày hết hạn</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vouchers.map((voucher) => (
+                <tr key={voucher.id}>
+                  <td className="font-mono font-bold text-blue-600">{voucher.code}</td>
+                  <td>{voucher.description}</td>
+                  <td>
+                    {voucher.discountType === 'percentage'
+                      ? `${voucher.discountValue}%`
+                      : `${voucher.discountValue.toLocaleString()} VNĐ`}
+                  </td>
+                  <td>{`${voucher.usesCount} / ${voucher.maxUses}`}</td>
+                  <td>{new Date(voucher.expiresAt).toLocaleDateString()}</td>
+                  <td>
+                    <button onClick={() => handleDeleteVoucher(voucher.id)} className="action-button delete-button">
+                      <Trash size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

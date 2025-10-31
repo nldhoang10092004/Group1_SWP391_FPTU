@@ -1,0 +1,177 @@
+// front-end/src/components/Admin/management-styles.scss
+
+@import "./admin-dashboard-styles.scss"; // To access the UI tokens and mixins
+
+// Common styles for all management pages (User, Course, Teacher, etc.)
+
+.management-page-container {
+  padding: 1rem;
+}
+
+.management-card {
+  @include ui-glass(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.6));
+  border-radius: $ui-radius-large;
+  padding: 1.5rem;
+  transition: $ui-transition;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $ui-shadow-deep;
+  }
+}
+
+.management-card-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid $ui-border;
+  margin-bottom: 1.5rem;
+
+  .card-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $ui-text;
+  }
+
+  .card-description {
+    font-size: 1rem;
+    color: $ui-muted;
+    margin-top: 0.25rem;
+  }
+}
+
+.management-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.75rem; // Add space between rows
+
+  th {
+    font-weight: 600;
+    color: $ui-muted;
+    font-size: 0.875rem;
+    text-align: left;
+    padding: 0 1rem 0.5rem;
+    border-bottom: 1px solid $ui-border-solid;
+  }
+
+  td {
+    padding: 1rem;
+    background-color: rgba(248, 250, 252, 0.5);
+    transition: background-color $ui-transition;
+
+    &:first-child {
+      border-top-left-radius: $ui-radius-medium;
+      border-bottom-left-radius: $ui-radius-medium;
+    }
+    &:last-child {
+      border-top-right-radius: $ui-radius-medium;
+      border-bottom-right-radius: $ui-radius-medium;
+    }
+  }
+
+  tr:hover td {
+    background-color: rgba(239, 246, 255, 0.8); // blue-50 with alpha
+  }
+}
+
+// --- Button Styles ---
+.action-button {
+  @include ui-glass(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
+  border-radius: $ui-radius-small;
+  padding: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $ui-text;
+  transition: $ui-transition;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+    color: $ui-brand;
+    transform: scale(1.05);
+  }
+
+  &.delete-button:hover {
+    color: $ui-danger;
+  }
+}
+
+// --- Badge Styles ---
+.status-badge {
+  border-radius: $ui-radius-small;
+  padding: 0.25rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.active {
+    background-color: rgba($ui-success, 0.1);
+    color: darken($ui-success, 10%);
+  }
+
+  &.inactive {
+    background-color: rgba($ui-muted, 0.1);
+    color: $ui-muted;
+  }
+}
+
+// --- Form & Modal Styles ---
+.management-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 40;
+}
+
+.management-modal-content {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  @include ui-glass(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.9));
+  border-radius: $ui-radius-large;
+  padding: 2rem;
+  width: 90vw;
+  max-width: 500px;
+}
+
+.form-input {
+  width: 100%;
+  background-color: rgba(241, 245, 249, 0.7); // slate-100 with alpha
+  border: 1px solid $ui-border-solid;
+  border-radius: $ui-radius-medium;
+  padding: 0.75rem 1rem;
+  color: $ui-text;
+  transition: $ui-transition;
+
+  &::placeholder {
+    color: $ui-muted;
+  }
+
+  &:focus {
+    @include ui-focus;
+    background-color: white;
+    border-color: rgba($ui-brand, 0.5);
+  }
+}
+
+.primary-button {
+  background: linear-gradient(120deg, $ui-brand 0%, $primary-color-dark 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: $ui-radius-medium;
+  padding: 0.75rem 1.5rem;
+  transition: $ui-transition;
+  box-shadow: 0 2px 8px rgba($ui-brand, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba($ui-brand, 0.4);
+  }
+
+  &:focus {
+    @include ui-focus;
+  }
+}

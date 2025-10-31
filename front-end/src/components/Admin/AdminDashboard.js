@@ -162,6 +162,15 @@ export function AdminDashboard({ onClose }) {
     { month: "T6", revenue: stats?.currentMonthRevenue || 0 },
   ];
 
+  const userGrowthData = [
+    { month: "T1", users: 250 },
+    { month: "T2", users: 310 },
+    { month: "T3", users: 450 },
+    { month: "T4", users: 620 },
+    { month: "T5", users: 780 },
+    { month: "T6", users: stats?.totalUsers || 850 },
+  ];
+
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -277,7 +286,32 @@ export function AdminDashboard({ onClose }) {
               </CardContent>
             </div>
 
-            {/* Biểu đồ phân bố vai trò */}
+            {/* Biểu đồ tăng trưởng người dùng */}
+            <div className="admin-chart-card " >
+              <CardHeader>
+                <CardTitle>Tăng trưởng người dùng</CardTitle>
+                <CardDescription>Số lượng người dùng mới mỗi tháng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={userGrowthData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area
+                      type="monotone"
+                      dataKey="users"
+                      stroke="#4caf50"
+                      fill="#4caf50"
+                      fillOpacity={0.3}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </div>
+
+                        {/* Biểu đồ phân bố vai trò */}
             <div className="admin-chart-card">
               <CardHeader>
                 <CardTitle>Phân bố vai trò</CardTitle>
@@ -373,6 +407,7 @@ export function AdminDashboard({ onClose }) {
         </div>
       );
     }
+    
 
     // Các trang quản lý khác
     switch (activeMenu) {

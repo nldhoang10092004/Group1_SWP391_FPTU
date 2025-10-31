@@ -197,9 +197,9 @@ useEffect(() => {
 
       {/* Import JSON */}
       <Card className="mt-4 shadow-sm rounded-4 p-3">
-        <h5>Import Quiz JSON</h5>
+        <h5>Import Quiz </h5>
         <Form.Group className="mb-3">
-          <Form.Label>Paste JSON vào đây</Form.Label>
+          <Form.Label>Paste vào đây</Form.Label>
           <Form.Control
             as="textarea"
             rows={10}
@@ -208,7 +208,7 @@ useEffect(() => {
           />
         </Form.Group>
         <Button onClick={handleImport} disabled={uploading} variant="primary">
-          {uploading ? "Đang import..." : "Import JSON"}
+          {uploading ? "Đang import..." : "Import"}
         </Button>
       </Card>
 

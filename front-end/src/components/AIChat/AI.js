@@ -3,7 +3,8 @@
  * EMT AI CHATBOT - VANILLA JAVASCRIPT
  * ============================================
  * File: /components/AIChat/AI.js
- * Description: Standalone AI Chatbot với design system đồng bộ
+ * Description: Standalone AI Chatbot - Có thể gắn vào bất kỳ website nào
+ * Usage: import './components/AIChat/AI.js' trong App
  * ============================================
  */
 
@@ -11,7 +12,7 @@
   'use strict';
 
   // ============================================
-  // 🔧 CẤU HÌNH API
+  // 🔧 CẤU HÌNH API - PASTE KEYS VÀO ĐÂY
   // ============================================
   
   const AI_CONFIG = {
@@ -28,7 +29,7 @@
   };
 
   // ============================================
-  // 📝 SYSTEM PROMPTS
+  // 📝 SYSTEM PROMPTS - TÙY CHỈNH Ở ĐÂY
   // ============================================
   
   const SYSTEM_PROMPTS = {
@@ -435,8 +436,16 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             window.EMTChatbot.send();
+            input.style.height = 'auto'; // Reset height after send
           }
         });
+
+        // Auto-resize textarea height
+        input.addEventListener('input', () => {
+          input.style.height = 'auto';
+          input.style.height = (input.scrollHeight) + 'px';
+        });
+
         input.focus();
       }
     }
@@ -464,14 +473,14 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
   };
 
   // ============================================
-  // 🎨 INJECT CSS - ĐÃ CẬP NHẬT THEO DESIGN SYSTEM
+  // 🎨 INJECT CSS
   // ============================================
   
   function injectCSS() {
     const style = document.createElement('style');
     style.textContent = `
       /* ============================================ */
-      /* EMT AI CHATBOT STYLES - DESIGN SYSTEM */
+      /* EMT AI CHATBOT STYLES */
       /* ============================================ */
       
       /* Float Button */
@@ -481,10 +490,10 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
         right: 2rem;
         width: 4rem;
         height: 4rem;
-        background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         border: none;
-        border-radius: 1rem;
-        box-shadow: 0 8px 30px rgba(79, 70, 229, 0.4);
+        border-radius: 9999px;
+        box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -493,21 +502,19 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
         transition: all 0.3s ease;
         animation: emtChatboxFloat 3s ease-in-out infinite;
         color: white;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
       }
 
       .emt-chatbox-float-button:hover {
         transform: scale(1.1);
-        box-shadow: 0 12px 40px rgba(79, 70, 229, 0.5);
+        box-shadow: 0 12px 32px rgba(14, 165, 233, 0.5);
       }
 
       .emt-chatbox-pulse {
         position: absolute;
         width: 100%;
         height: 100%;
-        border-radius: 1rem;
-        background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+        border-radius: 9999px;
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         animation: emtChatboxPulse 2s ease-out infinite;
         pointer-events: none;
       }
@@ -535,9 +542,7 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
         right: 2rem;
         width: 420px;
         height: 600px;
-        background: rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: white;
         border-radius: 1.5rem;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
         display: flex;
@@ -560,12 +565,12 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
 
       /* Header */
       .emt-chatbox-header {
-        background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         padding: 1.25rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
       }
 
       .emt-chatbox-header-left {
@@ -579,12 +584,11 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
         width: 2.5rem;
         height: 2.5rem;
         background: white;
-        border-radius: 0.75rem;
+        border-radius: 9999px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #4f46e5;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        color: #0ea5e9;
       }
 
       .emt-chatbox-status-dot {
@@ -603,7 +607,6 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
         font-size: 1rem;
         font-weight: 700;
         margin: 0;
-        font-family: 'Inter', sans-serif;
       }
 
       .emt-chatbox-subtitle {
@@ -613,8 +616,6 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
         display: flex;
         align-items: center;
         gap: 0.25rem;
-        font-family: 'Inter', sans-serif;
-        font-weight: 500;
       }
 
       .emt-chatbox-close-btn {
@@ -622,12 +623,12 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
         border: none;
         width: 2rem;
         height: 2rem;
-        border-radius: 0.75rem;
+        border-radius: 9999px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s;
         color: white;
       }
 
@@ -641,7 +642,7 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
         flex: 1;
         overflow-y: auto;
         padding: 1.25rem;
-        background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+        background: linear-gradient(to bottom, #f0f9ff 0%, #ffffff 100%);
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -656,7 +657,7 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
       }
 
       .emt-chatbox-messages::-webkit-scrollbar-thumb {
-        background: #cbd5e0;
+        background: #bae6fd;
         border-radius: 9999px;
       }
 
@@ -688,8 +689,8 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
       .emt-chatbox-message-avatar {
         width: 1.75rem;
         height: 1.75rem;
-        background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
-        border-radius: 0.5rem;
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        border-radius: 9999px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -706,24 +707,21 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
 
       .emt-chatbox-message-bubble {
         padding: 0.875rem 1rem;
-        border-radius: 1rem;
+        border-radius: 1.25rem;
         line-height: 1.5;
         font-size: 0.9375rem;
-        font-family: 'Inter', sans-serif;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
       }
 
       .emt-chatbox-message-user .emt-chatbox-message-bubble {
-        background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         color: white;
         border-bottom-right-radius: 0.25rem;
       }
 
       .emt-chatbox-message-assistant .emt-chatbox-message-bubble {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        color: #1a202c;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: white;
+        color: #0f172a;
+        border: 1px solid #e0f2fe;
         border-bottom-left-radius: 0.25rem;
       }
 
@@ -733,10 +731,8 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
 
       .emt-chatbox-message-time {
         font-size: 0.6875rem;
-        color: #718096;
+        color: #94a3b8;
         padding: 0 0.5rem;
-        font-family: 'Inter', sans-serif;
-        font-weight: 500;
       }
 
       .emt-chatbox-message-user .emt-chatbox-message-time {
@@ -746,22 +742,20 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
       /* Typing */
       .emt-chatbox-typing {
         padding: 0.875rem 1rem;
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 1rem;
+        background: white;
+        border: 1px solid #e0f2fe;
+        border-radius: 1.25rem;
         border-bottom-left-radius: 0.25rem;
         display: flex;
         gap: 0.375rem;
         align-items: center;
         width: fit-content;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
       }
 
       .emt-chatbox-typing span {
         width: 0.5rem;
         height: 0.5rem;
-        background: #4f46e5;
+        background: #0ea5e9;
         border-radius: 9999px;
         animation: emtChatboxTyping 1.4s ease-in-out infinite;
       }
@@ -795,104 +789,92 @@ Bạn muốn biết về chủ đề nào cụ thể? Hỏi tôi bất cứ đi�
 
       .emt-chatbox-quick-title {
         font-size: 0.8125rem;
-        color: #4a5568;
+        color: #64748b;
         margin: 0 0 0.25rem 0;
         font-weight: 600;
-        font-family: 'Inter', sans-serif;
       }
 
       .emt-chatbox-quick-btn {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: white;
+        border: 2px solid #bae6fd;
         padding: 0.625rem 0.875rem;
-        border-radius: 0.75rem;
+        border-radius: 9999px;
         font-size: 0.8125rem;
-        color: #4f46e5;
+        color: #0369a1;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s;
         text-align: left;
         font-weight: 500;
-        font-family: 'Inter', sans-serif;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
       }
 
       .emt-chatbox-quick-btn:hover {
-        background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
         color: white;
         border-color: transparent;
         transform: translateX(4px);
-        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
       }
 
       /* Input */
       .emt-chatbox-input-container {
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        border-top: 1px solid rgba(255, 255, 255, 0.3);
         display: flex;
-        gap: 0.75rem;
-        align-items: flex-end;
+        align-items: flex-end; /* Align items to the bottom */
+        padding: 0.75rem;
+        border-top: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        gap: 0.5rem; /* Add gap between textarea and button */
       }
 
       .emt-chatbox-input {
         flex: 1;
-        padding: 0.875rem 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 0.75rem;
-        font-size: 0.9375rem;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        padding: 0.65rem 1rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        background-color: white;
         resize: none;
-        max-height: 100px;
-        transition: all 0.3s ease;
-        font-family: 'Inter', sans-serif;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
+        overflow-y: hidden; /* Hide scrollbar until needed */
+        max-height: 120px; /* Limit max height */
+        transition: all 0.2s ease;
+        font-family: inherit;
+        box-sizing: border-box;
       }
 
       .emt-chatbox-input:focus {
         outline: none;
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
       }
 
       .emt-chatbox-send-btn {
         width: 2.75rem;
         height: 2.75rem;
-        background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+        background: #e0f2fe;
         border: none;
-        border-radius: 0.75rem;
+        border-radius: 9999px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s;
         flex-shrink: 0;
-        color: white;
-        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        color: #0369a1;
       }
 
       .emt-chatbox-send-btn:hover {
-        opacity: 0.9;
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        color: white;
         transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
-      }
-
-      .emt-chatbox-send-btn:active {
-        transform: scale(1);
       }
 
       /* Footer */
       .emt-chatbox-footer {
         padding: 0.625rem;
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
+        background: #f8fafc;
         text-align: center;
         font-size: 0.6875rem;
-        color: #718096;
-        border-top: 1px solid rgba(255, 255, 255, 0.3);
-        font-family: 'Inter', sans-serif;
-        font-weight: 500;
+        color: #94a3b8;
+        border-top: 1px solid #e0f2fe;
       }
 
       /* Responsive */

@@ -36,7 +36,7 @@ const Profile = () => {
 
   const token = localStorage.getItem("accessToken");
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const backPath = (-1);
+  const backPath = "/home";
 
   // ---------- TOAST FUNCTION ----------
   const showToast = (message, type = "info") => {

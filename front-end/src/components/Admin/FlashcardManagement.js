@@ -200,7 +200,6 @@ export function FlashcardManagement() {
   return (
     <div className="container py-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>📘 Quản lý Flashcard</h3>
         <Button onClick={() => handleOpenSetModal()}>+ Thêm Flashcard Set</Button>
       </div>
 
