@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace EMT_API.Controllers.Admin
+namespace EMT_API.Controllers.AdminSide
 {
     [ApiController]
     [Route("api/admin/quiz")]
@@ -41,7 +41,7 @@ namespace EMT_API.Controllers.Admin
         // 🔹 2️⃣ Tạo quiz (có thể không gắn với course)
         // ===========================================
         [HttpPost("create")]
-        public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequest request)
+        public async Task<IActionResult> CreateQuiz([FromBody] DTOs.Admin.CreateQuizRequest request)
         {
             var quiz = new EMT_API.Models.Quiz
             {

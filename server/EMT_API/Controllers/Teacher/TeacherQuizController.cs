@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Security.Claims;
 
-namespace EMT_API.Controllers.Teacher
+namespace EMT_API.Controllers.TeacherSide
 {
     [ApiController]
     [Route("api/teacher/quiz")]
