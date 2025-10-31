@@ -363,45 +363,7 @@ namespace EMT_API.Controllers.Teacher
                 return StatusCode(500, new { message = "Import failed", error = ex.Message });
             }
         }
-
-        [HttpPost("upload")]
-        [Consumes("multipart/form-data")]
-        [RequestSizeLimit(25_000_000)] // giới hạn 25MB
-        public async Task<IActionResult> UploadAsset([FromForm] AssetUploadRequest req)
-        {
-            if (req.File == null || req.File.Length == 0)
-                return BadRequest("No file uploaded.");
-
-            string url;
-
-            if (req.Type.Equals("audio", StringComparison.OrdinalIgnoreCase))
-            {
-                url = await _r2.UploadQuizAudioAsync(
-                    req.File.OpenReadStream(),
-                    req.File.FileName,
-                    req.File.ContentType
-                );
-            }
-            else if (req.Type.Equals("image", StringComparison.OrdinalIgnoreCase))
-            {
-                url = await _r2.UploadQuizImageAsync(
-                    req.File.OpenReadStream(),
-                    req.File.FileName,
-                    req.File.ContentType
-                );
-            }
-            else
-            {
-                return BadRequest("Invalid type. Only 'audio' or 'image' allowed.");
-            }
-
-            return Ok(new
-            {
-                message = "File uploaded successfully",
-                url
-            });
-        }
-
-
     }
+
 }
+    
