@@ -15,7 +15,7 @@ namespace EMT_API.Controllers
 
         [HttpPost("asset")]
         [Consumes("multipart/form-data")]
-        [RequestSizeLimit(100_000_000)] // 100MB (đủ cho video)
+        [RequestSizeLimit(1_000_000_000)] // 1GB (đủ cho video)
         public async Task<IActionResult> UploadAsset([FromForm] FileUploadRequest req)
         {
             if (req.File == null || req.File.Length == 0)
