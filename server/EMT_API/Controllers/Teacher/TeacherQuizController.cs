@@ -145,7 +145,7 @@ namespace EMT_API.Controllers.TeacherSide
         // 🔹 3️⃣ Tạo quiz mới (teacher tạo trong course của mình)
         // ===========================================
         [HttpPost]
-        public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequest req)
+        public async Task<IActionResult> CreateQuiz([FromBody] TeacherCreateQuizRequest req)
         {
             if (!await EnsureTeacherOwnsCourse(req.CourseID))
                 return Forbid();

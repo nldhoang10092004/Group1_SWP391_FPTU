@@ -3,7 +3,7 @@
     // ===================================================
     // 🔹 Tạo quiz shell
     // ===================================================
-    public class CreateQuizRequest
+    public class TeacherCreateQuizRequest
     {
         public int CourseID { get; set; }            // khoá học chứa quiz
         public string Title { get; set; } = null!;
