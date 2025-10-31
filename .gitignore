@@ -24,7 +24,3 @@ server/EMT_API/wwwroot/avatars/
 *.db
 *.opendb
 node_modules
-
-# Archives
-front-end.zip
-package-lock.json

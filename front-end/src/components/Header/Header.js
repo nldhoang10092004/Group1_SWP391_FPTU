@@ -317,19 +317,6 @@ const Header = () => {
     }, 1000);
   };
 
-  // 🟢 Demo login
-  const handleDemoStudent = () => {
-    setEmailOrUsername("students@gmail.com");
-    setPassword("1234567890");
-    showToastNotification("📝 Đã điền thông tin demo học viên", "info");
-  };
-
-  const handleDemoTeacher = () => {
-    setEmailOrUsername("teacher@emt.com");
-    setPassword("password123");
-    showToastNotification("📝 Đã điền thông tin demo giảng viên", "info");
-  };
-
   return (
     <>
       {/* 🔔 Toast Notification */}
@@ -495,15 +482,6 @@ const Header = () => {
       />
     </div>
   </Form.Group>
-
-  <div className="d-flex justify-content-between mb-3">
-    <Button variant="outline-dark" size="sm" onClick={handleDemoStudent}>
-      Học viên Demo
-    </Button>
-    <Button variant="outline-dark" size="sm" onClick={handleDemoTeacher}>
-      Giảng viên Demo
-    </Button>
-  </div>
 
   <Button type="submit" className="w-100" variant="dark">
     Đăng nhập
