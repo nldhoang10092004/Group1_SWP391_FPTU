@@ -14,7 +14,7 @@ import WritingPractice from "./components/User/WritingPractice";
 import EditLesson from "./components/Teacher/EditLesson";
 import Membership from "./components/User/Membership";
 import CourseDetail from './components/User/CourseDetail';
-import EditCourse from './components/Teacher/EditCourse';
+import EditCourse from './components/Teacher/CreateEditCourse';
 import Flashcard from "./components/User/Flashcard";
 import Grammar from "./components/User/Grammar";
 import PaymentForm from "./components/User/PaymentForm";
