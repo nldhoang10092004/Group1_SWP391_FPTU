@@ -19,11 +19,13 @@ $backdrop-blur: 10px;
 $transition-duration: 0.3s;
 $border-radius-lg: 1rem; // rounded-2xl
 $border-radius-md: 0.75rem; // rounded-xl
+
 .main-footer {
-  background: $text-gray-900; // Dark footer
-  color: #e2e8f0; // Muted white
+  background: $bg-white; // Light footer
+  color: $text-gray-600; // Darker text for readability
   padding: 4rem 0 1.5rem;
   font-size: 0.95rem;
+  border-top: 1px solid #e2e8f0; // Light border
 
   .footer-logo-col {
     .footer-logo {
@@ -31,22 +33,20 @@ $border-radius-md: 0.75rem; // rounded-xl
       align-items: center;
       font-size: 1.8rem;
       font-weight: $font-bold;
-      color: $bg-white;
+      color: $text-gray-900; // Dark logo text
       margin-bottom: 1rem;
 
       .logo-icon {
         width: 45px;
         height: 45px;
         margin-right: 0.75rem;
-        background: $primary-gradient;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        
         font-size: 2.5rem;
         line-height: 1;
         display: flex;
         align-items: center;
         justify-content: center;
-        text-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+        text-shadow: 0 0 12px rgba(139, 92, 246, 0.3); // Softer shadow
       }
     }
     p {
@@ -61,7 +61,7 @@ $border-radius-md: 0.75rem; // rounded-xl
         font-size: 1.5rem;
         transition: color $transition-duration ease;
         &:hover {
-          color: $bg-white;
+          color: $text-gray-900; // Darker hover color
         }
       }
     }
@@ -69,7 +69,7 @@ $border-radius-md: 0.75rem; // rounded-xl
 
   .footer-links-col {
     h4 {
-      color: $bg-white;
+      color: $text-gray-900; // Dark heading
       font-size: 1.1rem;
       margin-bottom: 1.25rem;
     }
@@ -95,7 +95,7 @@ $border-radius-md: 0.75rem; // rounded-xl
 
   .footer-contact-col {
     h4 {
-      color: $bg-white;
+      color: $text-gray-900; // Dark heading
       font-size: 1.1rem;
       margin-bottom: 1.25rem;
     }
@@ -116,7 +116,7 @@ $border-radius-md: 0.75rem; // rounded-xl
   }
 
   .footer-divider {
-    border-top: 1px solid $text-gray-600;
+    border-top: 1px solid #e2e8f0; // Lighter divider
     margin: 3rem 0 1.5rem;
   }
 

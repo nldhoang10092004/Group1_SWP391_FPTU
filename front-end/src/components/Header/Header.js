@@ -36,9 +36,6 @@ const Header = () => {
   const [registerErrorMessage, setRegisterErrorMessage] = useState("");
   const [otpMessage, setOtpMessage] = useState("");
   const [otpError, setOtpError] = useState("");
-  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 🟢 User info
   const [user, setUser] = useState(() => {
@@ -489,20 +486,13 @@ const Header = () => {
     <Form.Label>Mật khẩu</Form.Label>
     <div className="d-flex gap-2">
       <Form.Control
-        type={showLoginPassword ? "text" : "password"}
+        type="password"
         placeholder="Nhập mật khẩu"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
         size="sm"
       />
-      <Button 
-        variant="outline-secondary" 
-        onClick={() => setShowLoginPassword(!showLoginPassword)}
-        size="sm"
-      >
-        <i className={`fas ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
-      </Button>
     </div>
   </Form.Group>
 
@@ -591,20 +581,13 @@ const Header = () => {
                 <Form.Label>Mật khẩu</Form.Label>
                 <div className="d-flex gap-2">
                   <Form.Control
-                    type={showRegisterPassword ? "text" : "password"} 
+                    type="password" 
                     placeholder="Nhập mật khẩu"
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
                     size="sm"
                   />
-                  <Button 
-                    variant="outline-secondary" 
-                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                    size="sm"
-                  >
-                    <i className={`fas ${showRegisterPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
-                  </Button>
                 </div>
               </Form.Group>
 
@@ -612,20 +595,13 @@ const Header = () => {
                 <Form.Label>Xác nhận mật khẩu</Form.Label>
                 <div className="d-flex gap-2">
                   <Form.Control 
-                    type={showConfirmPassword ? "text" : "password"}
+                    type="password"
                     placeholder="Nhập lại mật khẩu"
                     value={registerConfirmPassword} 
                     onChange={(e) => setRegisterConfirmPassword(e.target.value)} 
                     required 
                     size="sm" 
                   />
-                  <Button 
-                    variant="outline-secondary" 
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    size="sm"
-                  >
-                    <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
-                  </Button>
                 </div>
               </Form.Group>
 

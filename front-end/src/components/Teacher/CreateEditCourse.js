@@ -103,109 +103,102 @@ const CreateEditCourse = () => {
 
   // ✅ Thêm hoặc sửa chương
   const handleSaveChapter = async () => {
-    try {
-      if (!chapterName.trim()) {
-        alert("Vui lòng nhập tên chương");
-        return;
-      }
-
-      if (editingChapter) {
-        const updated = await updateChapter(editingChapter.chapterID, { chapterName });
-        const updatedChapters = course.chapters.map((ch) =>
-          ch.chapterID === updated.chapterID ? updated : ch
-        );
-        setCourse({ ...course, chapters: updatedChapters });
-        setSuccess("Cập nhật chương thành công!");
-      } else {
-        const created = await createChapter(course.courseID, { chapterName });
-        setCourse({ ...course, chapters: [...course.chapters, created] });
-        setSuccess("Tạo chương mới thành công!");
-      }
-
-      setShowChapterModal(false);
-      setChapterName("");
-      setEditingChapter(null);
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error("❌ Lỗi khi lưu chương:", err);
-      setError("Không thể lưu chương");
+  try {
+    if (!chapterName.trim()) {
+      alert("Vui lòng nhập tên chương");
+      return;
     }
-  };
+
+    if (editingChapter) {
+      await updateChapter(editingChapter.chapterID, { chapterName });
+      setSuccess("Cập nhật chương thành công!");
+    } else {
+      await createChapter(course.courseID, { chapterName });
+      setSuccess("Tạo chương mới thành công!");
+    }
+
+    setShowChapterModal(false);
+    setChapterName("");
+    setEditingChapter(null);
+
+    // 🔁 Gọi lại API để reload dữ liệu thật
+    await loadCourseData();
+
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    console.error("❌ Lỗi khi lưu chương:", err);
+    setError("Không thể lưu chương");
+  }
+};
 
   // ✅ Xóa chương
   const handleDeleteChapter = async (chapterId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa chương này?")) return;
-    try {
-      await deleteChapter(chapterId);
-      const updatedChapters = course.chapters.filter((ch) => ch.chapterID !== chapterId);
-      setCourse({ ...course, chapters: updatedChapters });
-      setSuccess("Xóa chương thành công!");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error("❌ Lỗi khi xóa chương:", err);
-      setError("Không thể xóa chương");
-    }
-  };
+  if (!window.confirm("Bạn có chắc chắn muốn xóa chương này?")) return;
+  try {
+    await deleteChapter(chapterId);
+    setSuccess("Xóa chương thành công!");
+
+    // 🔁 Reload lại dữ liệu
+    await loadCourseData();
+
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    console.error("❌ Lỗi khi xóa chương:", err);
+    setError("Không thể xóa chương");
+  }
+};
 
   // ✅ Thêm hoặc sửa video
   const handleSaveVideo = async () => {
-    try {
-      if (!videoName.trim()) {
-        alert("Vui lòng nhập tên video");
-        return;
-      }
-
-      const payload = {
-        videoName,
-        videoURL: videoURL.trim() || null,
-        isPreview,
-      };
-
-      let updatedChapters = [...course.chapters];
-      if (editingVideo) {
-        const updated = await createVideo(editingVideo.videoID, payload);
-        updatedChapters = updatedChapters.map((ch) =>
-          ch.chapterID === selectedChapterId
-            ? { ...ch, videos: ch.videos.map((v) => (v.videoID === updated.videoID ? updated : v)) }
-            : ch
-        );
-        setSuccess("Cập nhật video thành công!");
-      } else {
-        const created = await createVideo(selectedChapterId, payload);
-        updatedChapters = updatedChapters.map((ch) =>
-          ch.chapterID === selectedChapterId ? { ...ch, videos: [...ch.videos, created] } : ch
-        );
-        setSuccess("Tạo video mới thành công!");
-      }
-
-      setCourse({ ...course, chapters: updatedChapters });
-      setShowVideoModal(false);
-      resetVideoForm();
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error("❌ Lỗi khi lưu video:", err);
-      setError("Không thể lưu video");
+  try {
+    if (!videoName.trim()) {
+      alert("Vui lòng nhập tên video");
+      return;
     }
-  };
+
+    const payload = {
+      videoName,
+      videoURL: videoURL.trim() || null,
+      isPreview,
+    };
+
+    if (editingVideo) {
+      await createVideo(editingVideo.videoID, payload);
+      setSuccess("Cập nhật video thành công!");
+    } else {
+      await createVideo(selectedChapterId, payload);
+      setSuccess("Tạo video mới thành công!");
+    }
+
+    setShowVideoModal(false);
+    resetVideoForm();
+
+    // 🔁 Reload dữ liệu từ backend
+    await loadCourseData();
+
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    console.error("❌ Lỗi khi lưu video:", err);
+    setError("Không thể lưu video");
+  }
+};
 
   // ✅ Xóa video
   const handleDeleteVideo = async (chapterId, videoId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa video này?")) return;
-    try {
-      await deleteVideo(videoId);
-      const updatedChapters = course.chapters.map((ch) =>
-        ch.chapterID === chapterId
-          ? { ...ch, videos: ch.videos.filter((v) => v.videoID !== videoId) }
-          : ch
-      );
-      setCourse({ ...course, chapters: updatedChapters });
-      setSuccess("Xóa video thành công!");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error("❌ Lỗi khi xóa video:", err);
-      setError("Không thể xóa video");
-    }
-  };
+  if (!window.confirm("Bạn có chắc chắn muốn xóa video này?")) return;
+  try {
+    await deleteVideo(videoId);
+    setSuccess("Xóa video thành công!");
+
+    // 🔁 Reload lại dữ liệu
+    await loadCourseData();
+
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    console.error("❌ Lỗi khi xóa video:", err);
+    setError("Không thể xóa video");
+  }
+};
 
   const resetVideoForm = () => {
     setVideoName("");
