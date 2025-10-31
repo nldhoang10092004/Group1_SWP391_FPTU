@@ -27,18 +27,35 @@ const getAuthHeader = () => {
 // ✅ Lấy tất cả khóa học của giáo viên
 export const getTeacherCourses = async () => {
   try {
-    const res = await axios.get(API_BASE, getAuthHeader());
-    return res.data?.courses || res.data || [];
-  } catch (err) {
-    console.error("❌ Lỗi lấy danh sách khóa học:", err.response || err);
-    throw new Error(err.response?.data?.message || "Không thể tải danh sách khóa học");
+    const res = await axios.get(`${API_BASE}`, getAuthHeader());
+    console.log("📘 getTeacherCourses - Raw response:", res.data);
+    
+    // Xử lý linh hoạt: nếu có .courses thì lấy, không thì lấy data
+    const coursesList = res.data.courses || res.data;
+    
+    console.log("📘 getTeacherCourses - Courses list:", coursesList);
+    console.log("📘 Is Array?", Array.isArray(coursesList));
+    
+    return Array.isArray(coursesList) ? coursesList : [];
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy danh sách khóa học:", error);
+    throw error;
   }
 };
 
 // ✅ Lấy chi tiết 1 khóa học
 export const getTeacherCourseDetail = async (courseId) => {
   try {
+    console.log("🔍 Đang lấy chi tiết khóa học ID:", courseId);
+
+    console.log("useParams courseId:", courseId);
+
+    if (!courseId || courseId === 'undefined' || courseId === 'null') {
+      throw new Error("courseId không hợp lệ");
+    }
+    
     const res = await axios.get(`${API_BASE}/${courseId}`, getAuthHeader());
+    console.log("✅ Chi tiết khóa học:", res.data);
     return res.data;
   } catch (err) {
     console.error("❌ Lỗi lấy chi tiết khóa học:", err.response || err);
@@ -60,7 +77,14 @@ export const createTeacherCourse = async (courseData) => {
 // ✅ Cập nhật khóa học
 export const updateTeacherCourse = async (courseId, courseData) => {
   try {
+    console.log("🔄 Đang cập nhật khóa học ID:", courseId, "với data:", courseData);
+    
+    if (!courseId || courseId === 'undefined' || courseId === 'null') {
+      throw new Error("courseId không hợp lệ");
+    }
+    
     const res = await axios.put(`${API_BASE}/${courseId}`, courseData, getAuthHeader());
+    console.log("✅ Cập nhật thành công:", res.data);
     return res.data;
   } catch (err) {
     console.error("❌ Lỗi cập nhật khóa học:", err.response || err);
@@ -71,6 +95,10 @@ export const updateTeacherCourse = async (courseId, courseData) => {
 // ✅ Xóa khóa học
 export const deleteTeacherCourse = async (courseId) => {
   try {
+    if (!courseId || courseId === 'undefined' || courseId === 'null') {
+      throw new Error("courseId không hợp lệ");
+    }
+    
     const res = await axios.delete(`${API_BASE}/${courseId}`, getAuthHeader());
     return res.data;
   } catch (err) {

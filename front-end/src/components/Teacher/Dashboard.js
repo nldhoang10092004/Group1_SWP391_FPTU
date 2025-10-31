@@ -36,7 +36,7 @@ import {
   getFlashcardSetsByCourse,
   deleteFlashcardSet,
 } from "../../middleware/teacher/flashcardTeacherAPI";
-import { getQuizzesByCourse } from "../../middleware/QuizAPI";
+import { getQuizzesByCourse } from "../../middleware/teacher/quizTeacherAPI";
 import { jwtDecode } from "jwt-decode";
 
 const Dashboard = () => {
@@ -45,6 +45,8 @@ const Dashboard = () => {
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [errorCourses, setErrorCourses] = useState(null);
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const [flashcards, setFlashcards] = useState([]);
   const [loadingFlashcards, setLoadingFlashcards] = useState(true);
@@ -59,6 +61,8 @@ const Dashboard = () => {
   const [newCourse, setNewCourse] = useState({
     courseName: "",
     description: "",
+    courseLevel: 1,
+
   });
 
   const token = localStorage.getItem("accessToken");
@@ -67,10 +71,13 @@ const Dashboard = () => {
     try {
       const decoded = jwtDecode(token);
       teacherId = decoded?.id || decoded?.teacherId || decoded?.UserId;
+      console.log("Teacher ID từ token:", teacherId);
+      console.log("📜 Decoded token:", decoded);
     } catch (err) {
       console.error("❌ Lỗi giải mã token:", err);
     }
   }
+
 
   /* -------------------- Lấy khóa học thật từ API -------------------- */
   useEffect(() => {
@@ -128,7 +135,7 @@ const Dashboard = () => {
         setLoadingQuizzes(true);
         const allQuizzes = [];
         for (const course of courses) {
-          const data = await getQuizzesByCourse(course.courseID);
+          const data = await getQuizzesByCourse(course.courseID); // ✅ API thật
           if (Array.isArray(data)) {
             const filtered = teacherId
               ? data.filter((q) => q.teacherID === teacherId)
@@ -151,26 +158,54 @@ const Dashboard = () => {
     if (courses.length > 0) fetchQuizzes();
   }, [courses, teacherId]);
 
+
+  /* -------------------- Hàm reload courses -------------------- */
+  const reloadCourses = async () => {
+    try {
+      setLoadingCourses(true);
+      const data = await getTeacherCourses();
+      const filtered = teacherId
+        ? data.filter((c) => c.teacherID === teacherId)
+        : data;
+      setCourses(filtered);
+    } catch (error) {
+      console.error("❌ Lỗi reload khóa học:", error);
+      setErrorCourses(error.message || "Không thể tải khóa học");
+    } finally {
+      setLoadingCourses(false);
+    }
+  };
+
   /* -------------------- CRUD khóa học -------------------- */
   const handleCreateCourse = async () => {
     if (!newCourse.courseName.trim()) {
       alert("Vui lòng nhập tên khóa học!");
       return;
     }
+
     try {
-      const payload = { ...newCourse, teacherID: teacherId };
-      const created = await createTeacherCourse(payload);
-      setCourses((prev) => [...prev, created]);
-      setNewCourse({ courseName: "", description: "" });
+      const payload = {
+        courseName: newCourse.courseName,
+        description: newCourse.description,
+        courseLevel: Number(newCourse.courseLevel),
+        teacherId: teacherId, // 👈 thêm dòng này
+      };
+
+      console.log("📤 Payload gửi lên API:", payload);
+      await createTeacherCourse(payload);
+      setNewCourse({ courseName: "", description: "", courseLevel: 1 });
       setShowModal(false);
+      await reloadCourses();
       alert("✅ Tạo khóa học thành công!");
     } catch (err) {
+      console.error("❌ Lỗi tạo khóa học:", err.response?.data || err);
       alert(err.message || "Không thể tạo khóa học.");
     }
   };
 
-  const handleEditCourse = (courseId) => navigate(`/editcourse/${courseId}`);
-  const handleViewCourseDetail = (courseId) => navigate(`/course/${courseId}`);
+  const handleViewCourseDetail = (courseId) => {
+    navigate(`/teacher/coursedetail/${courseId}`);
+  };
 
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm("Bạn có chắc muốn xóa khóa học này không?")) return;
@@ -226,11 +261,10 @@ const Dashboard = () => {
                 action
                 active={activeMenu === item.key}
                 onClick={() => setActiveMenu(item.key)}
-                className={`mb-2 rounded-3 ${
-                  activeMenu === item.key
+                className={`mb-2 rounded-3 ${activeMenu === item.key
                     ? "bg-primary text-white"
                     : "bg-light text-dark"
-                }`}
+                  }`}
                 style={{ cursor: "pointer", transition: "0.2s" }}
               >
                 <FontAwesomeIcon icon={item.icon} className="me-2" />
@@ -305,9 +339,10 @@ const Dashboard = () => {
                                 <Button
                                   size="sm"
                                   variant="outline-success"
-                                  onClick={() =>
-                                    handleEditCourse(course.courseID)
-                                  }
+                                  onClick={() => {
+                                    setEditingCourse(course);
+                                    setShowEditModal(true);
+                                  }}
                                 >
                                   <FontAwesomeIcon icon={faEdit} /> Sửa
                                 </Button>
@@ -423,20 +458,19 @@ const Dashboard = () => {
                       <Col md={6} lg={4} key={quiz.quizID} className="mb-4">
                         <Card className="shadow-sm border-0 rounded-4 hover-card h-100">
                           <Card.Body>
-                            <h6 className="fw-bold text-primary">
-                              {quiz.title}
-                            </h6>
+                            <h6 className="fw-bold text-primary">{quiz.title}</h6>
                             <p className="text-muted small">
                               Khóa học: {quiz.courseName}
                             </p>
+                            <p className="text-muted small" >{quiz.description}</p>
                             <Button
                               size="sm"
-                              variant="success"
+                              variant="primary"
                               onClick={() =>
-                                navigate(`/quiz/start/${quiz.quizID}`)
+                                navigate(`/teacher/quizdetail/${quiz.quizID}`)
                               }
                             >
-                              Làm thử
+                              <FontAwesomeIcon icon={faEye} /> Xem
                             </Button>
                           </Card.Body>
                         </Card>
@@ -446,6 +480,7 @@ const Dashboard = () => {
                 )}
               </>
             )}
+
           </Card>
         </Col>
       </Row>
@@ -468,6 +503,7 @@ const Dashboard = () => {
                 }
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label>Mô tả</Form.Label>
               <Form.Control
@@ -480,6 +516,24 @@ const Dashboard = () => {
                 }
               />
             </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Cấp độ khóa học</Form.Label>
+              <Form.Select
+                value={newCourse.courseLevel}
+                onChange={(e) =>
+                  setNewCourse({
+                    ...newCourse,
+                    courseLevel: Number(e.target.value),
+                  })
+                }
+              >
+                <option value={1}>Level 1</option>
+                <option value={2}>Level 2</option>
+                <option value={3}>Level 3</option>
+                <option value={4}>Level 4</option>
+              </Form.Select>
+            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -488,6 +542,97 @@ const Dashboard = () => {
           </Button>
           <Button variant="primary" onClick={handleCreateCourse}>
             Tạo mới
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal sửa khóa học */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Chỉnh sửa khóa học</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Tên khóa học</Form.Label>
+              <Form.Control
+                type="text"
+                value={editingCourse?.courseName || ""}
+                onChange={(e) =>
+                  setEditingCourse({
+                    ...editingCourse,
+                    courseName: e.target.value,
+                  })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Mô tả</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editingCourse?.description || ""}
+                onChange={(e) =>
+                  setEditingCourse({
+                    ...editingCourse,
+                    description: e.target.value,
+                  })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Cấp độ khóa học</Form.Label>
+              <Form.Select
+                value={editingCourse?.courseLevel || 1}
+                onChange={(e) =>
+                  setEditingCourse({
+                    ...editingCourse,
+                    courseLevel: Number(e.target.value),
+                  })
+                }
+              >
+                <option value={1}>Level 1</option>
+                <option value={2}>Level 2</option>
+                <option value={3}>Level 3</option>
+                <option value={4}>Level 4</option>
+              </Form.Select>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            disabled={loadingCourses}
+            onClick={async () => {
+              try {
+                const payload = {
+                  courseName: editingCourse.courseName,
+                  description: editingCourse.description,
+                  courseLevel: Number(editingCourse.courseLevel),
+                };
+
+                console.log("🔄 Đang cập nhật khóa học...", payload);
+                await updateTeacherCourse(editingCourse.courseID, payload);
+
+                setShowEditModal(false);
+                setEditingCourse(null);
+
+                console.log(" Đang reload danh sách khóa học...");
+                await reloadCourses();
+
+                alert("✅ Cập nhật khóa học thành công!");
+              } catch (error) {
+                console.error("❌ Lỗi cập nhật:", error);
+                alert(error.message || "❌ Không thể cập nhật khóa học.");
+              }
+            }}
+          >
+            {loadingCourses ? "Đang lưu..." : "Lưu thay đổi"}
           </Button>
         </Modal.Footer>
       </Modal>
