@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
-import { CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Eye, Trash } from "lucide-react";
 import { getAllCourses, deleteCourse } from "../../middleware/admin/courseManagementAPI";
+import "./management-styles.scss"; // Import the new styles
 
 export function CourseManagement() {
   const [courses, setCourses] = useState([]);
@@ -49,83 +46,64 @@ export function CourseManagement() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Đang tải dữ liệu...</p>
-        </div>
+      <div className="admin-loading-spinner">
+        <div className="admin-spinner"></div>
+        <p>Đang tải dữ liệu khóa học...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4">
-      {/* Toast Notification */}
+    <div className="management-page-container">
+      {/* Toast Notification can be a shared component later */}
       {toast.show && (
-        <div className="fixed top-4 right-4 z-50 max-w-md">
-          <div
-            className={`p-4 rounded-lg shadow-lg ${
-              toast.type === "success" ? "bg-green-500" : "bg-red-500"
-            } text-white`}
-          >
-            <div className="flex justify-between items-center">
-              <strong className="mr-2">Thông báo</strong>
-              <button
-                onClick={() => setToast((prev) => ({ ...prev, show: false }))}
-                className="text-white hover:text-gray-200"
-              >
-                ×
-              </button>
-            </div>
-            <div className="mt-2">{toast.message}</div>
-          </div>
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow">
-        <CardHeader>
-          <CardTitle>Quản lý khóa học</CardTitle>
-          <CardDescription>Tổng số: {courses.length}</CardDescription>
-        </CardHeader>
+      <div className="management-card">
+        <div className="management-card-header">
+          <h2 className="card-title">Quản lý khóa học</h2>
+          <p className="card-description">Tổng số: {courses.length} khóa học</p>
+        </div>
 
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tên khóa học</TableHead>
-                <TableHead>Mô tả</TableHead>
-                <TableHead>Giảng viên</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead>Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <div className="management-card-content">
+          <table className="management-table">
+            <thead>
+              <tr>
+                <th>Tên khóa học</th>
+                <th>Mô tả</th>
+                <th>Giảng viên</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
               {courses.map((course) => (
-                <TableRow key={course.courseID}>
-                  <TableCell className="font-bold">{course.courseName}</TableCell>
-                  <TableCell>{course.courseDescription}</TableCell>
-                  <TableCell>{course.teacherName}</TableCell>
-                  <TableCell>{new Date(course.createAt).toLocaleString()}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="outline" size="sm">
+                <tr key={course.courseID}>
+                  <td className="font-bold">{course.courseName}</td>
+                  <td>{course.courseDescription}</td>
+                  <td>{course.teacherName}</td>
+                  <td>{new Date(course.createAt).toLocaleDateString()}</td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button className="action-button">
                         <Eye size={16} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600"
+                      </button>
+                      <button
+                        className="action-button delete-button"
                         onClick={() => handleDeleteCourse(course.courseID)}
                       >
                         <Trash size={16} />
-                      </Button>
+                      </button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </CardContent>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

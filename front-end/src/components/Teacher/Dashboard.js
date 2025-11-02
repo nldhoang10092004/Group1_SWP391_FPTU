@@ -1,35 +1,21 @@
 import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Button,
-  Badge,
-  ListGroup,
-  Spinner,
-  Alert,
-  Modal,
-  Form,
-} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faBookOpen,
-  faLayerGroup,
-  faTrashAlt,
-  faEye,
-  faEdit,
-  faPlus,
-  faClipboardList,
-  faBrain,
-  faStar,
-} from "@fortawesome/free-solid-svg-icons";
-import "./dashboard.scss";
+  BookOpen,
+  ClipboardList,
+  Brain,
+  Star,
+  Plus,
+  Eye,
+  Edit,
+  Trash,
+  X,
+} from "lucide-react";
+import "../Admin/admin-dashboard-styles.scss"; // Re-use the admin styles
+import "./teacher-dashboard.scss"; // Add specific teacher styles if needed
 import {
   getTeacherCourses,
   createTeacherCourse,
-  updateTeacherCourse,
   deleteTeacherCourse,
 } from "../../middleware/teacher/courseTeacherAPI";
 import {
@@ -39,20 +25,15 @@ import {
 import { getQuizzesByCourse } from "../../middleware/QuizAPI";
 import { jwtDecode } from "jwt-decode";
 
-const Dashboard = () => {
+const TeacherDashboard = () => {
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState([]);
-  const [loadingCourses, setLoadingCourses] = useState(true);
-  const [errorCourses, setErrorCourses] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [flashcards, setFlashcards] = useState([]);
-  const [loadingFlashcards, setLoadingFlashcards] = useState(true);
-  const [errorFlashcards, setErrorFlashcards] = useState(null);
-
   const [quizzes, setQuizzes] = useState([]);
-  const [loadingQuizzes, setLoadingQuizzes] = useState(true);
-  const [errorQuizzes, setErrorQuizzes] = useState(null);
 
   const [activeMenu, setActiveMenu] = useState("khoahoc");
   const [showModal, setShowModal] = useState(false);
@@ -60,6 +41,13 @@ const Dashboard = () => {
     courseName: "",
     description: "",
   });
+
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+
+  const showPopup = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "" }), 3000);
+  };
 
   const token = localStorage.getItem("accessToken");
   let teacherId = null;
@@ -69,92 +57,43 @@ const Dashboard = () => {
       teacherId = decoded?.id || decoded?.teacherId || decoded?.UserId;
     } catch (err) {
       console.error("❌ Lỗi giải mã token:", err);
+      showPopup("Lỗi xác thực người dùng", "error");
     }
   }
 
-  /* -------------------- Lấy khóa học thật từ API -------------------- */
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
-        setLoadingCourses(true);
-        const data = await getTeacherCourses();
-        const filtered = teacherId
-          ? data.filter((c) => c.teacherID === teacherId)
-          : data;
-        setCourses(filtered);
-      } catch (error) {
-        setErrorCourses(error.message || "Không thể tải khóa học");
+        setLoading(true);
+        const courseData = await getTeacherCourses();
+        const filteredCourses = teacherId ? courseData.filter((c) => c.teacherID === teacherId) : courseData;
+        setCourses(filteredCourses);
+
+        if (filteredCourses.length > 0) {
+          const [flashcardData, quizData] = await Promise.all([
+            Promise.all(filteredCourses.map(c => getFlashcardSetsByCourse(c.courseID))),
+            Promise.all(filteredCourses.map(c => getQuizzesByCourse(c.courseID)))
+          ]);
+
+          const allFlashcards = flashcardData.flat().filter(f => f && (teacherId ? f.teacherID === teacherId : true));
+          const allQuizzes = quizData.flat().filter(q => q && (teacherId ? q.teacherID === teacherId : true));
+
+          setFlashcards(allFlashcards);
+          setQuizzes(allQuizzes);
+        }
+      } catch (err) {
+        setError(err.message || "Không thể tải dữ liệu");
+        showPopup(err.message || "Không thể tải dữ liệu", "error");
       } finally {
-        setLoadingCourses(false);
+        setLoading(false);
       }
     };
-    fetchCourses();
+    fetchData();
   }, [teacherId]);
 
-  /* -------------------- Lấy Flashcards -------------------- */
-  useEffect(() => {
-    const fetchCourseFlashcards = async () => {
-      try {
-        setLoadingFlashcards(true);
-        const allFlashcards = [];
-        for (const course of courses) {
-          const res = await getFlashcardSetsByCourse(course.courseID);
-          if (Array.isArray(res)) {
-            const filtered = teacherId
-              ? res.filter((f) => f.teacherID === teacherId)
-              : res;
-            allFlashcards.push(
-              ...filtered.map((f) => ({
-                ...f,
-                courseName: course.courseName,
-              }))
-            );
-          }
-        }
-        setFlashcards(allFlashcards);
-      } catch (error) {
-        setErrorFlashcards(error.message || "Không thể tải flashcards");
-      } finally {
-        setLoadingFlashcards(false);
-      }
-    };
-    if (courses.length > 0) fetchCourseFlashcards();
-  }, [courses, teacherId]);
-
-  /* -------------------- Lấy Quiz -------------------- */
-  useEffect(() => {
-    const fetchQuizzes = async () => {
-      try {
-        setLoadingQuizzes(true);
-        const allQuizzes = [];
-        for (const course of courses) {
-          const data = await getQuizzesByCourse(course.courseID);
-          if (Array.isArray(data)) {
-            const filtered = teacherId
-              ? data.filter((q) => q.teacherID === teacherId)
-              : data;
-            allQuizzes.push(
-              ...filtered.map((q) => ({
-                ...q,
-                courseName: course.courseName,
-              }))
-            );
-          }
-        }
-        setQuizzes(allQuizzes);
-      } catch (error) {
-        setErrorQuizzes(error.message || "Không thể tải quiz");
-      } finally {
-        setLoadingQuizzes(false);
-      }
-    };
-    if (courses.length > 0) fetchQuizzes();
-  }, [courses, teacherId]);
-
-  /* -------------------- CRUD khóa học -------------------- */
   const handleCreateCourse = async () => {
     if (!newCourse.courseName.trim()) {
-      alert("Vui lòng nhập tên khóa học!");
+      showPopup("Vui lòng nhập tên khóa học!", "error");
       return;
     }
     try {
@@ -163,9 +102,9 @@ const Dashboard = () => {
       setCourses((prev) => [...prev, created]);
       setNewCourse({ courseName: "", description: "" });
       setShowModal(false);
-      alert("✅ Tạo khóa học thành công!");
+      showPopup("Tạo khóa học thành công!", "success");
     } catch (err) {
-      alert(err.message || "Không thể tạo khóa học.");
+      showPopup(err.message || "Không thể tạo khóa học.", "error");
     }
   };
 
@@ -177,9 +116,9 @@ const Dashboard = () => {
     try {
       await deleteTeacherCourse(courseId);
       setCourses((prev) => prev.filter((c) => c.courseID !== courseId));
-      alert("🗑️ Xóa khóa học thành công!");
+      showPopup("Xóa khóa học thành công!", "success");
     } catch (error) {
-      alert(error.message || "Không thể xóa khóa học.");
+      showPopup(error.message || "Không thể xóa khóa học.", "error");
     }
   };
 
@@ -188,311 +127,210 @@ const Dashboard = () => {
     try {
       await deleteFlashcardSet(setId);
       setFlashcards((prev) => prev.filter((f) => f.setID !== setId));
-      alert("🗑️ Xóa flashcard thành công!");
+      showPopup("Xóa flashcard thành công!", "success");
     } catch (error) {
-      alert(error.message || "Không thể xóa flashcard.");
+      showPopup(error.message || "Không thể xóa flashcard.", "error");
+    }
+  };
+
+  const menuItems = [
+    { key: "khoahoc", icon: BookOpen, label: "Khóa học" },
+    { key: "flashcards", icon: ClipboardList, label: "Flashcards" },
+    { key: "quiz", icon: Brain, label: "Quiz" },
+    { key: "danhgia", icon: Star, label: "Đánh giá" },
+  ];
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="admin-loading-spinner">
+          <div className="admin-spinner"></div>
+          <p>Đang tải dữ liệu...</p>
+        </div>
+      );
+    }
+    if (error) {
+      return <div className="alert alert-danger">{error}</div>;
+    }
+
+    switch (activeMenu) {
+      case "khoahoc":
+        return (
+          <div className="management-card">
+            <div className="management-card-header flex justify-between items-center">
+              <div>
+                <h2 className="card-title">Danh sách khóa học</h2>
+                <p className="card-description">Tổng số: {courses.length} khóa học</p>
+              </div>
+              <button onClick={() => setShowModal(true)} className="primary-button">
+                <Plus size={18} /> Tạo khóa học mới
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+              {courses.map((course) => (
+                <div key={course.courseID} className="teacher-item-card">
+                  <h5 className="font-bold text-lg">{course.courseName}</h5>
+                  <p className="text-sm text-gray-600 flex-grow">{course.description}</p>
+                  <div className="flex justify-between items-center mt-4">
+                    <span className="flex items-center text-sm">
+                      <Star size={14} className="text-yellow-500 mr-1" /> {course.rating || "N/A"}
+                    </span>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleViewCourseDetail(course.courseID)} className="action-button"><Eye size={16} /></button>
+                      <button onClick={() => handleEditCourse(course.courseID)} className="action-button"><Edit size={16} /></button>
+                      <button onClick={() => handleDeleteCourse(course.courseID)} className="action-button delete-button"><Trash size={16} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case "flashcards":
+        return (
+          <div className="management-card">
+            <div className="management-card-header flex justify-between items-center">
+              <div>
+                <h2 className="card-title">Bộ Flashcards</h2>
+                <p className="card-description">Tổng số: {flashcards.length} bộ</p>
+              </div>
+              <button onClick={() => navigate("/teacher/create")} className="primary-button">
+                <Plus size={18} /> Tạo flashcard mới
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+              {flashcards.map((set) => (
+                <div key={set.setID} className="teacher-item-card">
+                  <h5 className="font-bold text-lg">{set.title}</h5>
+                  <p className="text-sm text-gray-600 flex-grow">{set.description}</p>
+                  <div className="flex gap-2 mt-4">
+                    <button onClick={() => navigate(`/teacher/flashcards/${set.setID}`)} className="action-button"><Eye size={16} /></button>
+                    <button onClick={() => navigate(`/teacher/edit/${set.setID}`)} className="action-button"><Edit size={16} /></button>
+                    <button onClick={() => handleDeleteFlashcard(set.setID)} className="action-button delete-button"><Trash size={16} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case "quiz":
+        return (
+          <div className="management-card">
+            <div className="management-card-header">
+              <h2 className="card-title">Danh sách Quiz</h2>
+              <p className="card-description">Tổng số: {quizzes.length} quiz</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+              {quizzes.map((quiz) => (
+                <div key={quiz.quizID} className="teacher-item-card">
+                  <h5 className="font-bold text-lg">{quiz.title}</h5>
+                  <p className="text-sm text-gray-600">Khóa học: {quiz.courseName}</p>
+                  <button onClick={() => navigate(`/quiz/start/${quiz.quizID}`)} className="primary-button mt-4">Làm thử</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case "danhgia":
+        return (
+          <div className="management-card">
+            <div className="management-card-header">
+              <h2 className="card-title">Đánh giá</h2>
+              <p className="card-description">Tính năng đang được phát triển.</p>
+            </div>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
   return (
-    <Container
-      fluid
-      className="p-4 dashboard"
-      style={{
-        background: "linear-gradient(135deg, #f8fafc, #e9f0ff)",
-        minHeight: "100vh",
-      }}
-    >
-      <Row className="h-100">
-        {/* Sidebar */}
-        <Col
-          md={3}
-          className="border-end bg-white rounded-4 shadow-sm p-3"
-          style={{ height: "fit-content" }}
-        >
-          <h5 className="mb-4 text-primary fw-bold text-center">
-            <FontAwesomeIcon icon={faLayerGroup} className="me-2" />
-            Bảng điều khiển
-          </h5>
-          <ListGroup variant="flush">
-            {[
-              { key: "khoahoc", icon: faBookOpen, label: "Khóa học" },
-              { key: "flashcards", icon: faClipboardList, label: "Flashcards" },
-              { key: "quiz", icon: faBrain, label: "Quiz" },
-              { key: "danhgia", icon: faStar, label: "Đánh giá" },
-            ].map((item) => (
-              <ListGroup.Item
-                key={item.key}
-                action
-                active={activeMenu === item.key}
-                onClick={() => setActiveMenu(item.key)}
-                className={`mb-2 rounded-3 ${
-                  activeMenu === item.key
-                    ? "bg-primary text-white"
-                    : "bg-light text-dark"
-                }`}
-                style={{ cursor: "pointer", transition: "0.2s" }}
-              >
-                <FontAwesomeIcon icon={item.icon} className="me-2" />
-                {item.label}
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
-        </Col>
+    <div className="admin-dashboard-layout">
+      {/* Sidebar */}
+      <div className="admin-sidebar">
+        <div className="admin-sidebar-header">
+          <h5 className="admin-sidebar-title">Teacher Panel</h5>
+          <p className="admin-sidebar-subtitle">Bảng điều khiển</p>
+        </div>
+        <nav className="admin-sidebar-nav">
+          <div className="admin-sidebar-menu-items">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeMenu === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveMenu(item.key)}
+                  className={`admin-sidebar-menu-item ${isActive ? "active" : ""}`}
+                >
+                  <Icon size={20} className="admin-sidebar-menu-icon" />
+                  <span className="admin-sidebar-menu-label">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
 
-        {/* Main content */}
-        <Col md={9}>
-          <Card className="border-0 shadow-lg rounded-4 p-4 bg-white">
-            {/* === KHÓA HỌC === */}
-            {activeMenu === "khoahoc" && (
-              <>
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <h4 className="fw-bold text-primary">
-                    <FontAwesomeIcon icon={faBookOpen} className="me-2" />
-                    Danh sách khóa học
-                  </h4>
-                  <Button
-                    variant="primary"
-                    className="rounded-pill px-4"
-                    onClick={() => setShowModal(true)}
-                  >
-                    <FontAwesomeIcon icon={faPlus} className="me-2" />
-                    Tạo khóa học mới
-                  </Button>
-                </div>
+      {/* Main Content */}
+      <div className="admin-main-content">
+        <div className="admin-main-header">
+          <div className="admin-main-header-wrapper">
+            <div>
+              <h2 className="admin-main-header-title">
+                {menuItems.find((item) => item.key === activeMenu)?.label || "Dashboard"}
+              </h2>
+              <p className="admin-main-header-subtitle">
+                Quản lý khóa học và tài nguyên của bạn
+              </p>
+            </div>
+            <button onClick={() => navigate("/")} className="secondary-button">
+              <X size={16} />
+              <span>Về trang chủ</span>
+            </button>
+          </div>
+        </div>
+        <div className="admin-content-area">{renderContent()}</div>
+      </div>
 
-                {loadingCourses ? (
-                  <div className="text-center py-5">
-                    <Spinner animation="border" variant="primary" />
-                    <p className="mt-3 text-muted">Đang tải khóa học...</p>
-                  </div>
-                ) : errorCourses ? (
-                  <Alert variant="danger">{errorCourses}</Alert>
-                ) : courses.length === 0 ? (
-                  <p className="text-muted">Chưa có khóa học nào.</p>
-                ) : (
-                  <Row>
-                    {courses.map((course) => (
-                      <Col md={6} lg={4} key={course.courseID} className="mb-4">
-                        <Card className="shadow-sm border-0 rounded-4 hover-card h-100">
-                          <Card.Body>
-                            <Card.Title className="text-primary fw-bold mb-2">
-                              {course.courseName}
-                            </Card.Title>
-                            <Card.Text className="text-muted small mb-3">
-                              {course.description}
-                            </Card.Text>
-                            <div className="d-flex justify-content-between align-items-center">
-                              <div>
-                                <FontAwesomeIcon
-                                  icon={faStar}
-                                  className="text-warning me-1"
-                                />
-                                <span className="small">
-                                  {course.rating || "Chưa có"}
-                                </span>
-                              </div>
-                              <div className="d-flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline-primary"
-                                  onClick={() =>
-                                    handleViewCourseDetail(course.courseID)
-                                  }
-                                >
-                                  <FontAwesomeIcon icon={faEye} /> Xem
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline-success"
-                                  onClick={() =>
-                                    handleEditCourse(course.courseID)
-                                  }
-                                >
-                                  <FontAwesomeIcon icon={faEdit} /> Sửa
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline-danger"
-                                  onClick={() =>
-                                    handleDeleteCourse(course.courseID)
-                                  }
-                                >
-                                  <FontAwesomeIcon icon={faTrashAlt} /> Xóa
-                                </Button>
-                              </div>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                )}
-              </>
-            )}
-
-            {/* === FLASHCARDS === */}
-            {activeMenu === "flashcards" && (
-              <>
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <h4 className="fw-bold text-primary">
-                    <FontAwesomeIcon icon={faClipboardList} className="me-2" />
-                    Bộ Flashcards
-                  </h4>
-                  <Button
-                    variant="primary"
-                    onClick={() => navigate("/teacher/create")}
-                    className="rounded-pill px-4"
-                  >
-                    <FontAwesomeIcon icon={faPlus} className="me-2" />
-                    Tạo flashcard mới
-                  </Button>
-                </div>
-
-                {loadingFlashcards ? (
-                  <div className="text-center py-5">
-                    <Spinner animation="border" variant="primary" />
-                    <p className="mt-3 text-muted">Đang tải flashcards...</p>
-                  </div>
-                ) : errorFlashcards ? (
-                  <Alert variant="danger">{errorFlashcards}</Alert>
-                ) : flashcards.length === 0 ? (
-                  <p className="text-muted">Chưa có bộ flashcard nào.</p>
-                ) : (
-                  <Row>
-                    {flashcards.map((set) => (
-                      <Col md={6} lg={4} key={set.setID} className="mb-4">
-                        <Card className="shadow-sm border-0 rounded-4 hover-card h-100">
-                          <Card.Body>
-                            <h6 className="fw-bold text-primary">
-                              {set.title}
-                            </h6>
-                            <p className="text-muted small">{set.description}</p>
-                            <div className="d-flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                onClick={() => navigate(`/teacher/flashcards/${set.setID}`)}
-                              >
-                                <FontAwesomeIcon icon={faEye} /> Xem
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline-success"
-                                onClick={() => navigate(`/teacher/edit/${set.setID}`)}
-                              >
-                                <FontAwesomeIcon icon={faEdit} /> Sửa
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline-danger"
-                                onClick={() => handleDeleteFlashcard(set.setID)}
-                              >
-                                <FontAwesomeIcon icon={faTrashAlt} /> Xóa
-                              </Button>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                )}
-              </>
-            )}
-
-            {/* === QUIZZES === */}
-            {activeMenu === "quiz" && (
-              <>
-                <h4 className="fw-bold text-primary mb-4">
-                  <FontAwesomeIcon icon={faBrain} className="me-2" />
-                  Danh sách Quiz
-                </h4>
-
-                {loadingQuizzes ? (
-                  <div className="text-center py-5">
-                    <Spinner animation="border" variant="primary" />
-                    <p className="mt-3 text-muted">Đang tải quiz...</p>
-                  </div>
-                ) : errorQuizzes ? (
-                  <Alert variant="danger">{errorQuizzes}</Alert>
-                ) : quizzes.length === 0 ? (
-                  <p className="text-muted">Chưa có quiz nào.</p>
-                ) : (
-                  <Row>
-                    {quizzes.map((quiz) => (
-                      <Col md={6} lg={4} key={quiz.quizID} className="mb-4">
-                        <Card className="shadow-sm border-0 rounded-4 hover-card h-100">
-                          <Card.Body>
-                            <h6 className="fw-bold text-primary">
-                              {quiz.title}
-                            </h6>
-                            <p className="text-muted small">
-                              Khóa học: {quiz.courseName}
-                            </p>
-                            <Button
-                              size="sm"
-                              variant="success"
-                              onClick={() =>
-                                navigate(`/quiz/start/${quiz.quizID}`)
-                              }
-                            >
-                              Làm thử
-                            </Button>
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                )}
-              </>
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Modal tạo khóa học */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Tạo khóa học mới</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Tên khóa học</Form.Label>
-              <Form.Control
+      {/* Modal */}
+      {showModal && (
+        <div className="management-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="management-modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="card-title mb-6">Tạo khóa học mới</h3>
+            <div className="flex flex-col gap-4">
+              <input
                 type="text"
-                placeholder="Nhập tên khóa học"
+                placeholder="Tên khóa học"
                 value={newCourse.courseName}
-                onChange={(e) =>
-                  setNewCourse({ ...newCourse, courseName: e.target.value })
-                }
+                onChange={(e) => setNewCourse({ ...newCourse, courseName: e.target.value })}
+                className="form-input"
               />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Mô tả</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
+              <textarea
                 placeholder="Mô tả khóa học"
                 value={newCourse.description}
-                onChange={(e) =>
-                  setNewCourse({ ...newCourse, description: e.target.value })
-                }
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Hủy
-          </Button>
-          <Button variant="primary" onClick={handleCreateCourse}>
-            Tạo mới
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
+                onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                className="form-input"
+                rows="3"
+              ></textarea>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button onClick={() => setShowModal(false)} className="secondary-button">Hủy</button>
+              <button onClick={handleCreateCourse} className="primary-button">Tạo mới</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast.show && (
+        <div className={`toast-notification ${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
+    </div>
   );
 };
 
-export default Dashboard;
+export default TeacherDashboard;

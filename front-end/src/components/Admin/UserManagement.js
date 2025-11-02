@@ -1,21 +1,14 @@
 import { useState, useEffect } from "react";
-import { Row, Col, Card, Form, Toast, ToastContainer, Modal } from "react-bootstrap";
-import { CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Input } from "./ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { UserX, UserCheck, Eye, Edit, Plus, Search, Filter } from "lucide-react";
-
-import {
-  getAllUsers,
-  lockUser,
-  unlockUser,
-  createUser,
-  assignRole,
-  searchUsers
+import { Eye, Trash, UserPlus, ShieldCheck, Power, PowerOff } from "lucide-react";
+import { 
+  getAllUsers, 
+  searchUsers, 
+  lockUser, 
+  unlockUser, 
+  createUser, 
+  assignRole 
 } from "../../middleware/admin/userManagementAPI";
+import "./management-styles.scss";
 
 export function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -23,29 +16,15 @@ export function UserManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  
+
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showAssignRole, setShowAssignRole] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "success",
-  });
 
-  const [roleAssignment, setRoleAssignment] = useState({
-    userId: undefined,
-    role: 'STUDENT'
-  });
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
-  const [newUser, setNewUser] = useState({
-    email: '',
-    username: '',
-    password: '',
-    role: 'STUDENT',
-    description: '',
-  });
+  const [roleAssignment, setRoleAssignment] = useState({ userId: undefined, role: 'STUDENT' });
+  const [newUser, setNewUser] = useState({ email: '', username: '', password: '', role: 'STUDENT' });
 
   const showPopup = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -59,404 +38,188 @@ export function UserManagement() {
   const loadUsers = async () => {
     try {
       setIsLoading(true);
-      const allUsersData = await getAllUsers();
-      
-      const mappedUsers = allUsersData.map(user => ({
-        id: user.name,
-        accountID: user.name,
-        fullName: user.username,
-        email: user.email,
-        userType: user.role.toLowerCase(),
-        role: user.role,
-        status: user.status,
-        isActive: user.status === 'ACTIVE',
-        joinedDate: new Date().toISOString(),
-        lastLogin: new Date().toISOString()
+      const data = await getAllUsers();
+      const mapped = data.map(u => ({ 
+        ...u, 
+        accountID: u.name, // Mapping 'name' to 'accountID' for consistency
+        username: u.username,
+        email: u.email,
+        role: u.role,
+        isActive: u.status === 'ACTIVE',
+        joinedDate: u.joinedDate || new Date().toISOString() // Fallback for joinedDate
       }));
-
-      setUsers(mappedUsers);
+      setUsers(mapped);
     } catch (error) {
-      console.error('Error loading users:', error);
-      showPopup("Không thể tải dữ liệu người dùng", "danger");
+      showPopup("Không thể tải danh sách người dùng", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery && (!filterRole || filterRole === 'all') && (!filterStatus || filterStatus === 'all')) {
-      await loadUsers();
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const roleParam = filterRole === 'all' ? null : filterRole;
-      const statusParam = filterStatus === 'all' ? null : filterStatus;
-      const results = await searchUsers(searchQuery, roleParam, statusParam);
-
-      const mappedResults = results.map(user => ({
-        id: user.accountID,
-        accountID: user.accountID,
-        fullName: user.username,
-        email: user.email,
-        userType: user.role.toLowerCase(),
-        role: user.role,
-        status: user.status,
-        isActive: user.status === 'ACTIVE',
-        joinedDate: user.createAt || new Date().toISOString(),
-        lastLogin: user.lastLoginAt || new Date().toISOString()
-      }));
-
-      setUsers(mappedResults);
-      showPopup(`Tìm thấy ${mappedResults.length} kết quả`, "success");
-    } catch (error) {
-      showPopup("Lỗi khi tìm kiếm", "danger");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleToggleUser = async (accountID, isActive) => {
-    try {
-      if (isActive) {
-        await lockUser(accountID);
-        showPopup("Đã khóa tài khoản", "success");
-      } else {
-        await unlockUser(accountID);
-        showPopup("Đã kích hoạt tài khoản", "success");
+  const handleToggleStatus = async (userId, isActive) => {
+    if (window.confirm(`Bạn có chắc muốn ${isActive ? 'khóa' : 'mở khóa'} tài khoản này?`)) {
+      try {
+        if (isActive) {
+          await lockUser(userId);
+        } else {
+          await unlockUser(userId);
+        }
+        showPopup("Cập nhật trạng thái thành công!", "success");
+        loadUsers(); // Reload users to reflect the change
+      } catch (error) {
+        showPopup(error.response?.data?.message || "Không thể cập nhật trạng thái", "error");
       }
-      await loadUsers();
-    } catch (error) {
-      showPopup("Không thể thay đổi trạng thái tài khoản", "danger");
+    }
+  };
+
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    if (!query) {
+      loadUsers();
+    } else {
+      try {
+        setIsLoading(true);
+        const results = await searchUsers(query);
+        setUsers(results);
+      } catch (error) {
+        showPopup("Không thể tìm kiếm người dùng", "error");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const handleCreateUser = async () => {
+    if (!newUser.email || !newUser.username || !newUser.password) {
+      showPopup("Vui lòng điền đầy đủ thông tin.", "error");
+      return;
+    }
     try {
       await createUser(newUser);
-      showPopup("Tạo tài khoản thành công!", "success");
+      showPopup("Tạo người dùng thành công!", "success");
       setShowCreateUser(false);
-      setNewUser({ email: '', username: '', password: '', role: 'STUDENT', description: '' });
-      await loadUsers();
-    } catch (err) {
-      showPopup("Lỗi khi tạo tài khoản!", "danger");
+      loadUsers();
+    } catch (error) {
+      showPopup(error.message || "Lỗi khi tạo người dùng", "error");
     }
   };
 
-  const handleAssignRole = async () => {
-    try {
-      await assignRole(roleAssignment.userId, roleAssignment.role);
-      showPopup("Cập nhật role thành công!", "success");
-      setShowAssignRole(false);
-      await loadUsers();
-    } catch (err) {
-      showPopup("Lỗi khi cập nhật role!", "danger");
-    }
-  };
+  const filteredUsers = users.filter(user => {
+    const roleMatch = filterRole === 'all' || (user.role && user.role.toLowerCase() === filterRole);
+    const statusMatch = filterStatus === 'all' || (user.isActive && filterStatus === 'active') || (!user.isActive && filterStatus === 'inactive');
+    const searchMatch = (user.username && user.username.toLowerCase().includes(searchQuery.toLowerCase())) || 
+                        (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase()));
+    return roleMatch && statusMatch && searchMatch;
+  });
 
-  const activeUsers = users.filter(u => u.isActive).length;
-  const inactiveUsers = users.filter(u => !u.isActive).length;
-
-  if (isLoading) {
+  if (isLoading && users.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Đang tải dữ liệu...</p>
-        </div>
+      <div className="admin-loading-spinner">
+        <div className="admin-spinner"></div>
+        <p>Đang tải dữ liệu người dùng...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4">
-      <Card>
-        <CardHeader>
-          <div className="d-flex justify-content-between align-items-start mb-3">
-            <div>
-              <CardTitle>Quản lý người dùng</CardTitle>
-              <CardDescription>Tổng: {users.length} | Hoạt động: {activeUsers} | Đã khóa: {inactiveUsers}</CardDescription>
-            </div>
-            <div className="d-flex gap-2">
-              <Button onClick={() => setShowAssignRole(true)}>
-                <Edit className="me-2" size={16} />
-                Gán vai trò
-              </Button>
-              <Button onClick={() => setShowCreateUser(true)}>
-                <Plus className="me-2" size={16} />
-                Tạo tài khoản
-              </Button>
-            </div>
-          </div>
-
-          {/* Search & Filter */}
-          <div className="mb-3">
-            <Row className="g-2">
-              <Col md={5}>
-                <div className="position-relative">
-                  <Search className="position-absolute" size={18} style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6c757d' }} />
-                  <Input
-                    placeholder="Tìm theo username..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    style={{ paddingLeft: '40px' }}
-                  />
-                </div>
-              </Col>
-              <Col md={2}>
-                <Select value={filterRole} onValueChange={setFilterRole}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Vai trò" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="STUDENT">Học viên</SelectItem>
-                    <SelectItem value="TEACHER">Giảng viên</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Col>
-              <Col md={2}>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                    <SelectItem value="LOCKED">Đã khóa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Col>
-              <Col md={3} className="d-flex gap-2">
-                <Button onClick={handleSearch} className="flex-grow-1">
-                  <Search size={16} className="me-2" />
-                  Tìm kiếm
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setFilterRole('all');
-                    setFilterStatus('all');
-                    loadUsers();
-                  }}
-                >
-                  <Filter size={16} />
-                </Button>
-              </Col>
-            </Row>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Tên người dùng</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Vai trò</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="text-muted">#{user.accountID}</TableCell>
-                  <TableCell className="fw-bold">{user.fullName}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge className={
-                      user.role === 'ADMIN' ? 'bg-danger' :
-                        user.role === 'TEACHER' ? 'bg-primary' : 'bg-secondary'
-                    }>
-                      {user.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={user.isActive ? 'bg-success' : 'bg-danger'}>
-                      {user.isActive ? 'Hoạt động' : 'Đã khóa'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="d-flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleUser(user.accountID, user.isActive)}
-                        title={user.isActive ? "Khóa tài khoản" : "Kích hoạt"}
-                      >
-                        {user.isActive ? <UserX size={16} /> : <UserCheck size={16} />}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setRoleAssignment({ userId: user.accountID, role: user.role });
-                          setShowAssignRole(true);
-                        }}
-                        title="Gán vai trò"
-                      >
-                        <Edit size={16} />
-                      </Button>
-                      <Button variant="outline" size="sm" title="Xem chi tiết">
-                        <Eye size={16} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Toast Notification */}
-      <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
-        <Toast
-          bg={toast.type}
-          show={toast.show}
-          onClose={() => setToast((prev) => ({ ...prev, show: false }))}
-          delay={3000}
-          autohide
-        >
-          <Toast.Header>
-            <strong className="me-auto">Thông báo</strong>
-          </Toast.Header>
-          <Toast.Body className="text-white">{toast.message}</Toast.Body>
-        </Toast>
-      </ToastContainer>
-
-      {/* Modal Gán vai trò */}
-      <Modal show={showAssignRole} onHide={() => setShowAssignRole(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Gán vai trò cho người dùng</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label className="form-label">Chọn người dùng</label>
-            <Form.Select
-              value={roleAssignment.userId}
-              onChange={(e) =>
-                setRoleAssignment((prev) => ({
-                  ...prev,
-                  userId: parseInt(e.target.value),
-                }))
-              }
-            >
-              <option value="">-- Chọn người dùng --</option>
-              {users.map((user) => (
-                <option key={user.accountID} value={user.accountID}>
-                  {user.fullName} ({user.email})
-                </option>
-              ))}
-            </Form.Select>
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Vai trò mới</label>
-            <Form.Select
-              value={roleAssignment.role}
-              onChange={(e) =>
-                setRoleAssignment((prev) => ({ ...prev, role: e.target.value }))
-              }
-            >
-              <option value="STUDENT">Học viên</option>
-              <option value="TEACHER">Giảng viên</option>
-              <option value="ADMIN">Admin</option>
-            </Form.Select>
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAssignRole(false)}>
-            Hủy
-          </Button>
-          <Button onClick={handleAssignRole}>Cập nhật</Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal Tạo tài khoản */}
-      <Modal show={showCreateUser} onHide={() => setShowCreateUser(false)} centered size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Tạo tài khoản mới</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Email *</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="example@email.com"
-                value={newUser.email}
-                onChange={(e) =>
-                  setNewUser((prev) => ({ ...prev, email: e.target.value }))
-                }
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Username *</Form.Label>
-              <Form.Control
-                placeholder="Tên đăng nhập"
-                value={newUser.username}
-                onChange={(e) =>
-                  setNewUser((prev) => ({ ...prev, username: e.target.value }))
-                }
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Mật khẩu *</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Mật khẩu"
-                value={newUser.password}
-                onChange={(e) =>
-                  setNewUser((prev) => ({ ...prev, password: e.target.value }))
-                }
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Vai trò *</Form.Label>
-              <Form.Select
-                value={newUser.role}
-                onChange={(e) =>
-                  setNewUser((prev) => ({ ...prev, role: e.target.value }))
-                }
-              >
-                <option value="STUDENT">Học viên</option>
-                <option value="TEACHER">Giảng viên</option>
+    <div className="management-page-container">
+      {showCreateUser && (
+        <div className="management-modal-overlay" onClick={() => setShowCreateUser(false)}>
+          <div className="management-modal-content" onClick={e => e.stopPropagation()}>
+            <h3 className="card-title mb-6">Tạo người dùng mới</h3>
+            <div className="flex flex-col gap-4">
+              <input type="text" placeholder="Tên đăng nhập" value={newUser.username} onChange={e => setNewUser({...newUser, username: e.target.value})} className="form-input" />
+              <input type="email" placeholder="Email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="form-input" />
+              <input type="password" placeholder="Mật khẩu" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} className="form-input" />
+              <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} className="form-input">
+                <option value="STUDENT">Student</option>
+                <option value="TEACHER">Teacher</option>
                 <option value="ADMIN">Admin</option>
-              </Form.Select>
-            </Form.Group>
+              </select>
+              <div className="flex justify-end gap-4 mt-6">
+                <button onClick={() => setShowCreateUser(false)} className="secondary-button">Hủy</button>
+                <button onClick={handleCreateUser} className="primary-button">Tạo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-            <Form.Group className="mb-3">
-              <Form.Label>Mô tả</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Thông tin thêm về người dùng"
-                value={newUser.description}
-                onChange={(e) =>
-                  setNewUser((prev) => ({ ...prev, description: e.target.value }))
-                }
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowCreateUser(false)}>
-            Hủy
-          </Button>
-          <Button onClick={handleCreateUser}>Tạo tài khoản</Button>
-        </Modal.Footer>
-      </Modal>
+      <div className="management-card">
+        <div className="management-card-header flex justify-between items-center">
+          <div>
+            <h2 className="card-title">Quản lý người dùng</h2>
+            <p className="card-description">Hiển thị {filteredUsers.length} trên tổng số {users.length} người dùng</p>
+          </div>
+          <button onClick={() => setShowCreateUser(true)} className="primary-button flex items-center gap-2">
+            <UserPlus size={18} />
+            Tạo mới
+          </button>
+        </div>
+
+        <div className="flex flex-nowrap gap-4 items-center my-6">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên, email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="form-input flex-grow"
+          />
+          <select value={filterRole} onChange={e => setFilterRole(e.target.value)} className="form-input w-auto min-w-[150px]">
+            <option value="all">Tất cả vai trò</option>
+            <option value="admin">Admin</option>
+            <option value="teacher">Teacher</option>
+            <option value="student">Student</option>
+          </select>
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="form-input w-auto min-w-[180px]">
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Không hoạt động</option>
+          </select>
+        </div>
+
+        <div className="management-card-content">
+          <table className="management-table">
+            <thead>
+              <tr>
+                <th>Người dùng</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th>Ngày tham gia</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => (
+                <tr key={user.accountID}>
+                  <td>
+                    <div className="font-bold">{user.username}</div>
+                    <div className="text-sm text-gray-500">{user.email}</div>
+                  </td>
+                  <td>{user.role}</td>
+                  <td>
+                    <span className={`status-badge ${user.isActive ? 'active' : 'inactive'}`}>
+                      {user.isActive ? 'Hoạt động' : 'Khóa'}
+                    </span>
+                  </td>
+                  <td>{new Date(user.joinedDate).toLocaleDateString()}</td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button className="action-button" onClick={() => handleToggleStatus(user.accountID, user.isActive)}>
+                        {user.isActive ? <PowerOff size={16} /> : <Power size={16} />}
+                      </button>
+                      <button className="action-button delete-button">
+                        <Trash size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

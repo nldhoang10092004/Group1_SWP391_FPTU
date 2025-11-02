@@ -1,4 +1,4 @@
-# Node.js
+np# Node.js
 frontend/node_modules/
 frontend/dist/
 frontend/.env
@@ -23,3 +23,4 @@ server/EMT_API/wwwroot/avatars/
 *.suo
 *.db
 *.opendb
+node_modules

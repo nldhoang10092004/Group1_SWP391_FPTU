@@ -29,7 +29,7 @@ const Footer = () => {
           <Row>
             <Col lg={4} md={6} className="footer-logo-col">
               <div className="footer-logo">
-                <span className="logo-icon">📚</span> EnglishMaster
+                <span className="logo-icon">📖</span> EnglishMaster
               </div>
               <p>
                 Nền tảng học tiếng Anh với AI tiên tiến, giúp bạn chinh phục mọi
