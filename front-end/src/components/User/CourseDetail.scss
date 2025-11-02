@@ -1,415 +1,316 @@
-// CourseDetail.scss - Redesigned with Design System
+// CourseDetail.scss - New design for the course learning page
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-// --- Design System Variables ---
-// Colors
-$bg-white: #ffffff;
-$bg-gradient-light: linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0);
-$text-gray-900: #1a202c;
-$text-gray-600: #4a5568;
-$text-gray-500: #718096;
-$primary-gradient: linear-gradient(to right, #4f46e5, #8b5cf6); // Indigo-600 to Purple-600
-$accent-gradient: linear-gradient(to right, #f97316, #ef4444); // Orange-500 to Red-600
-$success-gradient: linear-gradient(to right, #10b981, #059669); // Green-500 to Emerald-600
-
-// Typography
+// --- Variables ---
 $font-family-base: 'Inter', sans-serif;
-$font-bold: 700;
-$font-medium: 500;
+$bg-main: #f0f2f5;
+$bg-card: #ffffff;
+$text-dark: #1e293b;
+$text-medium: #475569;
+$text-light: #94a3b8;
+$primary-color: #6366f1;
+$primary-hover: #4f46e5;
+$border-color: #e2e8f0;
+$border-radius: 0.75rem;
+$shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+$transition: 0.3s ease;
 
-// Effects
-$glass-morphism-bg: rgba(255, 255, 255, 0.3);
-$glass-morphism-border: rgba(255, 255, 255, 0.18);
-$backdrop-blur: 10px;
-$transition-duration: 0.3s;
-$border-radius-lg: 1rem; // rounded-2xl
-$border-radius-md: 0.75rem; // rounded-xl
-
+// --- Global Page Styles ---
 .course-detail-page {
-  background: $bg-gradient-light;
+  background-color: $bg-main;
   min-height: 100vh;
   font-family: $font-family-base;
+  padding: 2rem 0;
+}
 
-  // Loading State
-  .loading {
-    padding: 4rem 0;
-    
-    .spinner-border {
-      width: 3rem;
-      height: 3rem;
-      border-width: 0.3em;
-    }
-    
-    p {
-      color: $text-gray-600;
-      font-weight: $font-medium;
-    }
-  }
+.page-loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  gap: 1rem;
+  color: $text-medium;
+}
 
-  // Back Button
-  .btn-link {
-    color: $text-gray-600;
-    text-decoration: none;
-    font-weight: $font-medium;
-    padding: 0.5rem 0;
-    margin-bottom: 1rem;
-    transition: all $transition-duration ease;
+// --- Layout ---
+.main-content-col {
+  display: flex;
+  flex-direction: column;
+}
 
-    &:hover {
-      color: $text-gray-900;
-      transform: translateX(-3px);
-    }
-  }
-
-  // Video Player Card
-  .video-player-card {
-    background: $glass-morphism-bg;
-    backdrop-filter: blur($backdrop-blur);
-    border: 1px solid $glass-morphism-border;
-    border-radius: $border-radius-lg;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    transition: all $transition-duration ease;
-
-    &:hover {
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-    }
-
-    .video-container {
-      iframe {
-        border-radius: $border-radius-lg $border-radius-lg 0 0;
-      }
-
-      .video-info {
-        background: $bg-white;
-        
-        h4 {
-          font-weight: $font-bold;
-          color: $text-gray-900;
-          margin-bottom: 0.5rem;
-        }
-
-        .badge {
-          font-weight: $font-medium;
-          font-size: 0.75rem;
-        }
-      }
-    }
-
-    .no-video-selected {
-      padding: 3rem 2rem;
-      color: $text-gray-500;
-
-      i {
-        opacity: 0.5;
-      }
-
-      h5 {
-        font-weight: $font-bold;
-        color: $text-gray-600;
-      }
-    }
-  }
-
-  // Course Overview Card
-  .card {
-    background: $glass-morphism-bg;
-    backdrop-filter: blur($backdrop-blur);
-    border: 1px solid $glass-morphism-border;
-    border-radius: $border-radius-lg;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    transition: all $transition-duration ease;
-
-    &:hover {
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-    }
-
-    .card-body {
-      padding: 1.5rem;
-
-      h5 {
-        font-weight: $font-bold;
-        color: $text-gray-900;
-        margin-bottom: 1rem;
-      }
-
-      p {
-        color: $text-gray-600;
-        font-weight: $font-medium;
-        margin-bottom: 0.5rem;
-
-        strong {
-          color: $text-gray-900;
-        }
-      }
-    }
-  }
-
-  // Course Content Card (Sidebar)
-  .course-content-card {
-    background: $glass-morphism-bg;
-    backdrop-filter: blur($backdrop-blur);
-    border: 1px solid $glass-morphism-border;
-    border-radius: $border-radius-lg;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-
-    .card-header {
-      background: $primary-gradient;
-      border-bottom: 1px solid $glass-morphism-border;
-      padding: 1.25rem 1.5rem;
-
-      h5 {
-        font-weight: $font-bold;
-        color: $bg-white;
-        margin: 0;
-      }
-    }
-
-    .accordion {
-      .accordion-item {
-        background: transparent;
-        border: none;
-        border-bottom: 1px solid $glass-morphism-border;
-
-        &:last-child {
-          border-bottom: none;
-        }
-
-        .accordion-header {
-          .accordion-button {
-            background: rgba(255, 255, 255, 0.5);
-            border: none;
-            padding: 1rem 1.5rem;
-            font-weight: $font-medium;
-            color: $text-gray-900;
-            box-shadow: none;
-
-            &:not(.collapsed) {
-              background: rgba(255, 255, 255, 0.8);
-              color: $text-gray-900;
-            }
-
-            &::after {
-              background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%231a202c'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-            }
-
-            strong {
-              display: block;
-              font-weight: $font-bold;
-              margin-bottom: 0.25rem;
-            }
-
-            small {
-              font-size: 0.8rem;
-              font-weight: $font-medium;
-            }
-          }
-        }
-
-        .accordion-body {
-          padding: 0;
-
-          .video-item {
-            border-bottom: 1px solid $glass-morphism-border;
-            transition: all $transition-duration ease;
-
-            &:last-child {
-              border-bottom: none;
-            }
-
-            &.active {
-              background: rgba(79, 70, 229, 0.1);
-              border-left: 3px solid $primary-gradient;
-            }
-
-            &:hover:not(.locked) {
-              background: rgba(255, 255, 255, 0.7);
-            }
-
-            &.locked {
-              background: rgba(255, 255, 255, 0.3);
-              opacity: 0.7;
-            }
-
-            .video-item-content {
-              padding: 1rem 1.5rem;
-
-              i {
-                color: $text-gray-500;
-                margin-top: 0.2rem;
-              }
-
-              .video-name {
-                font-weight: $font-medium;
-                color: $text-gray-900;
-                margin-bottom: 0.25rem;
-                line-height: 1.3;
-              }
-
-              .badge {
-                font-weight: $font-medium;
-                font-size: 0.7rem;
-              }
-            }
-          }
-
-          .text-muted {
-            padding: 1.5rem;
-            font-weight: $font-medium;
-          }
-        }
-      }
-    }
-
-    .card-footer {
-      background: rgba(255, 255, 255, 0.8);
-      border-top: 1px solid $glass-morphism-border;
-      padding: 1.25rem 1.5rem;
-
-      .btn {
-        border-radius: $border-radius-md;
-        font-weight: $font-bold;
-        padding: 0.75rem 1.5rem;
-        background: $primary-gradient;
-        border: none;
-        transition: all $transition-duration ease;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        }
-      }
-    }
-  }
-
-  // Badge Styles
-  .badge {
-    font-weight: $font-medium;
-    font-size: 0.75rem;
-    padding: 0.35em 0.65em;
-
-    &.bg-success {
-      background: $success-gradient !important;
-    }
-
-    &.bg-primary {
-      background: $primary-gradient !important;
-    }
-
-    &.bg-secondary {
-      background: linear-gradient(to right, #6b7280, #4b5563) !important;
-    }
-  }
-
-  // Alert Styles
-  .alert {
-    border-radius: $border-radius-lg;
-    border: none;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-
-    .alert-heading {
-      font-weight: $font-bold;
-    }
-
-    &.alert-danger {
-      background: rgba(239, 68, 68, 0.1);
-      color: #dc2626;
-    }
-
-    &.alert-warning {
-      background: rgba(245, 158, 11, 0.1);
-      color: #b45309;
-    }
-
-    .btn {
-      border-radius: $border-radius-md;
-      font-weight: $font-medium;
-    }
-  }
-
-  // Button Styles
-  .btn {
-    font-weight: $font-medium;
-    transition: all $transition-duration ease;
-
-    &.btn-primary {
-      background: $primary-gradient;
-      border: none;
-
-      &:hover {
-        opacity: 0.9;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      }
-    }
-
-    &.btn-outline-danger,
-    &.btn-outline-warning {
-      border: 2px solid;
-      
-      &:hover {
-        transform: translateY(-2px);
-      }
-    }
-  }
-
-  // Sticky Sidebar
-  .sticky-top {
+.sidebar-col {
+  .course-playlist-card {
     position: sticky;
-    z-index: 10;
+    top: 2rem;
+    max-height: calc(100vh - 4rem);
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// --- Video Player ---
+.video-player-wrapper {
+  width: 100%;
+  padding-top: 56.25%; // 16:9 Aspect Ratio
+  position: relative;
+  background-color: #000;
+  border-radius: $border-radius;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+
+  .video-container, .player-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
   }
 
-  // Responsive Design
-  @media (max-width: 992px) {
-    .video-player-card {
-      .video-container {
-        iframe {
-          height: 350px;
+  iframe {
+    width: 100%;
+    height: 100%;
+  }
+
+  .player-placeholder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
+
+    &.error {
+      background-color: #2d3748;
+    }
+  }
+}
+
+// --- Course Content Tabs ---
+.course-content-tabs {
+  background-color: $bg-card;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+  padding: 0.5rem 1.5rem 1.5rem;
+
+  .nav-tabs {
+    border-bottom: 1px solid $border-color;
+    .nav-link {
+      color: $text-medium;
+      font-weight: 600;
+      border: none;
+      border-bottom: 2px solid transparent;
+      transition: $transition;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &.active {
+        color: $primary-color;
+        border-bottom-color: $primary-color;
+      }
+      &:hover {
+        color: $primary-hover;
+      }
+    }
+  }
+
+  .tab-pane-content {
+    padding-top: 1.5rem;
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: $text-dark;
+      margin-bottom: 0.5rem;
+    }
+    .course-description {
+      color: $text-medium;
+      line-height: 1.6;
+    }
+  }
+}
+
+// --- Resource List (Quizzes/Flashcards) ---
+.resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .resource-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    transition: $transition;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $primary-color;
+      background-color: lighten($primary-color, 38%);
+    }
+
+    .resource-icon {
+      font-size: 1.5rem;
+      color: $primary-color;
+    }
+
+    .resource-info {
+      strong {
+        display: block;
+        color: $text-dark;
+        font-weight: 600;
+      }
+      span {
+        color: $text-medium;
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+
+// --- Sidebar Playlist ---
+.course-playlist-card {
+  background-color: $bg-card;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+  overflow: hidden;
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid $border-color;
+    h5 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    span {
+      font-size: 0.9rem;
+      color: $text-medium;
+    }
+  }
+
+  .accordion {
+    overflow-y: auto;
+    flex-grow: 1;
+
+    .accordion-item {
+      border: none;
+      border-bottom: 1px solid $border-color;
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .accordion-header {
+      .accordion-button {
+        background-color: #f8fafc;
+        box-shadow: none;
+        color: $text-dark;
+        font-weight: 600;
+
+        &:not(.collapsed) {
+          background-color: lighten($primary-color, 35%);
+          color: $primary-hover;
+        }
+        &:focus {
+          box-shadow: none;
+        }
+        &::after {
+          filter: brightness(0.5);
         }
       }
     }
 
-    .course-content-card {
-      margin-top: 2rem;
+    .chapter-header {
+      span {
+        display: block;
+        font-size: 0.8rem;
+        color: $text-medium;
+        font-weight: 500;
+      }
+      strong {
+        font-size: 1rem;
+      }
+    }
+
+    .accordion-body {
+      padding: 0;
     }
   }
+}
 
-  @media (max-width: 768px) {
-    .video-player-card {
-      .video-container {
-        iframe {
-          height: 300px;
-        }
+// --- Video List inside Accordion ---
+.video-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1.5rem;
+    border-top: 1px solid $border-color;
+    font-size: 0.95rem;
+    color: $text-medium;
+    transition: $transition;
+
+    .video-icon {
+      color: $text-light;
+      font-size: 1.1rem;
+    }
+    .video-name {
+      flex-grow: 1;
+    }
+    .badge {
+      font-size: 0.7rem;
+    }
+
+    &.watchable {
+      cursor: pointer;
+      color: $text-dark;
+      .video-icon {
+        color: $primary-color;
+      }
+      &:hover {
+        background-color: #f8fafc;
       }
     }
 
-    .accordion-button {
-      padding: 0.75rem 1rem !important;
+    &.locked {
+      opacity: 0.7;
     }
 
-    .video-item-content {
-      padding: 0.75rem 1rem !important;
+    &.playing {
+      background-color: lighten($primary-color, 38%);
+      color: $primary-hover;
+      font-weight: 600;
+      border-left: 4px solid $primary-color;
+      padding-left: calc(1.5rem - 4px);
+
+      .playing-icon {
+        animation: pulse 1.5s infinite;
+      }
     }
   }
+}
 
-  @media (max-width: 576px) {
-    .video-player-card {
-      .video-container {
-        iframe {
-          height: 250px;
-        }
-      }
-    }
-
-    .card-body {
-      padding: 1rem !important;
-    }
-
-    .course-content-card {
-      .card-header,
-      .card-footer {
-        padding: 1rem !important;
-      }
-    }
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
   }
 }
