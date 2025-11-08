@@ -50,7 +50,6 @@ namespace EMT_API.Controllers.Public
                         {
                             VideoID = v.VideoID,
                             VideoName = v.VideoName,
-                            // ✅ Chỉ hiển thị URL nếu là preview
                             VideoURL = v.IsPreview ? v.VideoURL : null!,
                             IsPreview = v.IsPreview
                         }).ToList()

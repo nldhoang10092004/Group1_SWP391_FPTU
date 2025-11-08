@@ -24,6 +24,8 @@ namespace EMT_API.DTOs.Public
         public string Description { get; set; } = string.Empty;
         public int CourseLevel { get; set; }
         public List<ChapterDto> Chapters { get; set; } = new();
+
+
     }
 
     public class ChapterDto
