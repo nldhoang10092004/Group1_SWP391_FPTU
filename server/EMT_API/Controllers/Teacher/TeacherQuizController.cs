@@ -121,7 +121,8 @@ namespace EMT_API.Controllers.TeacherSide
                         Options = qs.Options.Select(o => new OptionDto
                         {
                             OptionID = o.OptionID,
-                            Content = o.Content
+                            Content = o.Content,
+                            IsCorrect = o.IsCorrect
                         }).ToList(),
                         Assets = assets
                             .Where(a => a.OwnerType == 2 && a.OwnerID == qs.QuestionID)
@@ -136,6 +137,38 @@ namespace EMT_API.Controllers.TeacherSide
                             }).ToList()
                     }).ToList()
                 }).ToList();
+            }
+            else
+            {
+                // ✅ Nếu quiz không có group, vẫn thêm 1 group "ảo" để chứa câu hỏi rời
+                dto.Groups.Add(new QuestionGroupDto
+                {
+                    GroupID = 0,
+                    Instruction = "Ungrouped questions",
+                    Questions = quiz.Questions.Select(q => new QuestionDto
+                    {
+                        QuestionID = q.QuestionID,
+                        Content = q.Content,
+                        QuestionType = q.QuestionType,
+                        Options = q.Options.Select(o => new OptionDto
+                        {
+                            OptionID = o.OptionID,
+                            Content = o.Content,
+                            IsCorrect = o.IsCorrect
+                        }).ToList(),
+                        Assets = assets
+                            .Where(a => a.OwnerType == 2 && a.OwnerID == q.QuestionID)
+                            .Select(a => new AssetDto
+                            {
+                                AssetID = a.AssetID,
+                                AssetType = a.AssetType,
+                                Url = a.Url,
+                                ContentText = a.ContentText,
+                                Caption = a.Caption,
+                                MimeType = a.MimeType
+                            }).ToList()
+                    }).ToList()
+                });
             }
 
             return Ok(dto);
