@@ -14,16 +14,21 @@ import WritingPractice from "./components/User/WritingPractice";
 import EditLesson from "./components/Teacher/EditLesson";
 import Membership from "./components/User/Membership";
 import CourseDetail from './components/User/CourseDetail';
-import EditCourse from './components/Teacher/EditCourse';
+import EditCourse from './components/Teacher/CreateEditCourse';
+import CreateCourse from './components/Teacher/CreateEditCourse';
 import Flashcard from "./components/User/Flashcard";
 import Grammar from "./components/User/Grammar";
 import PaymentForm from "./components/User/PaymentForm";
 import PaymentSuccessSubscription from "./components/User/PaymentSuccessSubscription";
 import CreateEditQuizz from './components/Teacher/CreateEditQuizz';
-import CreateEditFlashcard from './components/Teacher/CreateEditFlashcard';
 import AdminDashboard  from "./components/Admin/AdminDashboard";
 import StartQuiz from "./components/User/StartQuiz";
 import FlashcardList from './components/User/FlashcardList';
+import SpeakingPractice from './components/User/SpeakingPractice';
+import CreateEditFlashcardSet from './components/Teacher/CreateEditFlashcardSet';
+import FlashcardItem from './components/Teacher/FlashcardItem';
+import CoursesDetail from './components/Teacher/CourseDetail';
+import QuizDetail from './components/Teacher/QuizDetail';
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -56,17 +61,22 @@ root.render(
         <Route path="membership" element={<Membership />} />
         <Route path="/payment/:id" element={<PaymentForm />} />
         <Route path="/course/:id" element={<CourseDetail />} />
-        <Route path="/editcourse/:id" element={<EditCourse />} />
+        <Route path="/teacher/editcourse/:id" element={<EditCourse />} />
+        <Route path="/teacher/createcourse" element={<CreateCourse />} />
         <Route path="/flashcards" element={<FlashcardList />} />
-        <Route path="/flashcards/:setId" element={<Flashcard />} />
+        <Route path="/flashcard/:setId" element={<Flashcard />} />
         <Route path="grammar" element={<Grammar />} />
         <Route path="payment-success" element={<PaymentSuccessSubscription />} />
         <Route path="/teacher/create-quiz" element={<CreateEditQuizz />} />
         <Route path="/teacher/edit-quiz/:id" element={<CreateEditQuizz />} />
-        <Route path="/teacher/create-flashcard" element={<CreateEditFlashcard />} />
-        <Route path="/teacher/edit-flashcard/:id" element={<CreateEditFlashcard />} />
-        <Route path="/admin/ashboard" element={<AdminDashboard />} />
+        <Route path="/teacher/create" element={<CreateEditFlashcardSet />} />
+        <Route path="/teacher/edit/:id" element={<CreateEditFlashcardSet />} />
+        <Route path="/teacher/flashcards/:setId" element={<FlashcardItem />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/quiz/start/:quizId" element={<StartQuiz />} />
+        <Route path="speakingpractice" element={<SpeakingPractice />} />
+        <Route path="/teacher/coursedetail/:courseId" element={<CoursesDetail />} />
+        <Route path="/teacher/quizdetail/:quizId" element={<QuizDetail />} />
 
         <Route path="profile" element={
           <ProtectedRoute>

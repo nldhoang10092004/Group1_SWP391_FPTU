@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EMT_API.DTOs.SystemExam;
 
-namespace EMT_API.Controllers.Admin
+namespace EMT_API.Controllers.AdminSide
 {
     [ApiController]
     [Route("api/admin/system-exams")]

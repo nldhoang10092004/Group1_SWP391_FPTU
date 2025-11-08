@@ -33,11 +33,12 @@ $border-radius-md: 0.75rem; // rounded-xl
   left: 0;
   width: 100%;
   z-index: 1000;
-  background: $glass-morphism-bg;
-  backdrop-filter: blur($backdrop-blur);
-  border-bottom: 1px solid $glass-morphism-border;
   padding: 0.75rem 0;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all $transition-duration ease;
 
   &.scrolled {
@@ -51,33 +52,20 @@ $border-radius-md: 0.75rem; // rounded-xl
     align-items: center;
     font-size: 1.5rem;
     font-weight: $font-bold;
-    color: $text-gray-900;
     text-decoration: none;
-    transition: all $transition-duration ease;
-
-    &:hover {
-      color: $text-gray-900;
-      transform: translateY(-1px);
-    }
 
     .logo-icon {
       width: 40px;
       height: 40px;
       margin-right: 0.75rem;
-      background: $primary-gradient;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
       font-size: 2rem;
       line-height: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      text-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-      transition: all $transition-duration ease;
     }
 
     &:hover .logo-icon {
-      text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
       transform: scale(1.05);
     }
   }
@@ -150,41 +138,38 @@ $border-radius-md: 0.75rem; // rounded-xl
     }
 
     .login-btn {
-  background: $primary-gradient;
-  color: $bg-white;
-  border: none;
-  padding: 0.75rem 1.75rem;
-  border-radius: $border-radius-lg;
-  font-weight: $font-bold;
-  transition: all $transition-duration ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-
-      padding: 0.6rem 1.5rem;
+      background: linear-gradient(to right, #38bdf8, #0ea5e9); // Sky-400 to Sky-500
+      color: $bg-white;
+      border: none;
+      padding: 0.75rem 1.75rem;
+      border-radius: $border-radius-lg;
+      font-weight: $font-bold;
+      transition: all $transition-duration ease;
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
       font-size: 0.95rem;
-      font-weight: $font-medium;
-      border-radius: $border-radius-md;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+      }
     }
 
     .register-btn {
-      background: transparent;
-      border: 2px solid $text-gray-500;
-      color: $text-gray-600;
-      padding: 0.6rem 1.5rem;
-      border-radius: $border-radius-md;
-      font-weight: $font-medium;
-      font-size: 0.95rem;
+      background: $bg-white;
+      border: 2px solid $text-gray-900;
+      color: $text-gray-900;
+      padding: 0.75rem 1.75rem;
+      border-radius: $border-radius-lg;
+      font-weight: $font-bold;
       transition: all $transition-duration ease;
+      font-size: 0.95rem;
 
       &:hover {
-        background: $primary-gradient;
+        background: linear-gradient(to right, #f97316, #ea580c);
         color: $bg-white;
         border-color: transparent;
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      }
-
-      &:active {
-        transform: translateY(0);
+        box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
       }
     }
   }

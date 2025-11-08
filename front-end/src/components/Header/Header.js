@@ -5,7 +5,8 @@ import Navbar from "react-bootstrap/Navbar";
 import { Modal, Button, Form, Dropdown, Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { loginApi, registerApi, sendOtpApi } from "../../middleware/auth"; // Adjust path as needed
-import "./Header.scss"; // Make sure your SCSS file is linked
+import "./Header.scss"; 
+import api from "../../middleware/axiosInstance";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -35,9 +36,6 @@ const Header = () => {
   const [registerErrorMessage, setRegisterErrorMessage] = useState("");
   const [otpMessage, setOtpMessage] = useState("");
   const [otpError, setOtpError] = useState("");
-  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 🟢 User info
   const [user, setUser] = useState(() => {
@@ -134,7 +132,6 @@ const Header = () => {
       
       const { accountID, accessToken, expiresIn, email: userEmail, username: userName } = response.data;
 
-      // ✅ FIX: Xử lý khi backend không trả về email/username
       let displayName = "";
       let userEmailFinal = "";
       
@@ -168,11 +165,15 @@ const Header = () => {
       showToastNotification("🎉 Đăng nhập thành công! Chào mừng bạn quay lại.", "success");
 
       setTimeout(() => {
-        setShowAuthModal(false);
-        resetLoginForm();
-        navigate("/home");
-        window.location.reload();
-      }, 1500);
+  setShowAuthModal(false);
+  resetLoginForm();
+
+  const redirectUrl = response.data.redirectUrl || "/home";
+  navigate(redirectUrl);
+
+  window.location.href = redirectUrl;
+}, 1500);
+
     } catch (err) {
       console.error("❌ Lỗi đăng nhập:", err);
       console.error("❌ Response data:", err.response?.data);
@@ -316,19 +317,6 @@ const Header = () => {
     }, 1000);
   };
 
-  // 🟢 Demo login
-  const handleDemoStudent = () => {
-    setEmailOrUsername("students@gmail.com");
-    setPassword("1234567890");
-    showToastNotification("📝 Đã điền thông tin demo học viên", "info");
-  };
-
-  const handleDemoTeacher = () => {
-    setEmailOrUsername("teacher@emt.com");
-    setPassword("password123");
-    showToastNotification("📝 Đã điền thông tin demo giảng viên", "info");
-  };
-
   return (
     <>
       {/* 🔔 Toast Notification */}
@@ -470,54 +458,53 @@ const Header = () => {
 
           {activeTab === "login" ? (
             <Form onSubmit={handleLoginSubmit}>
-              <Form.Group className="mb-2">
-                <Form.Label>Email hoặc Username</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Nhập email hoặc username"
-                  value={emailOrUsername}
-                  onChange={(e) => setEmailOrUsername(e.target.value)}
-                  required
-                  size="sm"
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Mật khẩu</Form.Label>
-                <div className="d-flex gap-2">
-                  <Form.Control
-                    type={showLoginPassword ? "text" : "password"}
-                    placeholder="Nhập mật khẩu"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    size="sm"
-                  />
-                  <Button 
-                    variant="outline-secondary" 
-                    onClick={() => setShowLoginPassword(!showLoginPassword)}
-                    size="sm"
-                  >
-                    <i className={`fas ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
-                  </Button>
-                </div>
-              </Form.Group>
+  <Form.Group className="mb-2">
+    <Form.Label>Email hoặc Username</Form.Label>
+    <Form.Control
+      type="text"
+      placeholder="Nhập email hoặc username"
+      value={emailOrUsername}
+      onChange={(e) => setEmailOrUsername(e.target.value)}
+      required
+      size="sm"
+    />
+  </Form.Group>
+  <Form.Group className="mb-3">
+    <Form.Label>Mật khẩu</Form.Label>
+    <div className="d-flex gap-2">
+      <Form.Control
+        type="password"
+        placeholder="Nhập mật khẩu"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        size="sm"
+      />
+    </div>
+  </Form.Group>
 
-              <div className="d-flex justify-content-between mb-3">
-                <Button variant="outline-dark" size="sm" onClick={handleDemoStudent}>
-                  Học viên Demo
-                </Button>
-                <Button variant="outline-dark" size="sm" onClick={handleDemoTeacher}>
-                  Giảng viên Demo
-                </Button>
-              </div>
+  <Button type="submit" className="w-100" variant="dark">
+    Đăng nhập
+  </Button>
 
-              <Button type="submit" className="w-100" variant="dark">
-                Đăng nhập
-              </Button>
+  {/* 🔹 Thêm nút Quên mật khẩu ở đây */}
+  <div className="text-center mt-2">
+    <Button 
+      variant="link" 
+      size="sm" 
+      onClick={() => {
+        setShowAuthModal(false);
+        navigate("/forgotpassword");
+      }}
+    >
+      Quên mật khẩu?
+    </Button>
+  </div>
 
-              {loginMessage && <div className="alert alert-success mt-2 mb-0 py-2">{loginMessage}</div>}
-              {loginErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{loginErrorMessage}</div>}
-            </Form>
+  {loginMessage && <div className="alert alert-success mt-2 mb-0 py-2">{loginMessage}</div>}
+  {loginErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{loginErrorMessage}</div>}
+</Form>
+
           ) : (
             <Form onSubmit={handleRegisterSubmit}>
               <Form.Group className="mb-2">
@@ -572,20 +559,13 @@ const Header = () => {
                 <Form.Label>Mật khẩu</Form.Label>
                 <div className="d-flex gap-2">
                   <Form.Control
-                    type={showRegisterPassword ? "text" : "password"} 
+                    type="password" 
                     placeholder="Nhập mật khẩu"
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
                     size="sm"
                   />
-                  <Button 
-                    variant="outline-secondary" 
-                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                    size="sm"
-                  >
-                    <i className={`fas ${showRegisterPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
-                  </Button>
                 </div>
               </Form.Group>
 
@@ -593,20 +573,13 @@ const Header = () => {
                 <Form.Label>Xác nhận mật khẩu</Form.Label>
                 <div className="d-flex gap-2">
                   <Form.Control 
-                    type={showConfirmPassword ? "text" : "password"}
+                    type="password"
                     placeholder="Nhập lại mật khẩu"
                     value={registerConfirmPassword} 
                     onChange={(e) => setRegisterConfirmPassword(e.target.value)} 
                     required 
                     size="sm" 
                   />
-                  <Button 
-                    variant="outline-secondary" 
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    size="sm"
-                  >
-                    <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i> 
-                  </Button>
                 </div>
               </Form.Group>
 

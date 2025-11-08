@@ -1,397 +1,529 @@
 // admin-dashboard-styles.scss
-// Base container for AdminDashboard (similar to .dashboard-container)
-.admin-dashboard-container {
-  font-family: 'Inter', sans-serif;
-  background-color: #f0f2f5; // Light gray background
-  color: #333;
+
+// --- UI Design Tokens (Liquid Glass + OneUI) ---
+$ui-brand: #5aa0ff !default;
+$ui-accent: #8c64ff !default;
+$ui-bg: #f0f4fa !default; // Slightly cooler than the requested #F7F9FC for a more modern feel
+$ui-surface: #ffffff !default;
+$ui-text: #0b1324 !default;
+$ui-muted: #8a94a6 !default; // Adjusted for better contrast on the new bg
+$ui-border: rgba(0, 0, 0, 0.08) !default; // Hairline border for glass components
+$ui-border-solid: #e5edf4 !default;
+
+$ui-success: #22c55e !default;
+$ui-warn: #f59e0b !default;
+$ui-danger: #ef4444 !default;
+
+$ui-radius-large: 24px !default; // For main panels, cards
+$ui-radius-medium: 16px !default; // For buttons, inputs
+$ui-radius-small: 12px !default; // For chips, smaller elements
+$ui-radius-round: 999px !default; // For circular elements
+
+$ui-blur: 12px !default;
+$ui-shadow-deep: 0 16px 48px rgba(0, 0, 0, 0.18);
+$ui-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+$ui-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
+// --- Mixins ---
+@mixin ui-focus($c: $ui-brand) {
+  outline: none;
+  box-shadow: 0 0 0 3.5px rgba($c, 0.3);
+}
+
+@mixin ui-glass(
+  $bg: rgba(255, 255, 255, 0.5),
+  $bd: rgba(255, 255, 255, 0.7),
+  $blur: $ui-blur
+) {
+  background: $bg;
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid $bd;
+  box-shadow: $ui-shadow-soft, inset 0 1px 1px rgba(255, 255, 255, 0.2);
+
+  // Fallback for older browsers
+  @supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+    background: rgba(255, 255, 255, 0.9);
+  }
+}
+
+// Colors
+$ui-brand: #007aff; // A vibrant blue, common in Samsung's OneUI
+$ui-bg: #f0f2f5; // A light, neutral background
+$ui-surface-1: rgba(255, 255, 255, 0.6); // Base for glass components
+$ui-surface-2: rgba(245, 245, 247, 0.7); // Slightly more opaque for interactions
+$ui-surface-3: rgba(235, 235, 240, 0.8); // Hover/active states
+$ui-text-primary: #1c1c1e;
+$ui-text-secondary: #8e8e93;
+$ui-border-color: rgba(0, 0, 0, 0.1);
+
+// Variables (có thể thêm nhiều biến màu sắc, font, v.v.)
+$sidebar-width: 256px; // 64 * 4px = 256px (tương đương w-64 trong Tailwind)
+$primary-color: $ui-brand;
+$primary-color-dark: #4178f0;
+$primary-color-light: #eff6ff; // Blue-50
+$text-color: $ui-text;
+$text-light-color: $ui-muted;
+$border-color: $ui-border-solid;
+$bg-light-gray: $ui-bg;
+
+$ui-red: #ff4d4f;
+$ui-green: #52c41a;
+$ui-yellow: #faad14;
+
+// Shadows - DEFINING THEM HERE
+$ui-shadow-small: 0 2px 8px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.05);
+$ui-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
+$ui-shadow-large: 0 10px 30px rgba(0, 0, 0, 0.12), 0 5px 15px rgba(0, 0, 0, 0.1);
+$ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
+
+
+/* ============================================= */
+/* ==              Core Mixins                == */
+/* ============================================= */
+
+// ...existing mixins...
+
+.admin-dashboard-layout {
+  display: flex;
   min-height: 100vh;
-  padding-bottom: 50px; // Add some bottom padding
+  background-color: $bg-light-gray;
+  background-image: radial-gradient(circle at 1% 1%, #dbeafe, transparent),
+    radial-gradient(circle at 99% 99%, #e0e7ff, transparent);
 }
 
-// --- Header Section ---
-.admin-dashboard-header {
-    margin-bottom: 2rem !important; // Tailwind mb-8 is 2rem
-    .dashboard-title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        .lucide-arrow-left { // lucide icon for shadcn
-            font-size: 1.8rem;
-            color: #667eea;
-            margin-right: 0.5rem; // Equivalent to me-2
-        }
-    }
+.admin-sidebar {
+  width: $sidebar-width;
+  background-color: rgba(248, 250, 252, 0.6); // slate-50 with alpha
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: $ui-shadow-soft;
+  position: sticky;
+  left: 0;
+  top: 1rem; // Give some space from the top
+  height: calc(100vh - 2rem); // Adjust height to fit the new top/bottom margin
+  margin: 1rem 0 1rem 1rem; // Add margin to detach from edges
+  border-radius: $ui-radius-large;
+  overflow: hidden; // Important for border-radius
+  display: flex;
+  flex-direction: column;
+  transition: $ui-transition;
 
-    .welcome-message {
-        font-size: 1.1rem;
-        color: #555;
-        margin-bottom: 0; // Adjust margin
-    }
-
-    // Buttons within the header (if you use custom buttons)
-    .btn {
-        font-weight: 600;
-        border-radius: 25px;
-        padding: 8px 20px;
-        transition: all 0.2s ease-in-out;
-        
-        // For shadcn Button component, we need to target its internal structure
-        &.btn-outline-primary {
-            border-color: #667eea !important;
-            color: #667eea !important;
-            background-color: transparent !important;
-            &:hover {
-                background-color: #667eea !important;
-                color: white !important;
-            }
-        }
-        &.btn-primary {
-            background-color: #667eea !important;
-            border-color: #667eea !important;
-            color: white !important;
-            &:hover {
-                background-color: #5a6edb !important;
-                border-color: #5a6edb !important;
-            }
-        }
-        .lucide-arrow-left { // lucide icon for shadcn
-            margin-right: 5px;
-        }
-    }
-}
-
-
-// --- Stats Section ---
-.stats-row-admin-dashboard {
-  .stat-card-admin-dashboard {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    background-color: white;
-    padding: 15px;
-    height: 100%; // Ensure equal height for cards in a row
-
-    .stat-icon-wrapper-admin {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-shrink: 0;
-      .lucide-users, .lucide-trending-up, .lucide-dollar-sign, .lucide-book-open { // Target lucide icons
-        font-size: 1.8rem;
-        width: 1.8rem; // Ensure consistent size
-        height: 1.8rem;
-      }
-    }
-
-    .stat-title-admin-dashboard {
-      font-size: 0.9rem;
-      color: #777;
-      font-weight: 500;
-    }
-    .stat-value-admin-dashboard {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #2c3e50;
-      line-height: 1.2;
-    }
-    .badge { // Tailwind's default badge styles might need !important
-        font-size: 0.75rem !important;
-        padding: 4px 8px !important;
-        border-radius: 5px !important;
-    }
-    // Specific badge colors for shadcn, if you define custom variants:
-    .bg-success { background-color: #4caf50 !important; }
-    .bg-primary { background-color: #667eea !important; }
-    .bg-secondary { background-color: #6c757d !important; } // Gray for inactive
-    .bg-danger { background-color: #dc3545 !important; }
-    .bg-warning { background-color: #ffc107 !important; }
-    .text-dark { color: #333 !important; }
-    .text-white { color: white !important; }
+  @supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+    background-color: #f8fafc;
+    margin: 0;
+    border-radius: 0;
+    height: 100vh;
+    top: 0;
+    border-right: 1px solid $border-color;
   }
 }
 
-// --- Tab Navigation ---
-.tab-navigation-row-admin {
-    border-bottom: none !important;
-    background-color: white;
-    border-radius: 12px;
-    padding: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    display: grid !important; // Override flex for Tailwind's grid class
-    grid-auto-flow: column; // Keep it inline-block like
-    width: 100% !important;
-
-    .nav-link { // This will target TabsTrigger
-        color: #555 !important;
-        font-weight: 600 !important;
-        padding: 10px 20px !important;
-        border: none !important;
-        border-radius: 10px !important;
-        transition: all 0.2s ease-in-out !important;
-        background-color: transparent !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important; // Center content in tab trigger
-
-        &:hover {
-            color: #667eea !important;
-            background-color: #f5f8ff !important;
-        }
-
-        &[data-state="active"] { // Target active tab in shadcn
-            background-color: #667eea !important;
-            color: white !important;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
-            border-color: #667eea !important;
-        }
-        .lucide-icon { // Placeholder for lucide icons inside tabs, if any
-            margin-right: 8px;
-            font-size: 1em;
-        }
-    }
+.admin-sidebar-header {
+  padding: 1.5rem; // p-6
+  border-bottom: 1px solid $ui-border;
 }
 
-// --- Tab Content Wrapper ---
-.tab-content-wrapper {
-  background-color: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  margin-top: 20px;
+.admin-sidebar-title {
+  font-size: 1.25rem; // text-xl
+  font-weight: 700;
+  color: $ui-text;
+}
 
-  .section-title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 20px;
+.admin-sidebar-subtitle {
+  color: $ui-muted;
+  font-size: 0.875rem; // text-sm
+  margin-top: 0.25rem; // mt-1
+}
+
+.admin-sidebar-nav {
+  padding: 0.75rem; // p-3
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.admin-sidebar-menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; // space-y-2
+}
+
+.admin-sidebar-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem; // gap-3.5
+  padding: 0.875rem 1.25rem; // px-5 py-3.5
+  border-radius: $ui-radius-medium;
+  transition: all 180ms ease-in-out;
+  text-align: left;
+  border: 1px solid transparent;
+  font-weight: 500;
+
+  span {
+    line-height: 1.2;
   }
-  // If you use alert in AdminDashboard
-  .empty-state-alert {
-    text-align: center;
-    padding: 40px 20px;
-    border-radius: 12px;
-    border: 1px dashed #cfe2ff;
-    background-color: #f0f8ff;
-    color: #0c5460;
 
-    .alert-heading {
-      font-size: 1.5rem;
-      color: #0c5460;
-    }
-    p {
-      font-size: 1rem;
-      color: #0c5460;
-      margin-bottom: 20px;
-    }
-    .btn-primary {
-      background-color: #667eea;
-      border-color: #667eea;
+  // Default state
+  color: #334155; // slate-700
+  &:hover {
+    background-color: rgba($ui-brand, 0.1);
+    color: $ui-brand;
+  }
+
+  // Active state
+  &.active {
+    background: linear-gradient(120deg, $ui-brand 0%, $primary-color-dark 100%);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba($ui-brand, 0.3);
+
+    .admin-sidebar-menu-icon {
       color: white;
-      &:hover {
-        background-color: #5a6edb;
-      }
     }
+  }
+
+  .admin-sidebar-menu-icon {
+    transition: color 180ms ease-in-out;
+    flex-shrink: 0;
   }
 }
 
+.admin-main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; // Fix for flexbox overflow
+}
 
-// --- Lessons/Users/Exams/Vouchers Tables ---
-.custom-table-container {
-  overflow-x: auto; // Ensure responsiveness for tables
-  .custom-table {
-    width: 100%;
-    margin-bottom: 1rem;
-    color: #333;
-    // For shadcn Table, it uses its own styling. We'll augment it.
-    // To make it look like react-bootstrap table, we need to override some shadcn defaults.
-    border-collapse: separate;
-    border-spacing: 0; 
-    
-    thead th {
-      background-color: #f8f9fa;
-      border-bottom: 1px solid #dee2e6;
-      padding: 12px 15px;
-      font-weight: 600;
-      color: #555;
-      text-align: left;
-      &:first-child { border-top-left-radius: 8px; }
-      &:last-child { border-top-right-radius: 8px; }
-    }
+.admin-main-header {
+  @include ui-glass(
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.6)
+  );
+  position: sticky;
+  top: 1rem;
+  z-index: 10;
+  margin: 1rem 1rem 0 1rem;
+  border-radius: $ui-radius-large;
+  padding: 1rem 1.5rem;
+  transition: $ui-transition;
 
-    tbody td {
-      padding: 12px 15px;
-      vertical-align: middle;
-      border-top: 1px solid #e9ecef;
-      background-color: white; 
-
-      &:first-child { border-left: 1px solid #e9ecef; }
-      &:last-child { border-right: 1px solid #e9ecef; }
-    }
-    tbody tr:last-child {
-      td:first-child { border-bottom-left-radius: 8px; }
-      td:last-child { border-bottom-right-radius: 8px; }
-    }
-
-    .badge {
-      font-size: 0.75rem !important;
-      padding: 4px 8px !important;
-      border-radius: 15px !important;
-      .lucide-icon { // Target lucide icons inside badges
-        font-size: 0.9em;
-      }
-    }
-    .text-muted { color: #6c757d !important; } // Ensure muted text is applied
-
-    .action-icon-btn {
-      border-radius: 50%; // Make buttons round
-      width: 35px !important;
-      height: 35px !important;
-      min-width: 35px !important; // Important for shadcn buttons
-      min-height: 35px !important;
-      display: inline-flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      padding: 0 !important;
-      font-size: 0.9em !important; // Adjust icon size
-      background-color: transparent !important;
-
-      .lucide-icon { // Ensure lucide icons inside buttons are sized correctly
-          width: 1.1em;
-          height: 1.1em;
-      }
-
-      &.btn-outline-primary {
-        color: #667eea !important;
-        border-color: #667eea !important;
-        &:hover {
-          background-color: #667eea !important;
-          color: white !important;
-        }
-      }
-      &.btn-outline-info {
-        color: #17a2b8 !important;
-        border-color: #17a2b8 !important;
-        &:hover {
-          background-color: #17a2b8 !important;
-          color: white !important;
-        }
-      }
-      &.btn-outline-success {
-        color: #4caf50 !important;
-        border-color: #4caf50 !important;
-        &:hover {
-          
-          color: white !important;
-        }
-      }
-      &.btn-outline-danger {
-        color: #dc3545 !important;
-        border-color: #dc3545 !important;
-        &:hover {
-          background-color: #dc3545 !important;
-          color: white !important;
-        }
-      }
-      &.btn-outline-warning { // For hide action
-        color: #ffc107 !important;
-        border-color: #ffc107 !important;
-        &:hover {
-          background-color: #ffc107 !important;
-          color: #333 !important;
-        }
-      }
-    }
+  @supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+    background-color: white;
+    margin: 0;
+    border-radius: 0;
+    border-bottom: 1px solid $border-color;
+    box-shadow: $ui-shadow-soft;
   }
 }
 
-// Review stars for Admin Dashboard
-.review-rating-stars-admin {
-    .lucide-star {
-        &.fill-yellow-400 { fill: #ffc107 !important; color: #ffc107 !important; }
-        &.text-gray-300 { color: #e0e0e0 !important; }
-    }
+.admin-main-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
+.admin-main-header-title {
+  font-size: 1.75rem; // text-3xl
+  font-weight: 700;
+  color: $text-color;
+  letter-spacing: -0.5px;
+}
 
-// --- Modal Styling (for Dialogs in AdminDashboard) ---
-.modal-content { // This targets DialogContent
-  border-radius: 15px !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-  // Ensure background is white if shadcn default overrides
-  background-color: white !important;
-  
-  .modal-header { // This targets DialogHeader
-    border-bottom: none !important;
-    padding: 20px 25px 10px !important;
-    .modal-title { // This targets DialogTitle
-      font-size: 1.5rem !important;
-      font-weight: 700 !important;
-      color: #2c3e50 !important;
-    }
-    // No direct equivalent to btn-close, but shadcn DialogClose button exists
+.admin-main-header-subtitle {
+  color: $text-light-color;
+  font-size: 1rem; // text-base
+  margin-top: 0.25rem; // mt-1
+}
+
+.admin-close-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; // gap-2
+  // Tailwind's `variant="outline"` styles would be applied here by your Button component
+  border-radius: $ui-radius-medium !important;
+  padding: 0.625rem 1rem !important;
+  font-weight: 500 !important;
+  border: 1px solid $ui-border-solid !important;
+  &:hover {
+    background-color: $ui-bg !important;
+  }
+  &:focus-visible {
+    @include ui-focus;
+  }
+}
+
+.admin-content-area {
+  background-color: transparent; // The layout provides the background
+  min-height: auto;
+  padding: 1rem;
+  flex-grow: 1;
+}
+
+// Analytics Specific Styles
+.admin-analytics-content {
+  padding: 0; // Removed padding, handled by content-area
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem; // gap-6
+  margin-bottom: 1.5rem; // mb-6
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 1280px) { // xl
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.admin-stat-card {
+  @include ui-glass(
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.6)
+  );
+  border-radius: $ui-radius-large;
+  padding: 1.25rem; // p-5
+  position: relative;
+  overflow: hidden;
+  transition: $ui-transition;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $ui-shadow-deep;
+  }
+}
+
+.admin-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; // Align to top
+  margin-bottom: 0.75rem; // mb-3
+}
+
+.admin-stat-title {
+  font-size: 0.9rem; // ~text-sm
+  font-weight: 600;
+  color: $text-light-color;
+}
+
+.admin-stat-icon-wrapper {
+  padding: 0.75rem; // p-3
+  border-radius: $ui-radius-medium;
+  display: grid;
+  place-items: center;
+  color: white;
+
+  // Assign colors based on an attribute or nth-child
+  // Example using nth-child for demonstration
+  .admin-stats-grid > .admin-stat-card:nth-child(1) & { background: linear-gradient(135deg, #2563eb, #5aa0ff); }
+  .admin-stats-grid > .admin-stat-card:nth-child(2) & { background: linear-gradient(135deg, #db2777, #f472b6); }
+  .admin-stats-grid > .admin-stat-card:nth-child(3) & { background: linear-gradient(135deg, #16a34a, #4ade80); }
+  .admin-stats-grid > .admin-stat-card:nth-child(4) & { background: linear-gradient(135deg, #f97316, #fb923c); }
+}
+
+.admin-stat-value {
+  font-size: 2rem; // ~text-3xl
+  font-weight: 700;
+  color: $text-color;
+  letter-spacing: -0.8px;
+}
+
+.admin-stat-footer {
+  font-size: 0.875rem; // text-sm
+  color: $text-light-color;
+  margin-top: 0.5rem; // mt-2
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  // Example for positive/negative colors
+  &.positive { color: $ui-success; }
+  &.negative { color: $ui-danger; }
+}
+
+.admin-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem; // gap-6
+  margin-bottom: 1.5rem;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(5, 1fr); // 3/5 and 2/5 layout
+  }
+}
+
+.admin-chart-card {
+  @include ui-glass(
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.6)
+  );
+  border-radius: $ui-radius-large;
+  padding: 1.5rem;
+  transition: $ui-transition;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $ui-shadow-deep;
   }
 
-  .modal-body { // This targets the content div within DialogContent
-    padding: 10px 25px 25px !important;
-    .form-label {
+  // Spanning columns
+  @media (min-width: 1024px) {
+    &:nth-child(1) { grid-column: span 3 / span 3; }
+    &:nth-child(2) { grid-column: span 2 / span 2; }
+  }
+}
+
+// Loading Spinner Styles
+.admin-loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 73px); // Chiều cao phù hợp sau header
+  flex-direction: column;
+  p {
+    margin-top: 1rem;
+    color: $ui-muted;
+    font-weight: 500;
+  }
+}
+
+.admin-spinner {
+  border: 4px solid rgba($ui-brand, 0.2);
+  border-top-color: $ui-brand;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Recharts Tooltip Customization
+.recharts-tooltip-wrapper {
+  .recharts-default-tooltip {
+    @include ui-glass(rgba(20, 20, 30, 0.8), rgba(255, 255, 255, 0.2), 8px);
+    border-radius: $ui-radius-medium !important;
+    box-shadow: $ui-shadow-deep !important;
+    padding: 0.5rem 1rem !important;
+    .recharts-tooltip-label {
+      color: white !important;
       font-weight: 600 !important;
-      color: #555 !important;
-      margin-bottom: 5px !important;
-      display: block !important; // Ensure label is block
     }
-    .form-control { // This targets Input, Textarea
-      border-radius: 8px !important;
-      border: 1px solid #ced4da !important;
-      padding: 10px 15px !important;
-      &:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25) !important;
-      }
-    }
-    // For shadcn Select, the trigger acts like the input
-    .select-trigger.form-control { // Target shadcn SelectTrigger with form-control
-        border-radius: 8px !important;
-        border: 1px solid #ced4da !important;
-        padding: 10px 15px !important;
-        height: auto !important; // Adjust height if needed
-        &:focus-visible { // Focus state for shadcn Select
-            border-color: #667eea !important;
-            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25) !important;
-        }
-    }
+  }
+}
+
+/* ============================================= */
+/* ==         UI Component Overrides          == */
+/* ============================================= */
+
+// Buttons
+.primary-button, .secondary-button, .action-button {
+  padding: 0.6rem 1.2rem;
+  border-radius: $ui-radius-medium;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none !important; // Override link styles
+  box-shadow: $ui-shadow-small;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $ui-shadow-large;
   }
 
-  .modal-footer { // This targets the div holding the buttons in DialogContent
-    border-top: none !important;
-    padding: 0 25px 20px !important;
-    .btn { // Ensure button styles apply
-      border-radius: 25px !important;
-      padding: 10px 25px !important;
-      font-weight: 600 !important;
-      &.btn-outline-secondary {
-        border-color: #6c757d !important;
-        color: #6c757d !important;
-        background-color: transparent !important;
-        &:hover {
-          background-color: #6c757d !important;
-          color: white !important;
-        }
-      }
-      &.btn-primary {
-        background-color: #667eea !important;
-        border-color: #667eea !important;
-        color: white !important;
-        &:hover {
-          background-color: #5a6edb !important;
-          border-color: #5a6edb !important;
-        }
-      }
-    }
+  &:active {
+    transform: translateY(0);
+    box-shadow: $ui-shadow-small;
   }
+}
+
+.primary-button {
+  background: $ui-brand;
+  color: white;
+
+  &:hover {
+    background: lighten($ui-brand, 5%);
+  }
+}
+
+.secondary-button {
+  background: $ui-surface-2;
+  color: $ui-text-primary;
+  border: 1px solid $ui-border-color;
+
+  &:hover {
+    background: $ui-surface-3;
+    border-color: darken($ui-border-color, 5%);
+  }
+}
+
+.action-button {
+  background: transparent;
+  color: $ui-text-secondary;
+  padding: 0.4rem;
+  border-radius: $ui-radius-round;
+
+  &:hover {
+    background: $ui-surface-3;
+    color: $ui-text-primary;
+  }
+
+  &.delete-button:hover {
+    background: rgba($ui-red, 0.1);
+    color: $ui-red;
+  }
+}
+
+// Form Inputs & Modals
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: $ui-radius-medium;
+  background-color: $ui-surface-2;
+  border: 1px solid $ui-border-color;
+  color: $ui-text-primary;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $ui-brand;
+    box-shadow: 0 0 0 3px rgba($ui-brand, 0.2);
+  }
+}
+
+.management-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.management-modal-content {
+  @include ui-glass;
+  width: 90%;
+  max-width: 600px;
+  padding: 2rem;
 }

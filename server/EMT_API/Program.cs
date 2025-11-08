@@ -14,6 +14,7 @@ using System.Text;
 
 namespace EMT_API
 {
+
     public class Program
     {
         public static void Main(string[] args)
@@ -131,6 +132,13 @@ namespace EMT_API
 
             //AI Exam Services
             builder.Services.AddScoped<AIWritingService>();
+            builder.Services.AddScoped<AISpeakingService>();
+
+            //Google Drive Service
+            builder.Services.AddSingleton<GoogleDriveService>();
+
+            //Cloudflare R2 Service
+            builder.Services.AddSingleton<CloudflareService>();
 
             //Json accept /n
             builder.Services.AddControllers()

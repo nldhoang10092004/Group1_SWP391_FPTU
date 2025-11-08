@@ -7,6 +7,7 @@ $bg-gradient-light: linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0);
 $text-gray-900: #1a202c;
 $text-gray-600: #4a5568;
 $text-gray-500: #718096;
+$text-gray-400: #9ca3af; // Lighter gray for icons or secondary text
 $primary-gradient: linear-gradient(to right, #4f46e5, #8b5cf6); // Indigo-600 to Purple-600
 $accent-gradient: linear-gradient(to right, #f97316, #ef4444); // Orange-500 to Red-600
 $success-gradient: linear-gradient(to right, #10b981, #059669); // Green-500 to Emerald-600
@@ -17,11 +18,13 @@ $font-bold: 700;
 $font-medium: 500;
 
 // Effects
-$glass-morphism-bg: rgba(255, 255, 255, 0.3);
-$glass-morphism-border: rgba(255, 255, 255, 0.18);
-$backdrop-blur: 10px;
+$glass-morphism-bg: rgba(255, 255, 255, 0.45); // Slightly more opaque for better readability
+$glass-morphism-border: rgba(255, 255, 255, 0.25);
+$backdrop-blur: 12px;
 $transition-duration: 0.3s;
-$border-radius-lg: 1rem; // rounded-2xl
+$border-radius-xl: 1.5rem; // Larger radius for "One UI" feel
+$border-radius-lg: 1rem;
+$border-radius-pill: 50px; // For pill-shaped buttons
 $border-radius-md: 0.75rem; // rounded-xl
 
 
@@ -29,6 +32,7 @@ $border-radius-md: 0.75rem; // rounded-xl
   background: $bg-gradient-light;
   min-height: 100vh;
   font-family: $font-family-base;
+  padding-bottom: 5rem; // Added padding to the bottom
 
   // Loading State
   .loading {
@@ -48,394 +52,418 @@ $border-radius-md: 0.75rem; // rounded-xl
 
   // Welcome Section
   .welcome-section {
+    text-align: left;
     padding: 2rem 0 1rem;
     
     h1 {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
       font-weight: $font-bold;
       color: $text-gray-900;
-      margin-bottom: 2rem;
-      background: $primary-gradient;
-      -webkit-text-fill-color: transparent;
+      margin-bottom: 1.5rem; // Adjusted margin
+    }
+  }
+
+  // Stats Section
+  .stats-row {
+    margin: 0 -0.75rem 2rem; // Add margin below
+  }
+
+  .stat-card {
+    background: $bg-white;
+    border: 1px solid #e2e8f0;
+    border-radius: $border-radius-xl;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+    transition: all $transition-duration ease;
+    text-align: center;
+    padding: 1rem; // Reduced padding
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
     }
 
-    .stats-row {
-      margin: 0 -0.75rem;
+    .card-body {
+      padding: 0;
     }
 
-    .stat-card {
-      background: $glass-morphism-bg;
-      backdrop-filter: blur($backdrop-blur);
-      border: 1px solid $glass-morphism-border;
-      border-radius: $border-radius-lg;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-      transition: all $transition-duration ease;
-      text-align: center;
-      height: 100%;
+    .stat-icon-wrapper {
+      width: 50px; // Reduced size
+      height: 50px; // Reduced size
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.75rem; // Reduced margin
 
-      &:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      .stat-icon {
+        font-size: 1.5rem; // Reduced size
       }
+    }
 
-      .card-body {
-        padding: 1.5rem 1rem;
-      }
+    .stat-value {
+      font-size: 2rem; // Reduced size
+      font-weight: $font-bold;
+      color: $text-gray-900;
+      margin: 0;
+    }
 
-      h3 {
-        font-size: 2rem;
-        font-weight: $font-bold;
-        color: $text-gray-900;
-        margin: 0.5rem 0;
-      }
-
-      p {
-        color: $text-gray-600;
-        font-weight: $font-medium;
-        margin: 0;
-        font-size: 0.9rem;
-      }
+    .stat-label {
+      color: $text-gray-600;
+      font-weight: $font-medium;
+      margin: 0;
+      font-size: 0.85rem; // Slightly smaller
     }
   }
 
   // Tab Navigation
   .lessons-nav {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem; // Reduced margin
   }
 
   .tab-navigation {
     display: flex;
+    justify-content: center; // Center the tabs
     background: $glass-morphism-bg;
     backdrop-filter: blur($backdrop-blur);
     border: 1px solid $glass-morphism-border;
-    border-radius: $border-radius-lg;
+    border-radius: $border-radius-xl; // Less round on mobile
     padding: 0.5rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    max-width: 600px; // Max width for the tab container
+    margin: 0 auto 2rem; // Center the container and add margin below
+    gap: 8px; // Add space between the tab items
 
     .tab-item {
-      flex: 1;
-      padding: 0.75rem 1rem;
+      padding: 0.75rem 1.5rem; // Adjust padding
       border: none;
       background: transparent;
       color: $text-gray-600;
       font-weight: $font-medium;
-      border-radius: $border-radius-md;
+      border-radius: $border-radius-pill; // Pill shape for items
       transition: all $transition-duration ease;
       cursor: pointer;
       font-family: $font-family-base;
+      white-space: nowrap;
 
       &.active {
-        background: $primary-gradient;
+        background: #3b82f6; // A nice, solid blue
         color: $bg-white;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); // Blue shadow
       }
 
       &:not(.active):hover {
-        color: $text-gray-900;
-        background: rgba(255, 255, 255, 0.5);
+        color: $bg-white;
+        background: #f97316; // Orange for hover
       }
     }
   }
 
-  // Your Lessons Section
-  .your-lessons-section {
-    background: $glass-morphism-bg;
-    backdrop-filter: blur($backdrop-blur);
-    border: 1px solid $glass-morphism-border;
-    border-radius: $border-radius-lg;
-    padding: 1.5rem;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    height: fit-content;
-    position: sticky;
-    top: 2rem;
-
-    h2 {
-      font-size: 1.5rem;
-      font-weight: $font-bold;
-      color: $text-gray-900;
-      margin-bottom: 1.5rem;
-    }
-
-    .membership-lessons {
-      .badge {
-        font-weight: $font-medium;
-        font-size: 0.75rem;
-      }
-
-      .text-muted {
-        font-size: 0.85rem;
-        color: $text-gray-500 !important;
-      }
-
-      .quick-stats {
-        .stat-item {
-          display: flex;
-          align-items: center;
-          margin-bottom: 0.75rem;
-          font-size: 0.9rem;
-          color: $text-gray-600;
-          font-weight: $font-medium;
-
-          strong {
-            color: $text-gray-900;
-            margin: 0 0.25rem;
-          }
-        }
-      }
-    }
-
-    .non-membership-lessons {
-      text-align: center;
-      padding: 1rem 0;
-
-      .btn {
-        border-radius: $border-radius-md;
-        font-weight: $font-medium;
-      }
-    }
-  }
-
-  // Level Section Box
-  .level-section-box {
-    background: $bg-white;
-    border-radius: $border-radius-lg;
+  // Lessons Section (New)
+  .lessons-section {
+    background: #f8fafc; // Use a very light gray background to make cards pop
+    border-radius: $border-radius-xl;
     padding: 2rem;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    margin-bottom: 4rem;
 
-    .section-title {
-      font-size: 1.5rem;
-      font-weight: $font-bold;
-      color: $text-gray-900;
-      margin-bottom: 0.5rem;
-    }
+    .lessons-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
 
-    .current-level {
-      color: $text-gray-600;
-      font-weight: $font-medium;
-      margin-bottom: 1.5rem;
-    }
-
-    .level-options {
-      margin: 0 -0.75rem;
-    }
-
-    .level-card {
-      background: $bg-gradient-light;
-      border: 2px solid transparent;
-      border-radius: $border-radius-md;
-      padding: 1rem;
-      cursor: pointer;
-      transition: all $transition-duration ease;
-      height: 100%;
-
-      &.active {
-        border-color: rgba(79, 70, 229, 0.5);
-        background: rgba(79, 70, 229, 0.05);
-        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1);
-      }
-
-      &:hover:not(.active) {
-        border-color: $glass-morphism-border;
-        transform: translateY(-2px);
-      }
-
-      .level-radio {
-        display: none;
-      }
-
-      .level-label {
-        cursor: pointer;
-        margin: 0;
-
-        .level-name {
-          display: block;
+      .header-left {
+        h4 {
           font-weight: $font-bold;
           color: $text-gray-900;
-          margin-bottom: 0.5rem;
-          font-size: 1rem;
+          margin-bottom: 0.25rem;
         }
-
-        .level-description {
-          font-size: 0.85rem;
+        p {
           color: $text-gray-600;
-          line-height: 1.4;
+          margin: 0;
+        }
+      }
+
+      .header-right {
+        .membership-badge {
+          background: linear-gradient(to right, #fef3c7, #fde68a);
+          color: #92400e;
+          padding: 0.5rem 1rem;
+          border-radius: $border-radius-pill;
+          font-weight: $font-medium;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.9rem;
         }
       }
     }
 
-    .divider {
-      height: 1px;
-      background: $glass-morphism-border;
-      margin: 2rem 0;
+    .level-filters {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      background-color: #f1f5f9;
+      padding: 0.5rem;
+      border-radius: $border-radius-pill;
+
+      .level-filter-item {
+        padding: 0.5rem 1.25rem;
+        border: none;
+        background: transparent;
+        color: $text-gray-600;
+        font-weight: $font-medium;
+        border-radius: $border-radius-pill;
+        transition: all $transition-duration ease;
+        cursor: pointer;
+
+        &.active {
+          background: $bg-white;
+          color: $text-gray-900;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        &:not(.active):hover {
+          background: #e2e8f0;
+        }
+      }
     }
 
-    // Lessons Grid
     .lessons-grid {
-      h5 {
-        font-weight: $font-bold;
-        color: $text-gray-900;
-        margin-bottom: 1.5rem;
+      .row {
+        --bs-gutter-x: 1.5rem; 
+        --bs-gutter-y: 1.5rem; 
+      }
+
+      .no-lessons {
+        .text-muted {
+          color: $text-gray-500 !important;
+        }
       }
 
       .lesson-card {
-        background: $glass-morphism-bg;
-        backdrop-filter: blur($backdrop-blur);
-        border: 1px solid $glass-morphism-border;
-        border-radius: $border-radius-md;
+        background: $bg-white;
+        border: 1px solid #e2e8f0;
+        border-radius: $border-radius-lg;
         padding: 1.25rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
         transition: all $transition-duration ease;
+        display: flex;
+        flex-direction: column;
         height: 100%;
-
+  
         &:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+          transform: translateY(-5px);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
-
+  
         .lesson-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
           margin-bottom: 0.75rem;
-
+  
           h6 {
             font-weight: $font-bold;
             color: $text-gray-900;
             margin: 0;
-            flex: 1;
-            margin-right: 1rem;
+            line-height: 1.4;
           }
-
           .badge {
-            font-weight: $font-medium;
             font-size: 0.7rem;
+            font-weight: $font-medium;
           }
         }
-
+  
         .lesson-description {
+          font-size: 0.875rem;
           color: $text-gray-600;
-          font-size: 0.9rem;
           margin-bottom: 1rem;
-          line-height: 1.4;
+          flex-grow: 1;
         }
-
+  
         .lesson-meta {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           color: $text-gray-500;
           margin-bottom: 1rem;
-
+          margin-top: auto; // Pushes meta to the bottom
+  
           .duration {
-            font-weight: $font-medium;
+            margin-right: 1rem;
           }
-
+  
           .progress-section {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-left: auto;
-
+            width: 100px;
+            margin-right: auto;
+  
             .lesson-progress {
-              width: 60px;
               height: 6px;
-              
-              .progress-bar {
-                background: $primary-gradient;
-              }
+              flex-grow: 1;
+              margin-right: 8px;
             }
-
             span {
-              font-size: 0.8rem;
               font-weight: $font-medium;
-              color: $text-gray-600;
             }
           }
-
+  
           .rating {
-            font-weight: $font-medium;
-            color: $text-gray-600;
+            font-weight: $font-bold;
+            color: $text-gray-900;
           }
         }
-
+  
         .btn {
-          border-radius: $border-radius-md;
+          border-radius: $border-radius-pill;
           font-weight: $font-medium;
-          font-size: 0.85rem;
-          transition: all $transition-duration ease;
-
-          &:hover {
-            transform: translateY(-1px);
-          }
         }
       }
 
-      .no-lessons {
+      .membership-required-section {
         padding: 3rem 1rem;
-        
-        .btn {
-          border-radius: $border-radius-md;
-          font-weight: $font-medium;
+        .lock-icon {
+          font-size: 2.5rem;
+          color: $text-gray-400;
         }
-      }
-    }
-
-    // Membership Required Section
-    .membership-required-section {
-      text-align: center;
-      padding: 2rem;
-
-      .membership-message {
         h5 {
           font-weight: $font-bold;
           color: $text-gray-900;
-          margin-bottom: 1rem;
+          margin-top: 1rem;
         }
-
         p {
           color: $text-gray-600;
-          margin-bottom: 2rem;
+          max-width: 450px;
+          margin: 0.5rem auto 1.5rem;
+        }
+        .btn {
+          font-weight: $font-medium;
+          border-radius: $border-radius-pill;
+          padding: 0.75rem 2rem;
+        }
+      }
+    }
+  }
+
+  // New Stats Section
+  .new-stats-section {
+    background: #f8fafc;
+    border-radius: $border-radius-xl;
+    padding: 2rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+
+    .stat-overview-card {
+      background: $bg-white;
+      border-radius: $border-radius-lg;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      transition: all $transition-duration ease;
+      height: 100%;
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+
+        .stat-icon {
+          font-size: 1.8rem;
+        }
+      }
+
+      .stat-title {
+        font-weight: $font-medium;
+        color: $text-gray-600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: $font-bold;
+        color: $text-gray-900;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-label {
+        color: $text-gray-500;
+        font-weight: $font-medium;
+        margin: 0;
+        font-size: 0.85rem;
+      }
+    }
+
+    .detail-card {
+      background: $bg-white;
+      border-radius: $border-radius-lg;
+      padding: 1.5rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      height: 100%;
+
+      h5 {
+        font-weight: $font-bold;
+        color: $text-gray-900;
+        margin-bottom: 0.5rem;
+      }
+
+      .text-muted {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .weekly-goal-item {
+        margin-bottom: 1.5rem;
+        &:last-child {
+          margin-bottom: 0;
+        }
+        .custom-progress-bar {
+          height: 8px;
+        }
+      }
+
+      .achievement-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e2e8f0;
+        &:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+        &:first-of-type {
+          padding-top: 0;
         }
 
-        .membership-benefits {
-          text-align: left;
-          background: $glass-morphism-bg;
-          backdrop-filter: blur($backdrop-blur);
-          border: 1px solid $glass-morphism-border;
-          border-radius: $border-radius-md;
-          padding: 1.5rem;
-
+        .achievement-icon {
+          color: #f59e0b;
+          font-size: 1.2rem;
+          margin-right: 1rem;
+        }
+        .achievement-details {
+          flex-grow: 1;
           h6 {
             font-weight: $font-bold;
             color: $text-gray-900;
-            margin-bottom: 1rem;
-          }
-
-          ul {
-            padding-left: 1rem;
             margin: 0;
-
-            li {
-              color: $text-gray-600;
-              margin-bottom: 0.5rem;
-              font-weight: $font-medium;
-            }
+            font-size: 0.95rem;
+          }
+          p {
+            margin: 0;
+            font-size: 0.85rem;
           }
         }
-
-        .btn {
-          border-radius: $border-radius-lg;
-          font-weight: $font-bold;
-          padding: 0.75rem 2rem;
-          background: $primary-gradient;
-          border: none;
-          transition: all $transition-duration ease;
-
-          &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-          }
+        .achievement-time {
+          font-size: 0.8rem;
+          white-space: nowrap;
         }
       }
     }
@@ -447,7 +475,7 @@ $border-radius-md: 0.75rem; // rounded-xl
       background: $glass-morphism-bg;
       backdrop-filter: blur($backdrop-blur);
       border: 1px solid $glass-morphism-border;
-      border-radius: $border-radius-lg;
+      border-radius: $border-radius-xl; // Updated radius
       transition: all $transition-duration ease;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 
@@ -476,7 +504,7 @@ $border-radius-md: 0.75rem; // rounded-xl
         }
 
         .btn {
-          border-radius: $border-radius-md;
+          border-radius: $border-radius-pill; // Pill shape
           font-weight: $font-medium;
         }
       }
@@ -489,52 +517,68 @@ $border-radius-md: 0.75rem; // rounded-xl
       font-weight: $font-bold;
       color: $text-gray-900;
       margin-bottom: 2rem;
+      text-align: left;
     }
 
     .skill-card {
-      background: $glass-morphism-bg;
-      backdrop-filter: blur($backdrop-blur);
-      border: 1px solid $glass-morphism-border;
-      border-radius: $border-radius-lg;
-      padding: 2rem 1.5rem;
+      background: $bg-white;
+      border: 1px solid #e2e8f0;
+      border-radius: $border-radius-xl;
+      padding: 1.5rem 1rem;
       text-align: center;
       transition: all $transition-duration ease;
       height: 100%;
+      cursor: pointer;
+      position: relative;
 
-      &:not(.skill-locked):hover {
+      &:hover {
         transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
       }
 
       &.skill-locked {
-        opacity: 0.7;
-        background: rgba(255, 255, 255, 0.5);
+        opacity: 0.6;
+        cursor: not-allowed;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
       }
 
-      .skill-icon {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
+      .skill-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+
+        .skill-icon {
+          font-size: 1.8rem;
+        }
       }
 
-      h6 {
+      .skill-title {
         font-weight: $font-bold;
         color: $text-gray-900;
-        margin-bottom: 1rem;
+        margin: 0;
       }
 
-      .badge {
-        font-weight: $font-medium;
-        margin-bottom: 1rem;
-      }
-
-      .btn {
-        border-radius: $border-radius-md;
-        font-weight: $font-medium;
-        transition: all $transition-duration ease;
-
-        &:hover:not(:disabled) {
-          transform: translateY(-2px);
-        }
+      .premium-lock {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.5);
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
       }
     }
   }
@@ -545,7 +589,7 @@ $border-radius-md: 0.75rem; // rounded-xl
       background: $glass-morphism-bg;
       backdrop-filter: blur($backdrop-blur);
       border: 1px solid $glass-morphism-border;
-      border-radius: $border-radius-lg;
+      border-radius: $border-radius-xl; // Updated radius
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
       transition: all $transition-duration ease;
       height: 100%;
@@ -589,7 +633,7 @@ $border-radius-md: 0.75rem; // rounded-xl
       background: $glass-morphism-bg;
       backdrop-filter: blur($backdrop-blur);
       border: 1px solid $glass-morphism-border;
-      border-radius: $border-radius-lg;
+      border-radius: $border-radius-xl; // Updated radius
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 
       .card-body {
@@ -604,7 +648,7 @@ $border-radius-md: 0.75rem; // rounded-xl
         .achievement-item {
           padding: 0.75rem;
           background: rgba(255, 255, 255, 0.5);
-          border-radius: $border-radius-md;
+          border-radius: $border-radius-lg;
           border-left: 3px solid $primary-gradient;
 
           h6 {
@@ -644,6 +688,7 @@ $border-radius-md: 0.75rem; // rounded-xl
     font-weight: $font-medium;
     font-size: 0.75rem;
     padding: 0.35em 0.65em;
+    border-radius: $border-radius-pill; // Pill shape for badges
 
     &.bg-success {
       background: $success-gradient !important;
@@ -670,6 +715,7 @@ $border-radius-md: 0.75rem; // rounded-xl
   .btn {
     font-weight: $font-medium;
     transition: all $transition-duration ease;
+    border-radius: $border-radius-pill; // Pill shape for all buttons
 
     &.btn-primary {
       background: $primary-gradient;
@@ -741,6 +787,8 @@ $border-radius-md: 0.75rem; // rounded-xl
     .tab-navigation {
       flex-direction: column;
       gap: 0.5rem;
+      border-radius: $border-radius-xl; // Less round on mobile
+      max-width: 90%;
 
       .tab-item {
         text-align: center;

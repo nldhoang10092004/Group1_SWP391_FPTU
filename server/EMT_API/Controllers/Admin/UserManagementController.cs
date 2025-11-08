@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using static EMT_API.Controllers.Auth.AuthController;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace EMT_API.Controllers.Admin;
+namespace EMT_API.Controllers.AdminSide;
 [ApiController]
 [Route("api/admin/users")]
 [Authorize(Roles = "ADMIN")]

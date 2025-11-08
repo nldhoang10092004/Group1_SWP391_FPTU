@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import './Grammar.scss'; 
-import { useNavigate } from "react-router-dom";
+import './Grammar.scss';
+import { useNavigate } from 'react-router-dom';
+import { Button, Modal } from 'react-bootstrap';
 
 const questionsData = [
   {
@@ -49,40 +50,87 @@ const questionsData = [
 
 const Grammar = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [completedQuestions, setCompletedQuestions] = useState(0);
-  const [showResult, setShowResult] = useState(false);
+  const [answers, setAnswers] = useState({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
   const navigate = useNavigate();
 
   const currentQuestion = questionsData[currentQuestionIndex];
   const totalQuestions = questionsData.length;
 
   const handleOptionSelect = (option) => {
-    setSelectedOption(option);
+    if (isSubmitted) return;
+    setAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.id]: option,
+    }));
   };
 
   const handleSubmit = () => {
-    if (selectedOption === currentQuestion.correctAnswer) {
-      setCompletedQuestions(completedQuestions + 1);
-    }
-    setShowResult(true);
+    let finalScore = 0;
+    questionsData.forEach((q) => {
+      if (answers[q.id] === q.correctAnswer) {
+        finalScore++;
+      }
+    });
+    setScore(finalScore);
+    setIsSubmitted(true);
   };
 
   const handleNextQuestion = () => {
-    setShowResult(false);
-    setSelectedOption(null);
     if (currentQuestionIndex < totalQuestions - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      // Có thể hiển thị một thông báo hoàn thành hoặc chuyển hướng
-      alert('Bạn đã hoàn thành tất cả các câu hỏi!');
     }
   };
 
-    const handleClose = () => {
-    navigate("/home");
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
   };
-  const progressPercentage = (completedQuestions / totalQuestions) * 100;
+
+  const handleClose = () => {
+    navigate('/home');
+  };
+
+  const handleRestart = () => {
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    setIsSubmitted(false);
+    setScore(0);
+  };
+
+  const progressPercentage = (Object.keys(answers).length / totalQuestions) * 100;
+  const selectedOption = answers[currentQuestion.id];
+
+  if (isSubmitted) {
+    return (
+      <div className="grammar-container">
+        <Modal show={true} centered backdrop="static">
+          <Modal.Header>
+            <Modal.Title>Kết quả bài làm</Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="text-center">
+            <h2>
+              Điểm của bạn: {score} / {totalQuestions}
+            </h2>
+            <p>
+              Bạn đã hoàn thành bài luyện tập. Hãy xem lại các câu hỏi để rút
+              kinh nghiệm nhé.
+            </p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              Về trang chủ
+            </Button>
+            <Button variant="primary" onClick={handleRestart}>
+              Làm lại
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    );
+  }
 
   return (
     <div className="grammar-container">
@@ -91,57 +139,73 @@ const Grammar = () => {
         <button className="close-button" onClick={handleClose}>×</button>
       </div>
 
-      <div className="progress-section">
-        <p>Câu {currentQuestionIndex + 1} / {totalQuestions}</p>
-        <div className="progress-bar-background">
-          <div
-            className="progress-bar-fill"
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-        <div className="completion-info">
-          <span>{completedQuestions} / {totalQuestions} câu hoàn thành</span>
-          <span>{Math.round(progressPercentage)}%</span>
-        </div>
-      </div>
-
       <div className="grammar-content">
         <div className="question-card">
           <div className="card-header">
-            <span className="icon">📖</span>
-            <span className="title">Present Simple Tense</span>
+            <span className="title">{currentQuestion.tense}</span>
             <span className="difficulty">Dễ</span>
             <span className="tag">Tenses</span>
           </div>
-          <p className="description">
-            Luyện tập về thì hiện tại đơn với các động từ thường và động từ 'be'
-          </p>
 
           <div className="question-body">
-            <p className="question-text">Câu {currentQuestion.id}: {currentQuestion.question}</p>
+            <p className="question-text">
+              Câu {currentQuestionIndex + 1}: {currentQuestion.question}
+            </p>
             <div className="options">
               {currentQuestion.options.map((option, index) => (
                 <div
                   key={index}
-                  className={`option-item ${selectedOption === option ? 'selected' : ''} ${showResult && option === currentQuestion.correctAnswer ? 'correct' : ''} ${showResult && selectedOption === option && selectedOption !== currentQuestion.correctAnswer ? 'incorrect' : ''}`}
+                  className={`option-item ${
+                    selectedOption === option ? 'selected' : ''
+                  }`}
                   onClick={() => handleOptionSelect(option)}
                 >
                   {option}
                 </div>
               ))}
             </div>
-            <button
-              className="check-button"
-              onClick={showResult ? handleNextQuestion : handleSubmit}
-              disabled={selectedOption === null && !showResult}
-            >
-              {showResult ? 'Câu tiếp theo' : 'Kiểm tra'}
-            </button>
+            <div className="navigation-buttons">
+              <button
+                className="nav-button"
+                onClick={handlePreviousQuestion}
+                disabled={currentQuestionIndex === 0}
+              >
+                Câu trước
+              </button>
+              {currentQuestionIndex < totalQuestions - 1 && (
+                <button
+                  className="nav-button"
+                  onClick={handleNextQuestion}
+                  disabled={selectedOption === undefined}
+                >
+                  Câu tiếp theo
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="progress-sidebar">
           <h3>Tiến độ bài tập</h3>
+          
+          <div className="progress-overview">
+            <p>
+              Câu {currentQuestionIndex + 1} / {totalQuestions}
+            </p>
+            <div className="progress-bar-background">
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+            <div className="completion-info">
+              <span>
+                Đã trả lời {Object.keys(answers).length} / {totalQuestions} câu
+              </span>
+              <span>{Math.round(progressPercentage)}%</span>
+            </div>
+          </div>
+
           <ul>
             {['Present Simple Tense', 'Past Simple Tense'].map((tense, index) => (
               <li key={index} className={currentQuestion.tense === tense ? 'active-tense' : ''}>
@@ -151,6 +215,14 @@ const Grammar = () => {
               </li>
             ))}
           </ul>
+
+          <button
+            className="submit-button"
+            onClick={handleSubmit}
+            disabled={Object.keys(answers).length !== totalQuestions}
+          >
+            Nộp bài
+          </button>
         </div>
       </div>
       <button className="chat-icon">💬</button>
