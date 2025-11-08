@@ -23,6 +23,9 @@ namespace EMT_API.DTOs.Public
         public string CourseName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public int CourseLevel { get; set; }
+        
+        public int TeacherID { get; set; }
+        public string TeacherName { get; set; } = string.Empty;
         public List<ChapterDto> Chapters { get; set; } = new();
 
 
