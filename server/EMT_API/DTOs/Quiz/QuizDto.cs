@@ -36,6 +36,8 @@
     {
         public int OptionID { get; set; }
         public string Content { get; set; } = string.Empty;
+
+        public bool IsCorrect { get; set; }
     }
 
     public class AssetDto
