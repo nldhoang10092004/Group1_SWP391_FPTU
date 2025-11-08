@@ -4,10 +4,10 @@ import "./management-styles.scss";
 
 // Mock data for reviews - replace with API call
 const mockReviews = [
-  { id: 1, courseName: "ReactJS for Beginners", userName: "Nguyễn Văn A", rating: 5, comment: "Khóa học rất tuyệt vời, dễ hiểu!", createdAt: "2025-10-26T10:00:00Z" },
-  { id: 2, courseName: "Advanced CSS", userName: "Trần Thị B", rating: 4, comment: "Nhiều kiến thức bổ ích, nhưng phần grid hơi khó.", createdAt: "2025-10-25T14:30:00Z" },
-  { id: 3, courseName: "ReactJS for Beginners", userName: "Lê Văn C", rating: 5, comment: "Giảng viên dạy hay, nhiệt tình.", createdAt: "2025-10-25T09:00:00Z" },
-  { id: 4, courseName: "UI/UX Design Principles", userName: "Phạm Thị D", rating: 3, comment: "Nội dung ổn nhưng cần thêm ví dụ thực tế.", createdAt: "2025-10-24T18:00:00Z" },
+  { id: 1, courseName: "English for Beginners", userName: "Nguyễn Văn A", rating: 5, comment: "Khóa học rất tuyệt vời, dễ hiểu!", createdAt: "2025-10-26T10:00:00Z" },
+  { id: 2, courseName: "Advanced Grammar", userName: "Trần Thị B", rating: 4, comment: "Nhiều kiến thức bổ ích, nhưng có phần hơi khó.", createdAt: "2025-10-25T14:30:00Z" },
+  { id: 3, courseName: "Basic Listening", userName: "Lê Văn C", rating: 5, comment: "Giảng viên dạy hay, nhiệt tình.", createdAt: "2025-10-25T09:00:00Z" },
+  { id: 4, courseName: "IELTS Trung Cấp", userName: "Phạm Thị D", rating: 3, comment: "Nội dung ổn nhưng cần thêm ví dụ thực tế.", createdAt: "2025-10-24T18:00:00Z" },
 ];
 
 export function ReviewManagement() {

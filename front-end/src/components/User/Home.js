@@ -512,6 +512,44 @@ const Home = () => {
             <h4 className="mb-4">Tổng quan thành tích</h4>
             <Row>
               {[
+                { title: "Flashcards", icon: faLayerGroup, color: '#4A90E2', available: true, path: '/flashcards' },
+                { title: "Luyện nói", icon: faMicrophone, color: '#50E3C2', available: hasMembership, path: '/speakingpractice' },
+                { title: "Luyện nghe", icon: faHeadphones, color: '#9013FE', available: hasMembership, path: '/listeningpractice' },
+                { title: "Luyện viết", icon: faPencilAlt, color: '#F5A623', available: true, path: '/writingpractice' },
+                { title: "Ngữ pháp", icon: faFileAlt, color: '#D0021B', available: true, path: '/grammar' },
+                { title: "Quizz", icon: faComments, color: '#4A90E2', available: hasMembership, path: '/quiz' }
+              ].map((skill, index) => (
+                <Col md={4} key={index} className="mb-4">
+                  <div 
+                    className={`skill-card ${!skill.available ? 'skill-locked' : ''}`}
+                    onClick={() => {
+                      if (skill.available) {
+                        navigate(skill.path);
+                      } else {
+                        navigate("/membership");
+                      }
+                    }}
+                  >
+                    <div className="skill-icon-wrapper" style={{ backgroundColor: `${skill.color}20`}}>
+                      <FontAwesomeIcon icon={skill.icon} className="skill-icon" style={{ color: skill.color }} />
+                    </div>
+                    <h6 className="skill-title">{skill.title}</h6>
+                    {!skill.available && (
+                      <div className="premium-lock">
+                        <FontAwesomeIcon icon={faLock} />
+                      </div>
+                    )}
+                  </div>
+                </Col>
+              ))}
+            </Row>
+
+        {/* Thống kê Tab Content */}
+        {activeTab === "thongke" && (
+          <div className="new-stats-section">
+            <h4 className="mb-4">Tổng quan thành tích</h4>
+            <Row>
+              {[
                 { 
                   title: "Cấp độ hiện tại", 
                   icon: faGraduationCap, 

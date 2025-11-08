@@ -4,9 +4,27 @@ import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import { Modal, Button, Form, Dropdown, Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { loginApi, registerApi, sendOtpApi } from "../../middleware/auth"; // Adjust path as needed
+import { loginApi, registerApi, sendOtpApi } from "../../middleware/auth";
 import "./Header.scss"; 
 import api from "../../middleware/axiosInstance";
+
+// 🔑 Hàm decode JWT để lấy username
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("❌ Lỗi decode JWT:", error);
+    return null;
+  }
+};
 
 const Header = () => {
   const navigate = useNavigate();
@@ -14,7 +32,7 @@ const Header = () => {
   // 🟢 Toast Notification States
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState("danger"); // success, danger, warning
+  const [toastType, setToastType] = useState("danger");
 
   // 🟢 Modal & Auth Tabs
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -116,7 +134,7 @@ const Header = () => {
     setOtpError("");
   };
 
-  // 🟢 Đăng nhập
+  // 🟢 Đăng nhập - ✅ FIX: Decode JWT để lấy username
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     
@@ -130,49 +148,45 @@ const Header = () => {
       
       console.log("✅ Response từ API:", response.data);
       
-      const { accountID, accessToken, expiresIn, email: userEmail, username: userName } = response.data;
+      const { accountID, accessToken, expiresIn, role, redirectUrl } = response.data;
 
-      let displayName = "";
-      let userEmailFinal = "";
+      // ✅ Decode JWT để lấy username
+      const decodedToken = decodeJWT(accessToken);
+      console.log("🔓 Decoded JWT:", decodedToken);
       
-      if (userName) {
-        displayName = userName;
-      } else if (userEmail) {
-        displayName = userEmail.split("@")[0];
-        userEmailFinal = userEmail;
-      } else {
-        displayName = emailOrUsername.includes("@") 
-          ? emailOrUsername.split("@")[0] 
-          : emailOrUsername;
-        userEmailFinal = emailOrUsername.includes("@") ? emailOrUsername : "";
-      }
+      // Lấy username từ JWT claim
+      const usernameFromToken = decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+      const roleFromToken = decodedToken?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      
+      console.log("✅ Username từ JWT:", usernameFromToken);
+      console.log("✅ Role từ JWT:", roleFromToken);
       
       const loggedUser = { 
         accountID, 
         accessToken, 
-        expiresIn, 
-        email: userEmailFinal || emailOrUsername,
-        username: userName || displayName
+        expiresIn,
+        role: role || roleFromToken,
+        username: usernameFromToken || emailOrUsername,
+        email: emailOrUsername.includes("@") ? emailOrUsername : ""
       };
       
       localStorage.setItem("user", JSON.stringify(loggedUser));
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("userName", displayName);
+      localStorage.setItem("userName", usernameFromToken || emailOrUsername);
 
       setUser(loggedUser);
-      setUsername(displayName);
+      setUsername(usernameFromToken || emailOrUsername);
       setLoginMessage("Đăng nhập thành công!");
       showToastNotification("🎉 Đăng nhập thành công! Chào mừng bạn quay lại.", "success");
 
       setTimeout(() => {
-  setShowAuthModal(false);
-  resetLoginForm();
-
-  const redirectUrl = response.data.redirectUrl || "/home";
-  navigate(redirectUrl);
-
-  window.location.href = redirectUrl;
-}, 1500);
+        setShowAuthModal(false);
+        resetLoginForm();
+        
+        const targetUrl = redirectUrl || "/home";
+        navigate(targetUrl);
+        window.location.href = targetUrl;
+      }, 1500);
 
     } catch (err) {
       console.error("❌ Lỗi đăng nhập:", err);
@@ -228,22 +242,26 @@ const Header = () => {
 
       console.log("✅ Đăng ký thành công:", response.data);
 
-      const { accountID, accessToken, expiresIn, username: userName } = response.data;
+      const { accountID, accessToken, expiresIn } = response.data;
+
+      // Decode JWT để lấy username từ token
+      const decodedToken = decodeJWT(accessToken);
+      const usernameFromToken = decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
 
       const newUser = { 
         accountID, 
         accessToken, 
         expiresIn, 
         email: registerEmail,
-        username: userName || registerName
+        username: usernameFromToken || registerName
       };
       
       localStorage.setItem("user", JSON.stringify(newUser));
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("userName", userName || registerName);
+      localStorage.setItem("userName", usernameFromToken || registerName);
 
       setUser(newUser);
-      setUsername(userName || registerName);
+      setUsername(usernameFromToken || registerName);
       setRegisterMessage("Đăng ký thành công!");
       showToastNotification("🎉 Đăng ký thành công! Chào mừng bạn đến với EnglishMaster.", "success");
 
@@ -349,7 +367,7 @@ const Header = () => {
 
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <div className="search-bar ms-auto"> {/* Removed me-auto to align right for actions */}
+            <div className="search-bar ms-auto">
               <input type="text" placeholder="Tìm kiếm giảng viên, khóa ..." />
             </div>
 
@@ -392,7 +410,7 @@ const Header = () => {
                       onError={(e) => (e.target.src = "/default-avatar.png")}
                     />
                     <span className="user-name ms-2">
-                      {username || user.username || user.email?.split("@")[0] || "Người dùng"}
+                      {username || user.username || "Người dùng"}
                     </span>
                   </Dropdown.Toggle>
 
@@ -458,53 +476,51 @@ const Header = () => {
 
           {activeTab === "login" ? (
             <Form onSubmit={handleLoginSubmit}>
-  <Form.Group className="mb-2">
-    <Form.Label>Email hoặc Username</Form.Label>
-    <Form.Control
-      type="text"
-      placeholder="Nhập email hoặc username"
-      value={emailOrUsername}
-      onChange={(e) => setEmailOrUsername(e.target.value)}
-      required
-      size="sm"
-    />
-  </Form.Group>
-  <Form.Group className="mb-3">
-    <Form.Label>Mật khẩu</Form.Label>
-    <div className="d-flex gap-2">
-      <Form.Control
-        type="password"
-        placeholder="Nhập mật khẩu"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        size="sm"
-      />
-    </div>
-  </Form.Group>
+              <Form.Group className="mb-2">
+                <Form.Label>Email hoặc Username</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Nhập email hoặc username"
+                  value={emailOrUsername}
+                  onChange={(e) => setEmailOrUsername(e.target.value)}
+                  required
+                  size="sm"
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Mật khẩu</Form.Label>
+                <div className="d-flex gap-2">
+                  <Form.Control
+                    type="password"
+                    placeholder="Nhập mật khẩu"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    size="sm"
+                  />
+                </div>
+              </Form.Group>
 
-  <Button type="submit" className="w-100" variant="dark">
-    Đăng nhập
-  </Button>
+              <Button type="submit" className="w-100" variant="dark">
+                Đăng nhập
+              </Button>
 
-  {/* 🔹 Thêm nút Quên mật khẩu ở đây */}
-  <div className="text-center mt-2">
-    <Button 
-      variant="link" 
-      size="sm" 
-      onClick={() => {
-        setShowAuthModal(false);
-        navigate("/forgotpassword");
-      }}
-    >
-      Quên mật khẩu?
-    </Button>
-  </div>
+              <div className="text-center mt-2">
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  onClick={() => {
+                    setShowAuthModal(false);
+                    navigate("/forgotpassword");
+                  }}
+                >
+                  Quên mật khẩu?
+                </Button>
+              </div>
 
-  {loginMessage && <div className="alert alert-success mt-2 mb-0 py-2">{loginMessage}</div>}
-  {loginErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{loginErrorMessage}</div>}
-</Form>
-
+              {loginMessage && <div className="alert alert-success mt-2 mb-0 py-2">{loginMessage}</div>}
+              {loginErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{loginErrorMessage}</div>}
+            </Form>
           ) : (
             <Form onSubmit={handleRegisterSubmit}>
               <Form.Group className="mb-2">

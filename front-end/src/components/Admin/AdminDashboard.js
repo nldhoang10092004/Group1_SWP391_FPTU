@@ -287,6 +287,73 @@ export function AdminDashboard({ onClose }) {
             </div>
 
             {/* Biểu đồ tăng trưởng người dùng */}
+            <div className="admin-chart-card " >
+              <CardHeader>
+                <CardTitle>Tăng trưởng người dùng</CardTitle>
+                <CardDescription>Số lượng người dùng mới mỗi tháng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={userGrowthData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area
+                      type="monotone"
+                      dataKey="users"
+                      stroke="#4caf50"
+                      fill="#4caf50"
+                      fillOpacity={0.3}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </div>
+
+                        {/* Biểu đồ phân bố vai trò */}
+            <div className="admin-chart-card">
+              <CardHeader>
+                <CardTitle>Phân bố vai trò</CardTitle>
+                <CardDescription>Phân loại người dùng theo vai trò</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const roleData = [
+                    { name: "Học viên", value: userStats.totalStudents, color: "#667eea" },
+                    { name: "Giảng viên", value: userStats.totalTeachers, color: "#4caf50" },
+                    { name: "Admin", value: userStats.totalAdmins, color: "#ff9800" },
+                  ];
+                  return roleData.some(item => item.value > 0) ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={roleData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={(entry) => `${entry.name}: ${entry.value}`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {roleData.map((entry, index) => (
+                            <Cell key={`cell-role-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
+                      Chưa có dữ liệu
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </div>
+
+            {/* Biểu đồ trạng thái tài khoản */}
             <div className="admin-chart-card">
               <CardHeader>
                 <CardTitle>Tăng trưởng người dùng</CardTitle>
@@ -314,6 +381,7 @@ export function AdminDashboard({ onClose }) {
         </div>
       );
     }
+    
 
     // Các trang quản lý khác
     switch (activeMenu) {

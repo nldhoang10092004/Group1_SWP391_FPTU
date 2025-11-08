@@ -56,31 +56,6 @@ function PaymentSuccessSubscription({ plan, paymentInfo, onStartLearning, onGoHo
             <p>Membership của bạn đã được kích hoạt</p>
           </div>
 
-          {/* Payment Details */}
-          <div className="details-box">
-            <div className="detail-row">
-              <span>Gói đăng ký:</span>
-              <strong>{plan?.name}</strong>
-            </div>
-            <div className="detail-row">
-              <span>Thời hạn:</span>
-              <strong>{plan?.duration}</strong>
-            </div>
-            <div className="detail-row">
-              <span>Số tiền:</span>
-              <strong className="price">
-                {plan?.price?.toLocaleString("vi-VN")}đ
-              </strong>
-            </div>
-            <div className="detail-row">
-              <span>Mã giao dịch:</span>
-              <strong>{paymentInfo?.transactionId}</strong>
-            </div>
-            <div className="detail-row">
-              <span>Email:</span>
-              <strong>{paymentInfo?.email}</strong>
-            </div>
-          </div>
 
           {/* Next Actions */}
           <div className="next-actions">

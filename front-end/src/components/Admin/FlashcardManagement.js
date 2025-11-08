@@ -155,11 +155,10 @@ export function FlashcardManagement() {
     alert("Đã xảy ra lỗi. Vui lòng thử lại.");
   };
 
-  if (loading) {
-    return (
-      <div className="admin-loading-spinner">
-        <div className="admin-spinner"></div>
-        <p>Đang tải dữ liệu flashcard...</p>
+  return (
+    <div className="container py-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <Button onClick={() => handleOpenSetModal()}>+ Thêm Flashcard Set</Button>
       </div>
     );
   }

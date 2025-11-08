@@ -95,7 +95,7 @@ const Flashcard = () => {
                 <FaExclamationTriangle size={50} className="mb-3 text-danger" />
                 <h4>Lỗi Tải Dữ Liệu</h4>
                 <p>{error}</p>
-                <Button variant="primary" onClick={() => navigate("/flashcard")}>
+                <Button variant="primary" onClick={() => navigate(-1)}>
                     <FaArrowLeft className="me-2" />
                     Quay về danh sách
                 </Button>
@@ -116,7 +116,7 @@ const Flashcard = () => {
 
             <header className="flashcard-learn-header">
                 <h1 className="set-title">{flashcardSet.title}</h1>
-                <button onClick={() => navigate("/flashcard")} className="close-button">
+                <button onClick={() => navigate(-1)} className="close-button">
                     <FaTimes />
                 </button>
             </header>

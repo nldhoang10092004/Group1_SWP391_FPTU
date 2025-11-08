@@ -157,7 +157,12 @@ const CourseDetail = () => {
             <Container fluid="xl">
                 <Row>
                     {/* Main Content */}
+                    <button onClick={() => navigate("/home")} className="back-button">
+                              <FaArrowLeft />
+                              <span>Quay lại</span>
+                            </button>
                     <Col lg={8} className="main-content-col">
+                    
                         <div className="video-player-wrapper">
                             {loadingVideo ? (
                                 <div className="player-placeholder">
