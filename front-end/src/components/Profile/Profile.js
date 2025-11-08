@@ -1,10 +1,36 @@
 import React, { useState, useEffect } from "react";
 import {
-  Container,Row,Col,Card,Button,Form,Modal,Alert,} from "react-bootstrap";
-import {FaCog,FaLock,FaCamera,FaTrash,FaUpload,FaArrowLeft,} from "react-icons/fa";
+  Container, Row, Col, Card, Button, Form, Modal, Alert,
+} from "react-bootstrap";
+import {
+  FaCog, FaLock, FaCamera, FaTrash, FaUpload, FaArrowLeft,
+} from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import {getUser,updateUser,updateAvatar,changePassword,} from "../../middleware/userAPI";
+import {
+  getUser,
+  updateUser,
+  updateAvatar,
+  changePassword,
+} from "../../middleware/userAPI";
 import "./Profile.scss";
+
+// 🔑 Hàm decode JWT token để lấy username và email
+const decodeToken = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    return null;
+  }
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -35,7 +61,6 @@ const Profile = () => {
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
   const token = localStorage.getItem("accessToken");
-  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const backPath = "/home";
 
   // ---------- TOAST FUNCTION ----------
@@ -49,71 +74,122 @@ const Profile = () => {
     if (!token) {
       setError("Vui lòng đăng nhập để xem trang này");
       setLoading(false);
-      setTimeout(() => navigate("/login"), 2000);
+      setTimeout(() => navigate("/"), 2000);
       return;
     }
 
     let isMounted = true;
-    let avatarObjectUrl = null;
 
     const fetchUserData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const data = await getUser(token);
+        // 🔑 Decode JWT token để lấy username
+        const decodedToken = decodeToken(token);
+        console.log("🔑 Full Decoded Token:", JSON.stringify(decodedToken, null, 2));
 
-        if (isMounted) {
-          const userEmail =
-            data.email ||
-            storedUser?.email ||
-            storedUser?.username ||
-            "";
+        const username = decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || 
+                        decodedToken?.["name"] || 
+                        decodedToken?.["username"] || 
+                        decodedToken?.["sub"] || "";
 
-          setUser({
-            fullName:
-              data.fullName ||
-              storedUser?.fullName ||
-              storedUser?.username ||
-              "",
-            email: userEmail,
-            bio: data.bio || "",
-            address: data.address || "",
-            dob: data.dob ? data.dob.split("T")[0] : "",
-            gender: data.gender || "",
-            phone: data.phone || "",
-          });
+        console.log("👤 Username parsed:", username);
+
+        // ✅ Gọi API để lấy UserDetail
+        const detailData = await getUser(token);
+        console.log("📊 User Detail API Response:", JSON.stringify(detailData, null, 2));
+
+        // ✅ Gọi thêm API để lấy Email từ Account (nếu backend có endpoint)
+        // Nếu không có, có thể lấy từ localStorage khi user login
+        let email = "";
+        try {
+          // Thử lấy từ localStorage trước (được set khi login)
+          const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+          email = storedUser.email || storedUser.Email || "";
+          console.log("📧 Email from localStorage:", email);
+        } catch (e) {
+          console.warn("Cannot get email from localStorage");
         }
 
-        // Load avatar
+        // ✅ Gọi API để lấy Avatar URL
+        let avatarURL = "";
         try {
-          const res = await fetch(
-            `${process.env.REACT_APP_API_URL || "https://localhost:7010"}/api/user/profile/avatar`,
+          const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7010";
+          console.log("🔗 Fetching avatar from:", `${API_BASE}/api/user/profile/avatar`);
+          
+          const avatarRes = await fetch(
+            `${API_BASE}/api/user/profile/avatar`,
             {
-              headers: { Authorization: `Bearer ${token}` },
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Accept': 'application/json'
+              },
               mode: "cors",
             }
           );
 
-          if (res.ok) {
-            const blob = await res.blob();
-            avatarObjectUrl = URL.createObjectURL(blob);
-            if (isMounted) setAvatarUrl(avatarObjectUrl);
+          console.log("📡 Avatar Response Status:", avatarRes.status);
+          
+          if (avatarRes.ok) {
+            const avatarData = await avatarRes.json();
+            console.log("🖼️ Avatar API Response:", JSON.stringify(avatarData, null, 2));
+            
+            const r2AvatarUrl = avatarData.avatarUrl || avatarData.avatarURL || avatarData.AvatarUrl || "";
+            
+            // ✅ CHỌN 1 TRONG 2 CÁCH:
+            // Cách 1: Dùng proxy (nếu đã tạo endpoint /api/user/profile/avatar/proxy)
+            // avatarURL = r2AvatarUrl ? `${API_BASE}/api/user/profile/avatar/proxy` : "";
+            
+            // Cách 2: Dùng direct URL (nếu đã fix CORS trên R2)
+            avatarURL = r2AvatarUrl;
+            
+            console.log("✅ Final Avatar URL:", avatarURL);
+          } else {
+            const errorText = await avatarRes.text();
+            console.warn("⚠️ Avatar API Error:", errorText);
           }
         } catch (avatarErr) {
-          console.warn("⚠️ Lỗi avatar:", avatarErr.message);
+          console.error("❌ Avatar Fetch Error:", avatarErr);
         }
 
-        showToast("Tải dữ liệu thành công!", "success");
+        if (isMounted) {
+          const displayName = detailData?.fullName || username || "Chưa cập nhật";
+          const displayEmail = email || username || "Chưa có email";
+          
+          console.log("🎯 Final Display Values:");
+          console.log("  - Name:", displayName);
+          console.log("  - Email:", displayEmail);
+          console.log("  - Avatar:", avatarURL || "default");
+
+          setUser({
+            fullName: displayName,
+            email: displayEmail,
+            bio: detailData?.bio || "",
+            address: detailData?.address || "",
+            dob: detailData?.dob ? detailData.dob.split("T")[0] : "",
+            gender: detailData?.gender || "",
+            phone: detailData?.phone || "",
+          });
+
+          if (avatarURL) {
+            console.log("✅ Setting avatar URL:", avatarURL);
+            setAvatarUrl(avatarURL);
+          } else {
+            console.warn("⚠️ No avatar URL, using default");
+          }
+
+          showToast("Tải dữ liệu thành công!", "success");
+        }
       } catch (err) {
         console.error("❌ Lỗi khi tải user:", err);
 
-        if (err.response?.status === 401 || err.message === "Token hết hạn") {
-          setError("Phiên đăng nhập đã hết hạn. Đang chuyển về trang đăng nhập...");
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("user");
-          setTimeout(() => navigate("/login"), 2000);
-        } else if (err.code === "ERR_NETWORK") {
+        if (err.message === "Token hết hạn") {
+          // handleApiError đã xử lý redirect
+          return;
+        }
+
+        if (err.code === "ERR_NETWORK") {
           setError(
             "Không thể kết nối tới server. Vui lòng kiểm tra kết nối mạng hoặc đảm bảo backend đang chạy."
           );
@@ -137,7 +213,6 @@ const Profile = () => {
 
     return () => {
       isMounted = false;
-      if (avatarObjectUrl) URL.revokeObjectURL(avatarObjectUrl);
     };
   }, [token, navigate]);
 
@@ -178,26 +253,22 @@ const Profile = () => {
       if (response && response.avatarUrl) {
         const newAvatarUrl = response.avatarUrl;
 
-        localStorage.setItem("avatarUrl", newAvatarUrl);
-
-        const userData = JSON.parse(localStorage.getItem("user") || "{}");
-        userData.avatarUrl = newAvatarUrl;
-        localStorage.setItem("user", JSON.stringify(userData));
-
-        window.dispatchEvent(new Event("avatarUpdated"));
-
+        // ✅ Cập nhật avatar URL
         setAvatarUrl(newAvatarUrl);
         setSelectedFile(null);
+        
+        if (previewImage) URL.revokeObjectURL(previewImage);
         setPreviewImage(null);
+        
         setShowAvatarModal(false);
 
         showToast("Cập nhật avatar thành công!", "success");
       } else {
-        showToast("API không trả về avatarUrl, vui lòng kiểm tra server.", "error");
+        showToast("API không trả về avatarUrl, vui lòng thử lại.", "warning");
       }
     } catch (err) {
       console.error("❌ Lỗi update avatar:", err);
-      showToast("Lỗi khi cập nhật avatar!", "error");
+      // handleApiError đã xử lý alert
     }
   };
 
@@ -219,9 +290,7 @@ const Profile = () => {
       showToast("Cập nhật thông tin thành công!", "success");
     } catch (err) {
       console.error("❌ Lỗi update profile:", err);
-      const errorMsg =
-        err.response?.data?.message || err.message || "Lỗi không xác định";
-      showToast(`Lỗi khi cập nhật thông tin: ${errorMsg}`, "error");
+      // handleApiError đã xử lý alert
     }
   };
 
@@ -248,6 +317,7 @@ const Profile = () => {
       showToast("Đang đổi mật khẩu...", "info");
 
       await changePassword(currentPassword, newPassword, confirmPassword, token);
+      
       showToast("Đổi mật khẩu thành công!", "success");
 
       setCurrentPassword("");
@@ -255,8 +325,7 @@ const Profile = () => {
       setConfirmPassword("");
     } catch (err) {
       console.error("❌ Lỗi đổi mật khẩu:", err);
-      const errorMsg = err.response?.data?.message || "Mật khẩu hiện tại không đúng";
-      showToast(`Lỗi khi đổi mật khẩu: ${errorMsg}`, "error");
+      // handleApiError đã xử lý alert
     }
   };
 
@@ -294,7 +363,7 @@ const Profile = () => {
                 </Button>
                 <Button
                   variant="outline-secondary"
-                  onClick={() => navigate("/home")}
+                  onClick={() => navigate(-1)}
                 >
                   Về trang chủ
                 </Button>
@@ -358,7 +427,9 @@ const Profile = () => {
                       src={previewImage || avatarUrl}
                       alt="Avatar"
                       className="profile-avatar"
+                      crossOrigin="anonymous"
                       onError={(e) => {
+                        console.error("❌ Image onError triggered for:", e.target.src);
                         e.target.src = "/default-avatar.png";
                       }}
                     />
@@ -368,8 +439,8 @@ const Profile = () => {
                   </div>
                 </div>
 
-                <h4 className="profile-name">{user.fullName || "Chưa cập nhật"}</h4>
-                <p className="profile-email text-muted">{user.email || "Chưa có email"}</p>
+                <h4 className="profile-name">{user.fullName}</h4>
+                <p className="profile-email text-muted">{user.email}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -386,7 +457,7 @@ const Profile = () => {
                     <Form.Label><strong>Họ và tên</strong></Form.Label>
                     <Form.Control
                       type="text"
-                      value={user.fullName || ""}
+                      value={user.fullName}
                       onChange={(e) => setUser({ ...user, fullName: e.target.value })}
                       placeholder="Nhập họ và tên"
                     />
@@ -396,7 +467,7 @@ const Profile = () => {
                     <Form.Label><strong>Email</strong></Form.Label>
                     <Form.Control 
                       type="text" 
-                      value={user.email || ""} 
+                      value={user.email} 
                       disabled 
                     />
                   </Form.Group>
@@ -404,7 +475,7 @@ const Profile = () => {
                   <Form.Group className="mb-3">
                     <Form.Label><strong>Giới tính</strong></Form.Label>
                     <Form.Select
-                      value={user.gender || ""}
+                      value={user.gender}
                       onChange={(e) => setUser({ ...user, gender: e.target.value })}
                     >
                       <option value="">-- Chọn giới tính --</option>
@@ -418,7 +489,7 @@ const Profile = () => {
                     <Form.Label><strong>Ngày sinh</strong></Form.Label>
                     <Form.Control
                       type="date"
-                      value={user.dob || ""}
+                      value={user.dob}
                       onChange={(e) => setUser({ ...user, dob: e.target.value })}
                     />
                   </Form.Group>
@@ -427,7 +498,7 @@ const Profile = () => {
                     <Form.Label><strong>Số điện thoại</strong></Form.Label>
                     <Form.Control
                       type="text"
-                      value={user.phone || ""}
+                      value={user.phone}
                       onChange={(e) => setUser({ ...user, phone: e.target.value })}
                       placeholder="Nhập số điện thoại"
                     />
@@ -437,7 +508,7 @@ const Profile = () => {
                     <Form.Label><strong>Địa chỉ</strong></Form.Label>
                     <Form.Control
                       type="text"
-                      value={user.address || ""}
+                      value={user.address}
                       onChange={(e) => setUser({ ...user, address: e.target.value })}
                       placeholder="Nhập địa chỉ"
                     />
@@ -448,7 +519,7 @@ const Profile = () => {
                     <Form.Control
                       as="textarea"
                       rows={3}
-                      value={user.bio || ""}
+                      value={user.bio}
                       onChange={(e) => setUser({ ...user, bio: e.target.value })}
                       placeholder="Viết vài dòng về bản thân..."
                     />
@@ -515,7 +586,9 @@ const Profile = () => {
               src={previewImage || avatarUrl}
               alt="Current Avatar"
               className="modal-avatar"
+              crossOrigin="anonymous"
               onError={(e) => {
+                console.error("❌ Modal image onError triggered for:", e.target.src);
                 e.target.src = "/default-avatar.png";
               }}
             />

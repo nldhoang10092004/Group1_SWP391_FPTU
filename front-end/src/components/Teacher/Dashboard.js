@@ -23,7 +23,7 @@ import {
   getFlashcardSetsByCourse,
   deleteFlashcardSet,
 } from "../../middleware/teacher/flashcardTeacherAPI";
-import { getQuizzesByCourse } from "../../middleware/teacher/quizTeacherAPI";
+import { getQuizzesByCourse, createQuiz } from "../../middleware/teacher/quizTeacherAPI";
 import { jwtDecode } from "jwt-decode";
 
 const Dashboard = () => {
@@ -53,6 +53,30 @@ const Dashboard = () => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "" }), 3000);
   };
+  const [showCreateQuizModal, setShowCreateQuizModal] = useState(false);
+  const [newQuiz, setNewQuiz] = useState({
+    title: "",
+    description: "",
+    quizType: 1,
+    courseID: "",
+  });
+
+  const getQuizTypeName = (type) => {
+  switch (type) {
+    case 1:
+      return "Trắc nghiệm (Multiple Choice)";
+    case 2:
+      return "Listening";
+    case 3:
+      return "Reading";
+    case 4:
+      return "Writing";
+    case 5:
+      return "Speaking";
+    default:
+      return "Không xác định";
+  }
+};
 
   // ✅ Lấy teacherId từ token
   const token = localStorage.getItem("accessToken");
@@ -172,6 +196,29 @@ const Dashboard = () => {
       showPopup(error.message || "Không thể xóa flashcard.", "error");
     }
   };
+  //Tạo quiz mới
+  const handleCreateQuiz = async () => {
+    if (!newQuiz.title.trim()) {
+      showPopup("Vui lòng nhập tiêu đề quiz!", "error");
+      return;
+    }
+    if (!newQuiz.courseID) {
+      showPopup("Vui lòng chọn khóa học!", "error");
+      return;
+    }
+
+    try {
+      await createQuiz(newQuiz);
+
+      console.log("📤 Quiz được tạo:", newQuiz);
+      showPopup("Tạo quiz thành công!", "success");
+      setShowCreateQuizModal(false);
+      setNewQuiz({ title: "", description: "", quizType: 1, courseID: "" });
+      setReloadTrigger((prev) => prev + 1);
+    } catch (err) {
+      showPopup(err.message || "Không thể tạo quiz", "error");
+    }
+  };
 
   const handleViewCourseDetail = (courseId) => navigate(`/teacher/coursedetail/${courseId}`);
 
@@ -272,24 +319,45 @@ const Dashboard = () => {
       case "quiz":
         return (
           <div className="management-card">
-            <div className="management-card-header">
-              <h2 className="card-title">Danh sách Quiz</h2>
-              <p className="card-description">Tổng số: {quizzes.length} quiz</p>
+            <div className="management-card-header flex justify-between items-center">
+              <div>
+                <h2 className="card-title">Danh sách Quiz</h2>
+                <p className="card-description">Tổng số: {quizzes.length} quiz</p>
+              </div>
+              <button
+                onClick={() => setShowCreateQuizModal(true)}
+                className="primary-button"
+              >
+                <Plus size={18} /> Tạo Quiz mới
+              </button>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
               {quizzes.map((quiz) => (
                 <div key={quiz.quizID} className="teacher-item-card">
                   <h5 className="font-bold text-lg">{quiz.title}</h5>
-                  <p className="text-sm text-gray-600">Khóa học: {quiz.courseName}</p>
-                  <p className="text-sm text-gray-600 flex-grow">{quiz.description}</p>
-                  <button onClick={() => navigate(`/teacher/quizdetail/${quiz.quizID}`)} className="primary-button mt-4">
+                  <p className="text-sm text-gray-600 flex-grow">
+                    {quiz.description}
+                  </p>
+
+                  <p className="text-sm text-gray-600">
+                    Loại: {getQuizTypeName(quiz.quizType)}
+                  </p>
+
+
+                  <button
+                    onClick={() => navigate(`/teacher/quizdetail/${quiz.quizID}`)}
+                    className="primary-button mt-4"
+                  >
                     <Eye size={16} /> Xem
                   </button>
                 </div>
               ))}
+
             </div>
           </div>
         );
+
       case "danhgia":
         return (
           <div className="management-card">
@@ -431,6 +499,89 @@ const Dashboard = () => {
               </button>
               <button onClick={handleUpdateCourse} className="primary-button">
                 Lưu thay đổi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal tạo Quiz */}
+      {showCreateQuizModal && (
+        <div
+          className="management-modal-overlay"
+          onClick={() => setShowCreateQuizModal(false)}
+        >
+          <div
+            className="management-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="card-title mb-6">Tạo Quiz mới</h3>
+            <div className="flex flex-col gap-4">
+              <input
+                type="text"
+                placeholder="Tiêu đề Quiz"
+                value={newQuiz.title}
+                onChange={(e) =>
+                  setNewQuiz({ ...newQuiz, title: e.target.value })
+                }
+                className="form-input"
+              />
+              <textarea
+                placeholder="Mô tả Quiz"
+                value={newQuiz.description}
+                onChange={(e) =>
+                  setNewQuiz({ ...newQuiz, description: e.target.value })
+                }
+                className="form-input"
+                rows="3"
+              ></textarea>
+
+              <select
+                value={newQuiz.quizType}
+                onChange={(e) =>
+                  setNewQuiz({
+                    ...newQuiz,
+                    quizType: Number(e.target.value),
+                  })
+                }
+                className="form-input"
+              >
+                <option value="">-- Chọn loại quiz --</option>
+                <option value={1}>Trắc nghiệm (Multiple Choice)</option>
+                <option value={2}>Listening</option>
+                <option value={3}>Reading</option>
+                <option value={4}>Writing</option>
+                <option value={5}>Speaking</option>
+              </select>
+
+
+              <select
+                value={newQuiz.courseID}
+                onChange={(e) =>
+                  setNewQuiz({
+                    ...newQuiz,
+                    courseID: Number(e.target.value),
+                  })
+                }
+                className="form-input"
+              >
+                <option value="">-- Chọn khóa học --</option>
+                {courses.map((c) => (
+                  <option key={c.courseID} value={c.courseID}>
+                    {c.courseName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => setShowCreateQuizModal(false)}
+                className="secondary-button"
+              >
+                Hủy
+              </button>
+              <button onClick={handleCreateQuiz} className="primary-button">
+                Tạo mới
               </button>
             </div>
           </div>

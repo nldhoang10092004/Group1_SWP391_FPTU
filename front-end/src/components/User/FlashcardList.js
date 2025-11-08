@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
+import { Container, Spinner, Card } from "react-bootstrap";
 import { FaArrowLeft, FaBook, FaExclamationTriangle } from "react-icons/fa";
 import { getFlashcardSets } from "../../middleware/flashcardAPI";
 import { useNavigate } from "react-router-dom";
@@ -9,118 +9,104 @@ const FlashcardList = () => {
   const [sets, setSets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const navigate = useNavigate();
 
-  // Hiện thông báo toast
-  const showToast = (message, type = "info") => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: "", type: "" }), 4000);
-  };
-
-  // Lấy danh sách flashcard sets
   useEffect(() => {
     const fetchSets = async () => {
       try {
+        setLoading(true);
         setError(null);
-        showToast("Đang tải danh sách flashcard...", "info");
-
         const data = await getFlashcardSets();
-        // Đảm bảo sets luôn là mảng
-        setSets(Array.isArray(data) ? data : []);
-
-        if (!Array.isArray(data) || data.length === 0) {
-          showToast("Không có bộ flashcard nào.", "info");
-        } else {
-          showToast(`Đã tải ${data.length} bộ flashcard`, "success");
-        }
+        // API returns an object with a 'data' property which is the array
+        const flashcardData = data.data || data;
+        setSets(Array.isArray(flashcardData) ? flashcardData : []);
       } catch (err) {
-        console.error("Error fetching flashcard sets:", err);
-        const errorMsg = err.response?.data?.message || err.message || "Không thể tải danh sách flashcard.";
+        const errorMsg = err.response?.data?.message || "Không thể tải danh sách flashcard.";
         setError(errorMsg);
-        showToast(errorMsg, "error");
       } finally {
         setLoading(false);
       }
     };
-
     fetchSets();
   }, []);
 
-  const handleViewFlashcards = (setId, title) => {
-    showToast(`Đang mở bộ flashcard: ${title}`, "info");
-    navigate(`/flashcards/${setId}`);
+  const handleViewFlashcards = (setId) => {
+    navigate(`/flashcard/${setId}`);
   };
 
-  const handleRetry = () => {
-    setLoading(true);
-    setError(null);
-    window.location.reload();
+  const getCardCount = (set) => {
+    if (set.items && Array.isArray(set.items)) {
+      return set.items.length;
+    }
+    return set.itemCount || 0;
   };
 
   if (loading) {
     return (
-      <Container className="flashcard-list-page text-center my-5">
-        <Spinner animation="border" role="status" />
-        <p>Đang tải các bộ flashcard...</p>
-      </Container>
+      <div className="flashcard-list-page">
+        <Container className="loading-container">
+          <Spinner animation="border" variant="primary" />
+          <p>Đang tải các bộ flashcard...</p>
+        </Container>
+      </div>
     );
   }
 
-  if (error && sets.length === 0) {
+  if (error) {
     return (
-      <Container className="flashcard-list-page text-center my-5">
-        <FaExclamationTriangle size={50} className="mb-3 text-danger" />
-        <p>{error}</p>
-        <div className="d-flex justify-content-center gap-2">
-          <Button variant="outline-primary" onClick={handleRetry}>
-            Thử lại
-          </Button>
-          <Button variant="primary" onClick={() => navigate("/home")}>
+      <div className="flashcard-list-page">
+        <Container className="empty-state">
+          <FaExclamationTriangle className="empty-icon text-danger" />
+          <h4>Lỗi Tải Dữ Liệu</h4>
+          <p>{error}</p>
+          <button className="btn btn-primary" onClick={() => navigate("/home")}>
+            <FaArrowLeft className="me-2" />
             Về trang chủ
-          </Button>
-        </div>
-      </Container>
+          </button>
+        </Container>
+      </div>
     );
   }
 
   return (
     <div className="flashcard-list-page">
-      {toast.show && (
-        <div className={`toast-notification ${toast.type}`}>
-          <strong>{toast.message}</strong>
-        </div>
-      )}
-
       <Container>
-        <Button variant="link" onClick={() => navigate("/home")} className="my-3">
-          <FaArrowLeft className="me-2" /> Quay lại trang chủ
-        </Button>
+        <button onClick={() => navigate("/home")} className="back-button">
+          <FaArrowLeft />
+          <span>Quay lại</span>
+        </button>
 
-        <h1 className="mb-3">📚 Bộ Flashcard</h1>
+        <header className="page-header">
+          <h1>Bộ sưu tập Flashcard</h1>
+          <p className="page-subtitle">
+            Chọn một bộ flashcard để bắt đầu học từ vựng và củng cố kiến thức của bạn.
+          </p>
+        </header>
 
         {sets.length === 0 ? (
-          <div className="text-center my-5">
-            <FaBook size={50} className="mb-3" />
-            <p>Không có bộ flashcard nào.</p>
-            <Button variant="primary" onClick={() => navigate("/home")}>
-              Quay về trang chủ
-            </Button>
+          <div className="empty-state">
+            <FaBook className="empty-icon" />
+            <p>Chưa có bộ flashcard nào được tạo.</p>
           </div>
         ) : (
-          <Row xs={1} md={2} lg={3} className="g-4">
+          <div className="sets-grid">
             {sets.map((set) => (
-              <Col key={set.setID}>
-                <div className="card h-100 p-3">
-                  <h5>{set.title || "Bộ Flashcard"}</h5>
-                  <p>{set.description || "Bộ flashcard học từ vựng tiếng Anh chất lượng cao."}</p>
-                  <Button onClick={() => handleViewFlashcards(set.setID, set.title)}>
-                    <FaBook className="me-1" /> Học ngay
-                  </Button>
-                </div>
-              </Col>
+              <Card key={set.setID} className="set-card" onClick={() => handleViewFlashcards(set.setID)}>
+                <Card.Body>
+                  <div className="card-icon-wrapper">
+                    <FaBook />
+                  </div>
+                  <Card.Title>{set.title || "Bộ Flashcard Chưa Có Tên"}</Card.Title>
+                  <Card.Text>
+                    {set.description || "Bộ flashcard học từ vựng tiếng Anh."}
+                  </Card.Text>
+                  <div className="card-footer-info">
+                    <span>{getCardCount(set)} thẻ</span>
+                  </div>
+                </Card.Body>
+              </Card>
             ))}
-          </Row>
+          </div>
         )}
       </Container>
     </div>

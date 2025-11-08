@@ -10,13 +10,14 @@ import {
   deleteChapter,
   createVideo,
   deleteVideo,
-} from "../../middleware/teacher/courseTeacherAPI"; // ✅ dùng file API thật của Teacher
+} from "../../middleware/teacher/courseTeacherAPI";
+import { uploadAsset } from "../../middleware/teacher/uploadAPI"; // ✅ Import upload API
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./EditCourse.scss";
 
 const CreateEditCourse = () => {
-  const { id } = useParams(); // nếu không có id → tạo mới
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const isEditMode = !!id;
@@ -40,9 +41,10 @@ const CreateEditCourse = () => {
   const [selectedChapterId, setSelectedChapterId] = useState(null);
   const [videoName, setVideoName] = useState("");
   const [videoURL, setVideoURL] = useState("");
+  const [videoFile, setVideoFile] = useState(null); // ✅ State cho file video
   const [isPreview, setIsPreview] = useState(false);
+  const [isUploading, setIsUploading] = useState(false); // ✅ State loading upload
 
-  // tải dữ liệu nếu là chế độ sửa
   useEffect(() => {
     if (isEditMode) {
       loadCourseData();
@@ -67,7 +69,6 @@ const CreateEditCourse = () => {
     }
   };
 
-  // ✅ Lưu hoặc tạo mới khóa học
   const handleSaveCourse = async () => {
     try {
       setError(null);
@@ -90,7 +91,7 @@ const CreateEditCourse = () => {
       } else {
         savedCourse = await createCourse(payload);
         setSuccess("✅ Tạo khóa học mới thành công!");
-        navigate(`/teacher/courses/edit/${savedCourse.courseID}`); // chuyển sang trang edit
+        navigate(`/teacher/courses/edit/${savedCourse.courseID}`);
       }
 
       setCourse(savedCourse);
@@ -101,114 +102,117 @@ const CreateEditCourse = () => {
     }
   };
 
-  // ✅ Thêm hoặc sửa chương
   const handleSaveChapter = async () => {
-  try {
-    if (!chapterName.trim()) {
-      alert("Vui lòng nhập tên chương");
-      return;
+    try {
+      if (!chapterName.trim()) {
+        alert("Vui lòng nhập tên chương");
+        return;
+      }
+
+      if (editingChapter) {
+        await updateChapter(editingChapter.chapterID, { chapterName });
+        setSuccess("Cập nhật chương thành công!");
+      } else {
+        await createChapter(course.courseID, { chapterName });
+        setSuccess("Tạo chương mới thành công!");
+      }
+
+      setShowChapterModal(false);
+      setChapterName("");
+      setEditingChapter(null);
+      await loadCourseData();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error("❌ Lỗi khi lưu chương:", err);
+      setError("Không thể lưu chương");
     }
+  };
 
-    if (editingChapter) {
-      await updateChapter(editingChapter.chapterID, { chapterName });
-      setSuccess("Cập nhật chương thành công!");
-    } else {
-      await createChapter(course.courseID, { chapterName });
-      setSuccess("Tạo chương mới thành công!");
-    }
-
-    setShowChapterModal(false);
-    setChapterName("");
-    setEditingChapter(null);
-
-    // 🔁 Gọi lại API để reload dữ liệu thật
-    await loadCourseData();
-
-    setTimeout(() => setSuccess(null), 3000);
-  } catch (err) {
-    console.error("❌ Lỗi khi lưu chương:", err);
-    setError("Không thể lưu chương");
-  }
-};
-
-  // ✅ Xóa chương
   const handleDeleteChapter = async (chapterId) => {
-  if (!window.confirm("Bạn có chắc chắn muốn xóa chương này?")) return;
-  try {
-    await deleteChapter(chapterId);
-    setSuccess("Xóa chương thành công!");
+    if (!window.confirm("Bạn có chắc chắn muốn xóa chương này?")) return;
+    try {
+      await deleteChapter(chapterId);
+      setSuccess("Xóa chương thành công!");
+      await loadCourseData();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error("❌ Lỗi khi xóa chương:", err);
+      setError("Không thể xóa chương");
+    }
+  };
 
-    // 🔁 Reload lại dữ liệu
-    await loadCourseData();
-
-    setTimeout(() => setSuccess(null), 3000);
-  } catch (err) {
-    console.error("❌ Lỗi khi xóa chương:", err);
-    setError("Không thể xóa chương");
-  }
-};
-
-  // ✅ Thêm hoặc sửa video
+  // ✅ Cập nhật hàm lưu video với upload
   const handleSaveVideo = async () => {
-  try {
-    if (!videoName.trim()) {
-      alert("Vui lòng nhập tên video");
-      return;
+    try {
+      if (!videoName.trim()) {
+        alert("Vui lòng nhập tên video");
+        return;
+      }
+
+      setIsUploading(true);
+      let uploadedVideoURL = videoURL;
+
+      // ✅ Nếu có file mới được chọn, upload lên server
+      if (videoFile) {
+        try {
+          const uploadResult = await uploadAsset(videoFile, "video");
+          uploadedVideoURL = uploadResult.url; // Backend trả về { url: "https://..." }
+        } catch (uploadError) {
+          console.error("❌ Lỗi upload video:", uploadError);
+          setError("Không thể upload video. Vui lòng thử lại.");
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      const payload = {
+        videoName,
+        videoURL: uploadedVideoURL || null,
+        isPreview,
+      };
+
+      if (editingVideo) {
+        await createVideo(editingVideo.videoID, payload);
+        setSuccess("Cập nhật video thành công!");
+      } else {
+        await createVideo(selectedChapterId, payload);
+        setSuccess("Tạo video mới thành công!");
+      }
+
+      setShowVideoModal(false);
+      resetVideoForm();
+      await loadCourseData();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error("❌ Lỗi khi lưu video:", err);
+      setError("Không thể lưu video");
+    } finally {
+      setIsUploading(false);
     }
+  };
 
-    const payload = {
-      videoName,
-      videoURL: videoURL.trim() || null,
-      isPreview,
-    };
-
-    if (editingVideo) {
-      await createVideo(editingVideo.videoID, payload);
-      setSuccess("Cập nhật video thành công!");
-    } else {
-      await createVideo(selectedChapterId, payload);
-      setSuccess("Tạo video mới thành công!");
-    }
-
-    setShowVideoModal(false);
-    resetVideoForm();
-
-    // 🔁 Reload dữ liệu từ backend
-    await loadCourseData();
-
-    setTimeout(() => setSuccess(null), 3000);
-  } catch (err) {
-    console.error("❌ Lỗi khi lưu video:", err);
-    setError("Không thể lưu video");
-  }
-};
-
-  // ✅ Xóa video
   const handleDeleteVideo = async (chapterId, videoId) => {
-  if (!window.confirm("Bạn có chắc chắn muốn xóa video này?")) return;
-  try {
-    await deleteVideo(videoId);
-    setSuccess("Xóa video thành công!");
-
-    // 🔁 Reload lại dữ liệu
-    await loadCourseData();
-
-    setTimeout(() => setSuccess(null), 3000);
-  } catch (err) {
-    console.error("❌ Lỗi khi xóa video:", err);
-    setError("Không thể xóa video");
-  }
-};
+    if (!window.confirm("Bạn có chắc chắn muốn xóa video này?")) return;
+    try {
+      await deleteVideo(videoId);
+      setSuccess("Xóa video thành công!");
+      await loadCourseData();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error("❌ Lỗi khi xóa video:", err);
+      setError("Không thể xóa video");
+    }
+  };
 
   const resetVideoForm = () => {
     setVideoName("");
     setVideoURL("");
+    setVideoFile(null); // ✅ Reset file
     setIsPreview(false);
     setEditingVideo(null);
     setSelectedChapterId(null);
   };
 
-  // ================= UI render =================
   if (isLoading) {
     return (
       <Container className="py-5 text-center">
@@ -234,7 +238,6 @@ const CreateEditCourse = () => {
       {success && <Alert variant="success" dismissible onClose={() => setSuccess(null)}>{success}</Alert>}
 
       <Row>
-        {/* Thông tin khóa học */}
         <Col lg={4}>
           <Card className="mb-4">
             <Card.Header><h5>Thông tin khóa học</h5></Card.Header>
@@ -264,7 +267,6 @@ const CreateEditCourse = () => {
           </Card>
         </Col>
 
-        {/* Nội dung chương & video */}
         {isEditMode && (
           <Col lg={8}>
             <Card>
@@ -377,7 +379,7 @@ const CreateEditCourse = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Video Modal */}
+      {/* ✅ Video Modal - Đã chỉnh sửa để upload file */}
       <Modal show={showVideoModal} onHide={() => setShowVideoModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>{editingVideo ? "Chỉnh sửa video" : "Thêm video mới"}</Modal.Title>
@@ -390,17 +392,46 @@ const CreateEditCourse = () => {
                 type="text"
                 value={videoName}
                 onChange={(e) => setVideoName(e.target.value)}
+                placeholder="Nhập tên video"
               />
             </Form.Group>
+            
+            {/* ✅ Thay input URL bằng input file */}
             <Form.Group className="mb-3">
-              <Form.Label>URL video</Form.Label>
+              <Form.Label>Upload video</Form.Label>
               <Form.Control
-                type="text"
-                value={videoURL}
-                onChange={(e) => setVideoURL(e.target.value)}
-                placeholder="https://www.youtube.com/embed/..."
+                type="file"
+                accept="video/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setVideoFile(file);
+                    // Auto-fill tên video nếu chưa có
+                    if (!videoName) {
+                      setVideoName(file.name.replace(/\.[^/.]+$/, ""));
+                    }
+                  }
+                }}
               />
+              <Form.Text className="text-muted">
+                Hỗ trợ các định dạng: MP4, AVI, MOV, WMV, FLV...
+              </Form.Text>
+              {videoFile && (
+                <Alert variant="success" className="mt-2 mb-0">
+                  <small>✅ Đã chọn: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB)</small>
+                </Alert>
+              )}
             </Form.Group>
+
+            {/* ✅ Hiển thị thông tin video hiện tại khi edit */}
+            {editingVideo && videoURL && !videoFile && (
+              <Alert variant="info" className="mb-3">
+                <small><strong>Video hiện tại:</strong></small><br />
+                <small><a href={videoURL} target="_blank" rel="noreferrer">Xem video</a></small><br />
+                <small className="text-muted">Chọn file mới để thay thế</small>
+              </Alert>
+            )}
+
             <Form.Check
               type="checkbox"
               label="Cho phép xem trước miễn phí"
@@ -410,9 +441,18 @@ const CreateEditCourse = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowVideoModal(false)}>Hủy</Button>
-          <Button variant="primary" onClick={handleSaveVideo}>
-            {editingVideo ? "Cập nhật" : "Thêm video"}
+          <Button variant="secondary" onClick={() => setShowVideoModal(false)} disabled={isUploading}>
+            Hủy
+          </Button>
+          <Button variant="primary" onClick={handleSaveVideo} disabled={isUploading}>
+            {isUploading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" />
+                Đang upload...
+              </>
+            ) : (
+              editingVideo ? "Cập nhật" : "Thêm video"
+            )}
           </Button>
         </Modal.Footer>
       </Modal>
