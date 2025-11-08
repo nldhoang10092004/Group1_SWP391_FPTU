@@ -356,51 +356,25 @@ export function AdminDashboard({ onClose }) {
             {/* Biểu đồ trạng thái tài khoản */}
             <div className="admin-chart-card">
               <CardHeader>
-                <CardTitle>Trạng thái tài khoản</CardTitle>
-                <CardDescription>Phân bố theo trạng thái</CardDescription>
+                <CardTitle>Tăng trưởng người dùng</CardTitle>
+                <CardDescription>Số lượng người dùng mới mỗi tháng</CardDescription>
               </CardHeader>
               <CardContent>
-                {(() => {
-                  const statusData = [
-                    { name: "Hoạt động", value: userStats.activeUsers, color: "#4caf50" },
-                    { name: "Đã khóa", value: userStats.inactiveUsers, color: "#f44336" },
-                  ];
-
-                  // Nếu có ít nhất 1 giá trị khác 0 → vẽ biểu đồ
-                  return statusData.some(item => item.value > 0) ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={statusData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={(entry) => `${entry.name}: ${entry.value}`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {statusData.map((entry, index) => (
-                            <Cell key={`cell-status-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div
-                      style={{
-                        height: 300,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#999",
-                      }}
-                    >
-                      Chưa có dữ liệu
-                    </div>
-                  );
-                })()}
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={userGrowthData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area
+                      type="monotone"
+                      dataKey="users"
+                      stroke="#4caf50"
+                      fill="#4caf50"
+                      fillOpacity={0.3}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </CardContent>
             </div>
           </div>

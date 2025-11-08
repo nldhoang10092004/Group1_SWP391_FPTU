@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace EMT_API.Controllers.Admin;
+namespace EMT_API.Controllers.AdminSide;
 [ApiController]
 [Route("api/admin/courses")]
 [Authorize(Roles = "ADMIN")]

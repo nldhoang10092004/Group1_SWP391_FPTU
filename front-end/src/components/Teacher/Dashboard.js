@@ -16,7 +16,6 @@ import "./teacher-dashboard.scss";
 import {
   getTeacherCourses,
   createTeacherCourse,
-  updateTeacherCourse,
   deleteTeacherCourse,
 } from "../../middleware/teacher/courseTeacherAPI";
 import {
@@ -26,7 +25,7 @@ import {
 import { getQuizzesByCourse, createQuiz } from "../../middleware/teacher/quizTeacherAPI";
 import { jwtDecode } from "jwt-decode";
 
-const Dashboard = () => {
+const TeacherDashboard = () => {
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState([]);
@@ -602,4 +601,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default TeacherDashboard;

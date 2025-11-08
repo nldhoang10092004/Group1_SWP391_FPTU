@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Security.Claims;
 
-namespace EMT_API.Controllers.Teacher
+namespace EMT_API.Controllers.TeacherSide
 {
     [ApiController]
     [Route("api/teacher/quiz")]
@@ -121,7 +121,8 @@ namespace EMT_API.Controllers.Teacher
                         Options = qs.Options.Select(o => new OptionDto
                         {
                             OptionID = o.OptionID,
-                            Content = o.Content
+                            Content = o.Content,
+                            IsCorrect = o.IsCorrect
                         }).ToList(),
                         Assets = assets
                             .Where(a => a.OwnerType == 2 && a.OwnerID == qs.QuestionID)
@@ -137,6 +138,38 @@ namespace EMT_API.Controllers.Teacher
                     }).ToList()
                 }).ToList();
             }
+            else
+            {
+                // ✅ Nếu quiz không có group, vẫn thêm 1 group "ảo" để chứa câu hỏi rời
+                dto.Groups.Add(new QuestionGroupDto
+                {
+                    GroupID = 0,
+                    Instruction = "Ungrouped questions",
+                    Questions = quiz.Questions.Select(q => new QuestionDto
+                    {
+                        QuestionID = q.QuestionID,
+                        Content = q.Content,
+                        QuestionType = q.QuestionType,
+                        Options = q.Options.Select(o => new OptionDto
+                        {
+                            OptionID = o.OptionID,
+                            Content = o.Content,
+                            IsCorrect = o.IsCorrect
+                        }).ToList(),
+                        Assets = assets
+                            .Where(a => a.OwnerType == 2 && a.OwnerID == q.QuestionID)
+                            .Select(a => new AssetDto
+                            {
+                                AssetID = a.AssetID,
+                                AssetType = a.AssetType,
+                                Url = a.Url,
+                                ContentText = a.ContentText,
+                                Caption = a.Caption,
+                                MimeType = a.MimeType
+                            }).ToList()
+                    }).ToList()
+                });
+            }
 
             return Ok(dto);
         }
@@ -145,7 +178,7 @@ namespace EMT_API.Controllers.Teacher
         // 🔹 3️⃣ Tạo quiz mới (teacher tạo trong course của mình)
         // ===========================================
         [HttpPost]
-        public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequest req)
+        public async Task<IActionResult> CreateQuiz([FromBody] TeacherCreateQuizRequest req)
         {
             if (!await EnsureTeacherOwnsCourse(req.CourseID))
                 return Forbid();

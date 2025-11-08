@@ -126,7 +126,20 @@ const CreateEditCourse = () => {
       console.error("❌ Lỗi khi lưu chương:", err);
       setError("Không thể lưu chương");
     }
-  };
+
+    setShowChapterModal(false);
+    setChapterName("");
+    setEditingChapter(null);
+
+    // 🔁 Gọi lại API để reload dữ liệu thật
+    await loadCourseData();
+
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    console.error("❌ Lỗi khi lưu chương:", err);
+    setError("Không thể lưu chương");
+  }
+};
 
   const handleDeleteChapter = async (chapterId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa chương này?")) return;
@@ -143,11 +156,11 @@ const CreateEditCourse = () => {
 
   // ✅ Cập nhật hàm lưu video với upload
   const handleSaveVideo = async () => {
-    try {
-      if (!videoName.trim()) {
-        alert("Vui lòng nhập tên video");
-        return;
-      }
+  try {
+    if (!videoName.trim()) {
+      alert("Vui lòng nhập tên video");
+      return;
+    }
 
       setIsUploading(true);
       let uploadedVideoURL = videoURL;
@@ -189,7 +202,19 @@ const CreateEditCourse = () => {
     } finally {
       setIsUploading(false);
     }
-  };
+
+    setShowVideoModal(false);
+    resetVideoForm();
+
+    // 🔁 Reload dữ liệu từ backend
+    await loadCourseData();
+
+    setTimeout(() => setSuccess(null), 3000);
+  } catch (err) {
+    console.error("❌ Lỗi khi lưu video:", err);
+    setError("Không thể lưu video");
+  }
+};
 
   const handleDeleteVideo = async (chapterId, videoId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa video này?")) return;

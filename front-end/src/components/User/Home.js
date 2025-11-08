@@ -5,6 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
 import { getCourses } from "../../middleware/courseAPI"; 
 import { checkMembership } from "../../middleware/membershipAPI";
+import { getAllQuizzes } from "../../middleware/QuizAPI";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrophy, faFire, faBookOpen, faHourglassHalf, faCheckCircle, faClock, faStar, faLock, faGraduationCap, faLayerGroup, faMicrophone, faHeadphones, faPencilAlt, faFileAlt, faComments } from '@fortawesome/free-solid-svg-icons';
 import Footer from "../Footer/footer";
@@ -21,6 +22,9 @@ const Home = () => {
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [activeTab, setActiveTab] = useState("baihoc");
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [practiceView, setPracticeView] = useState('main'); // 'main' or 'quizList'
+  const [quizzes, setQuizzes] = useState([]);
+  const [loadingQuizzes, setLoadingQuizzes] = useState(false);
 
   const emptyData = {
     user: {
@@ -402,7 +406,110 @@ const Home = () => {
         {/* Luyện tập Tab Content */}
         {activeTab === "luyentap" && (
           <div className="practice-section">
-            <h4 className="mb-4">Luyện tập kỹ năng</h4>
+            {practiceView === 'main' && (
+              <>
+                <h4 className="mb-4">Luyện tập kỹ năng</h4>
+                <Row>
+                  {[
+                    { title: "Flashcards", icon: faLayerGroup, color: '#4A90E2', available: true, path: '/flashcard' },
+                    { title: "Luyện nói", icon: faMicrophone, color: '#50E3C2', available: hasMembership, path: '/speakingpractice' },
+                    { title: "Luyện nghe", icon: faHeadphones, color: '#9013FE', available: hasMembership, path: '/listeningpractice' },
+                    { title: "Luyện viết", icon: faPencilAlt, color: '#F5A623', available: true, path: '/writingpractice' },
+                    { title: "Ngữ pháp", icon: faFileAlt, color: '#D0021B', available: true, path: '/grammar' },
+                    { title: "Quizz", icon: faComments, color: '#4A90E2', available: hasMembership, action: 'showQuizzes' }
+                  ].map((skill, index) => (
+                    <Col md={4} key={index} className="mb-4">
+                      <div 
+                        className={`skill-card ${!skill.available ? 'skill-locked' : ''}`}
+                        onClick={async () => {
+                          if (skill.available) {
+                            if (skill.action === 'showQuizzes') {
+                              setLoadingQuizzes(true);
+                              try {
+                                const quizData = await getAllQuizzes();
+                                setQuizzes(quizData || []);
+                                setPracticeView('quizList');
+                              } catch (error) {
+                                console.error("Failed to fetch quizzes:", error);
+                              } finally {
+                                setLoadingQuizzes(false);
+                              }
+                            } else {
+                              navigate(skill.path);
+                            }
+                          } else {
+                            navigate("/membership");
+                          }
+                        }}
+                      >
+                        <div className="skill-icon-wrapper" style={{ backgroundColor: `${skill.color}20`}}>
+                          <FontAwesomeIcon icon={skill.icon} className="skill-icon" style={{ color: skill.color }} />
+                        </div>
+                        <h6 className="skill-title">{skill.title}</h6>
+                        {!skill.available && (
+                          <div className="premium-lock">
+                            <FontAwesomeIcon icon={faLock} />
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              </>
+            )}
+
+            {practiceView === 'quizList' && (
+              <div className="quiz-list-section">
+                <div className="d-flex align-items-center mb-4">
+                  <Button variant="light" onClick={() => setPracticeView('main')} className="me-3">
+                    &larr; Quay lại
+                  </Button>
+                  <h4>Danh sách Quizz</h4>
+                </div>
+                {loadingQuizzes ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-3">Đang tải danh sách quizz...</p>
+                  </div>
+                ) : quizzes.length > 0 ? (
+                  <Row>
+                    {quizzes.map(quiz => (
+                      <Col md={6} lg={4} key={quiz.id} className="mb-4">
+                        <Card 
+                          className="quiz-card h-100"
+                          onClick={() => navigate(`/quiz/start/${quiz.id}`)}
+                        >
+                          <Card.Body>
+                            <Card.Title>{quiz.title}</Card.Title>
+                            <Card.Text className="text-muted">
+                              {quiz.description}
+                            </Card.Text>
+                            <div className="d-flex justify-content-between align-items-center text-muted small">
+                              <span>{quiz.questionCount} câu hỏi</span>
+                              <span>{quiz.duration} phút</span>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                ) : (
+                  <div className="text-center py-5">
+                    <FontAwesomeIcon icon={faFileAlt} size="3x" className="mb-3 text-muted" />
+                    <p className="text-muted">Không có quizz nào để hiển thị.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Thống kê Tab Content */}
+        {activeTab === "thongke" && (
+          <div className="new-stats-section">
+            <h4 className="mb-4">Tổng quan thành tích</h4>
             <Row>
               {[
                 { title: "Flashcards", icon: faLayerGroup, color: '#4A90E2', available: true, path: '/flashcards' },
@@ -436,8 +543,6 @@ const Home = () => {
                 </Col>
               ))}
             </Row>
-          </div>
-        )}
 
         {/* Thống kê Tab Content */}
         {activeTab === "thongke" && (
