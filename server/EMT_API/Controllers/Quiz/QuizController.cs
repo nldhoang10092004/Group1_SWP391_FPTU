@@ -59,6 +59,27 @@ namespace EMT_API.Controllers.Quiz
             return Ok(quizzes);
         }
 
+        [HttpGet("system-quiz")]
+        public async Task<IActionResult> GetGlobalQuiz()
+        {
+            int userId = GetUserId();
+            if (!await CheckMembership(userId))
+                return StatusCode(403, new { message = "Your membership has expired or is inactive." });
+
+            var quizzes = await _db.Quizzes
+                .Where(q => q.CourseID == null)
+                .Select(q => new QuizDto
+                {
+                    QuizID = q.QuizID,
+                    Title = q.Title,
+                    Description = q.Description,
+                    QuizType = q.QuizType
+                })
+                .ToListAsync();
+
+            return Ok(quizzes);
+        }
+
         // ===========================================
         // 🔹 2️⃣ Lấy chi tiết quiz (hybrid mode)
         // ===========================================
