@@ -8,14 +8,16 @@ frontend/.vite/
 server/EMT_API/bin/
 server/EMT_API/obj/
 server/EMT_API/wwwroot/avatars/
-
+server/EMT_API.Tests/bin/
+server/EMT_API.Tests/obj/
 # Common
 *.log
 *.user
 *.DS_Store
 .vscode/
 .idea/
-
+bin/
+obj/
 # Visual Studio cache
 .vs/
 *.vscode/
@@ -23,4 +25,3 @@ server/EMT_API/wwwroot/avatars/
 *.suo
 *.db
 *.opendb
-node_modules

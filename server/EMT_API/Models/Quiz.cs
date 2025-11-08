@@ -13,7 +13,7 @@ public partial class Quiz
     [Key]
     public int QuizID { get; set; }
 
-    public int? CourseID { get; set; } = null;
+    public int? CourseID { get; set; }
 
     [StringLength(200)]
     public string Title { get; set; } = null!;
