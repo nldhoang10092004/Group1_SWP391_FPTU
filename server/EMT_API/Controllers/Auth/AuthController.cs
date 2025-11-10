@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-
+using Google.Apis.Auth;
 namespace EMT_API.Controllers.Auth;
 
 [ApiController]
@@ -198,6 +198,11 @@ public class AuthController : ControllerBase
         if (!PasswordHasher.Verify(req.Password, user.Hashpass))
             return Unauthorized("Mật khẩu không đúng.");
 
+        // ✅ Kiểm tra mật khẩu
+        if (!user.Status.Equals("ACTIVE"))
+            return Unauthorized("Tài khoản đã bị khoá, vui lòng liên hệ hỗ trợ để được biết chi tiết.");
+
+
         // ✅ Tạo access/refresh token
         var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
         var (rt, exp) = _tokens.CreateRefreshToken();
@@ -210,6 +215,71 @@ public class AuthController : ControllerBase
         SetRefreshCookie(rt, exp);
 
         // ✅ Redirect theo role
+        string redirectUrl = user.Role switch
+        {
+            "ADMIN" => "http://localhost:3000/admin/dashboard",
+            "TEACHER" => "http://localhost:3000/teacher/dashboard",
+            _ => "http://localhost:3000/home"
+        };
+
+        return Ok(new
+        {
+            AccountID = user.AccountID,
+            AccessToken = access,
+            ExpiresIn = int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60,
+            Role = user.Role,
+            RedirectUrl = redirectUrl
+        });
+    }
+
+    [HttpPost("login/google")]
+    public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginDto dto)
+    {
+        if (string.IsNullOrEmpty(dto.IdToken))
+            return BadRequest("Missing ID token");
+
+        // 1️ Xác minh với Google
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken);
+        }
+        catch
+        {
+            return Unauthorized("Invalid Google token");
+        }
+
+        // 2️ Tìm hoặc tạo user
+        var user = await _db.Accounts.FirstOrDefaultAsync(x => x.GoogleSub == payload.Subject);
+        if (user == null)
+        {
+            user = new Account
+            {
+                Email = payload.Email ?? $"{payload.Subject}@googleuser.com",
+                Username = (payload.Email ?? payload.Subject).Split('@')[0],
+
+                GoogleSub = payload.Subject,
+                Role = "STUDENT"
+            };
+            _db.Accounts.Add(user);
+            await _db.SaveChangesAsync();
+
+            _db.UserDetails.Add(new UserDetail { AccountID = user.AccountID });
+            await _db.SaveChangesAsync();
+        }
+
+        // Tạo access/refresh token
+        var access = _tokens.CreateAccessToken(user, user.RefreshTokenVersion);
+
+        var (rt, exp) = _tokens.CreateRefreshToken();
+
+        user.RefreshTokenHash = _tokens.HashRefreshToken(rt);
+        user.RefreshTokenExpiresAt = exp.UtcDateTime;
+        user.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        SetRefreshCookie(rt, exp);
+
         string redirectUrl = user.Role switch
         {
             "ADMIN" => "http://localhost:3000/admin/dashboard",
