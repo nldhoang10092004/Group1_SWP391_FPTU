@@ -9,7 +9,6 @@ import ResetPassword from "./components/Password/ResetPassword";
 import Profile from "./components/Profile/Profile";
 import Dashboard from "./components/Teacher/Dashboard";
 import Guide from "./components/Teacher/Guide";
-import CreateLesson from "./components/Teacher/CreateLesson";
 import WritingPractice from "./components/User/WritingPractice";
 import EditLesson from "./components/Teacher/EditLesson";
 import Membership from "./components/User/Membership";
@@ -29,6 +28,8 @@ import CreateEditFlashcardSet from './components/Teacher/CreateEditFlashcardSet'
 import FlashcardItem from './components/Teacher/FlashcardItem';
 import CoursesDetail from './components/Teacher/CourseDetail';
 import QuizDetail from './components/Teacher/QuizDetail';
+import ExamDetail from './components/Admin/ExamDetail';
+import QuizPublish from "./components/User/QuizPublish";
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -56,7 +57,6 @@ root.render(
         <Route path="reset-password" element={<ResetPassword />} />
         <Route path="/teacher/dashboard" element={<Dashboard />} />
         <Route path="guide" element={<Guide />} />
-        <Route path="createlesson" element={<CreateLesson />} />
         <Route path="editlesson" element={<EditLesson />} />
         <Route path="membership" element={<Membership />} />
         <Route path="/payment/:id" element={<PaymentForm />} />
@@ -77,7 +77,8 @@ root.render(
         <Route path="speakingpractice" element={<SpeakingPractice />} />
         <Route path="/teacher/coursedetail/:courseId" element={<CoursesDetail />} />
         <Route path="/teacher/quizdetail/:quizId" element={<QuizDetail />} />
-
+        <Route path="/admin/examdetail/:quizId" element={<ExamDetail />} />
+        <Route path="/quiz/publish" element={<QuizPublish />} />
         <Route path="profile" element={
           <ProtectedRoute>
             <Profile />

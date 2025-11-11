@@ -17,12 +17,14 @@ import {
   getTeacherCourses,
   createTeacherCourse,
   deleteTeacherCourse,
+  updateTeacherCourse,
 } from "../../middleware/teacher/courseTeacherAPI";
 import {
   getFlashcardSetsByCourse,
   deleteFlashcardSet,
 } from "../../middleware/teacher/flashcardTeacherAPI";
 import { getQuizzesByCourse, createQuiz } from "../../middleware/teacher/quizTeacherAPI";
+import { TeacherFeedbackView } from "./TeacherFeedbackView";
 import { jwtDecode } from "jwt-decode";
 
 const TeacherDashboard = () => {
@@ -358,16 +360,7 @@ const TeacherDashboard = () => {
         );
 
       case "danhgia":
-        return (
-          <div className="management-card">
-            <div className="management-card-header">
-              <h2 className="card-title">Đánh giá</h2>
-              <p className="card-description">Tính năng đang được phát triển.</p>
-            </div>
-          </div>
-        );
-      default:
-        return null;
+        return <TeacherFeedbackView />;
     }
   };
 

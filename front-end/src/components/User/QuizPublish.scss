@@ -1,0 +1,53 @@
+.quiz-publish-page {
+  min-height: 80vh;
+
+  .hover-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+
+    &:hover {
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+      border-color: #007bff;
+    }
+  }
+
+  .quiz-card {
+    border-radius: 12px;
+    overflow: hidden;
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .card-text {
+      font-size: 0.9rem;
+      min-height: 60px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+
+    .btn-primary {
+      border-radius: 8px;
+      font-weight: 500;
+      padding: 10px;
+      
+      &:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+      }
+    }
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    .quiz-card {
+      .card-text {
+        min-height: auto;
+      }
+    }
+  }
+}

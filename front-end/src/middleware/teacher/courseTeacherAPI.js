@@ -159,3 +159,29 @@ export const deleteVideo = async (videoId) => {
     throw new Error(err.response?.data?.message || "Không thể xóa video");
   }
 };
+
+// Thêm vào courseTeacherAPI.js
+
+/**
+ * ✅ Update video
+ */
+export const updateVideo = async (videoId, data) => {
+  try {
+    console.log(`🔄 Updating video ${videoId}...`, data);
+    const res = await axios.put(
+      `${API_BASE}/teacher/video/${videoId}`, 
+      data, 
+      { headers: getAuthHeader() }
+    );
+    console.log("✅ Video updated:", res.data);
+    return res.data;
+  } catch (error) {
+    console.error("❌ Lỗi update video:", error.response?.data || error);
+    throw new Error(
+      error.response?.data?.message || 
+      error.response?.data?.Message || 
+      "Không thể cập nhật video"
+    );
+  }
+};
+

@@ -61,7 +61,7 @@ const Profile = () => {
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
   const token = localStorage.getItem("accessToken");
-  const backPath = "/home";
+  const backPath = (-1);
 
   // ---------- TOAST FUNCTION ----------
   const showToast = (message, type = "info") => {
