@@ -134,6 +134,8 @@ namespace EMT_API
             //AI Exam Services
             builder.Services.AddScoped<AIWritingService>();
             builder.Services.AddScoped<AISpeakingService>();
+            builder.Services.AddScoped<AIQuizService>();
+
 
             //Google Drive Service
             builder.Services.AddSingleton<GoogleDriveService>();
