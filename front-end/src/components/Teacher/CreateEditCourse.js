@@ -12,7 +12,8 @@ import {
   deleteVideo,
 } from "../../middleware/teacher/courseTeacherAPI";
 import { uploadAsset } from "../../middleware/teacher/uploadAPI"; // ✅ Import upload API
-
+// Thêm vào courseTeacherAPI.js
+import { updateVideo } from "../../middleware/teacher/courseTeacherAPI";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./EditCourse.scss";
 
@@ -127,18 +128,7 @@ const CreateEditCourse = () => {
       setError("Không thể lưu chương");
     }
 
-    setShowChapterModal(false);
-    setChapterName("");
-    setEditingChapter(null);
-
-    // 🔁 Gọi lại API để reload dữ liệu thật
-    await loadCourseData();
-
-    setTimeout(() => setSuccess(null), 3000);
-  } catch (err) {
-    console.error("❌ Lỗi khi lưu chương:", err);
-    setError("Không thể lưu chương");
-  }
+    
 };
 
   const handleDeleteChapter = async (chapterId) => {
@@ -155,65 +145,72 @@ const CreateEditCourse = () => {
   };
 
   // ✅ Cập nhật hàm lưu video với upload
-  const handleSaveVideo = async () => {
+  // ✅ Sửa hàm handleSaveVideo trong CreateEditCourse.js
+const handleSaveVideo = async () => {
   try {
     if (!videoName.trim()) {
       alert("Vui lòng nhập tên video");
       return;
     }
 
-      setIsUploading(true);
-      let uploadedVideoURL = videoURL;
+    setIsUploading(true);
+    let uploadedVideoURL = videoURL;
 
-      // ✅ Nếu có file mới được chọn, upload lên server
-      if (videoFile) {
-        try {
-          const uploadResult = await uploadAsset(videoFile, "video");
-          uploadedVideoURL = uploadResult.url; // Backend trả về { url: "https://..." }
-        } catch (uploadError) {
-          console.error("❌ Lỗi upload video:", uploadError);
-          setError("Không thể upload video. Vui lòng thử lại.");
-          setIsUploading(false);
-          return;
-        }
+    // ✅ Upload file nếu có
+    if (videoFile) {
+      try {
+        const uploadResult = await uploadAsset(videoFile, "video");
+        uploadedVideoURL = uploadResult.url;
+      } catch (uploadError) {
+        console.error("❌ Lỗi upload video:", uploadError);
+        setError("Không thể upload video. Vui lòng thử lại.");
+        setIsUploading(false);
+        return;
       }
+    }
 
-      const payload = {
-        videoName,
-        videoURL: uploadedVideoURL || null,
-        isPreview,
-      };
+    const payload = {
+      videoName,
+      videoURL: uploadedVideoURL || null,
+      isPreview,
+    };
 
-      if (editingVideo) {
-        await createVideo(editingVideo.videoID, payload);
-        setSuccess("Cập nhật video thành công!");
-      } else {
-        await createVideo(selectedChapterId, payload);
-        setSuccess("Tạo video mới thành công!");
-      }
-
-      setShowVideoModal(false);
-      resetVideoForm();
-      await loadCourseData();
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error("❌ Lỗi khi lưu video:", err);
-      setError("Không thể lưu video");
-    } finally {
-      setIsUploading(false);
+    // ✅ SỬA LẠI LOGIC NÀY
+    if (editingVideo) {
+      // ❌ KHÔNG GỌI createVideo với videoID
+      // await createVideo(editingVideo.videoID, payload); 
+      
+      // ✅ GỌI updateVideo thay vì createVideo
+      await updateVideo(editingVideo.videoID, payload);
+      setSuccess("Cập nhật video thành công!");
+    } else {
+      // ✅ Tạo mới video - GỌI với chapterId
+      await createVideo(selectedChapterId, payload);
+      setSuccess("Tạo video mới thành công!");
     }
 
     setShowVideoModal(false);
     resetVideoForm();
-
-    // 🔁 Reload dữ liệu từ backend
     await loadCourseData();
-
     setTimeout(() => setSuccess(null), 3000);
   } catch (err) {
     console.error("❌ Lỗi khi lưu video:", err);
-    setError("Không thể lưu video");
+    
+    // ✅ Hiển thị lỗi chi tiết hơn
+    if (err.response?.status === 403) {
+      setError("Không có quyền thực hiện. Vui lòng đăng nhập lại.");
+    } else if (err.response?.status === 401) {
+      setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+      // Tùy chọn: Redirect về trang login
+      // navigate('/login');
+    } else {
+      setError(err.message || "Không thể lưu video");
+    }
+  } finally {
+    setIsUploading(false);
   }
+
+   
 };
 
   const handleDeleteVideo = async (chapterId, videoId) => {

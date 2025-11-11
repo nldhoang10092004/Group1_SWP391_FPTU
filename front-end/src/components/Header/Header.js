@@ -5,10 +5,10 @@ import Navbar from "react-bootstrap/Navbar";
 import { Modal, Button, Form, Dropdown, Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { loginApi, registerApi, sendOtpApi } from "../../middleware/auth";
-import "./Header.scss"; 
 import api from "../../middleware/axiosInstance";
+import "./Header.scss"; 
 
-// 🔑 Hàm decode JWT để lấy username
+// 🔑 Hàm decode JWT để lấy thông tin user
 const decodeJWT = (token) => {
   try {
     const base64Url = token.split('.')[1];
@@ -63,58 +63,215 @@ const Header = () => {
       : null;
   });
 
-  const [avatarUrl, setAvatarUrl] = useState(
-    localStorage.getItem("avatarUrl") || "/default-avatar.png"
-  );
-  
-  const [username, setUsername] = useState(() => {
-    const savedUserName = localStorage.getItem("userName");
-    if (savedUserName) return savedUserName;
-    
-    const savedUser = localStorage.getItem("user");
-    if (savedUser && savedUser !== "undefined" && savedUser !== "null") {
-      const parsedUser = JSON.parse(savedUser);
-      return parsedUser.username || parsedUser.email?.split("@")[0] || "";
-    }
-    return "";
-  });
+  const [avatarUrl, setAvatarUrl] = useState("/default-avatar.png");
+  const [username, setUsername] = useState("");
 
-  // 🟢 Hàm hiển thị Toast
+  // 🟢 Google Identity Services
+  const [gisReady, setGisReady] = useState(false);
+  const GOOGLE_CLIENT_ID =
+    process.env.REACT_APP_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+
+  // ✅ Hàm lấy thông tin user profile (bao gồm avatar)
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const response = await api.get("/api/account/profile", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const profile = response.data;
+      
+      // ✅ Lấy avatar URL từ backend
+      if (profile.avatarUrl || profile.AvatarUrl) {
+        const avatar = profile.avatarUrl || profile.AvatarUrl;
+        setAvatarUrl(avatar);
+        localStorage.setItem("avatarUrl", avatar);
+      }
+
+      // ✅ Lấy username
+      if (profile.username || profile.Username) {
+        const name = profile.username || profile.Username;
+        setUsername(name);
+        localStorage.setItem("userName", name);
+      }
+
+      console.log("✅ User profile loaded:", profile);
+    } catch (error) {
+      console.error("❌ Lỗi tải profile:", error);
+      // Nếu API trả về 401/403, có thể token đã hết hạn
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        handleLogout();
+      }
+    }
+  };
+
+  // ✅ Load user data khi component mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      const savedUser = localStorage.getItem("user");
+      const savedAvatar = localStorage.getItem("avatarUrl");
+      const savedUserName = localStorage.getItem("userName");
+
+      if (savedUser && savedUser !== "undefined" && savedUser !== "null") {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+
+        // Lấy username từ localStorage hoặc token
+        const nameToUse = savedUserName || parsedUser.username || parsedUser.email?.split("@")[0] || "";
+        setUsername(nameToUse);
+
+        // Lấy avatar từ localStorage hoặc fetch từ API
+        if (savedAvatar && savedAvatar !== "/default-avatar.png") {
+          setAvatarUrl(savedAvatar);
+        } else {
+          // ✅ Fetch avatar từ backend nếu chưa có
+          await fetchUserProfile();
+        }
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  // ✅ Listen cho sự kiện cập nhật avatar từ component khác (Profile page)
+  useEffect(() => {
+    const handleAvatarUpdate = () => {
+      const savedAvatar = localStorage.getItem("avatarUrl");
+      if (savedAvatar) {
+        setAvatarUrl(savedAvatar);
+      }
+    };
+
+    const handleStorageChange = () => {
+      const savedAvatar = localStorage.getItem("avatarUrl");
+      const savedUserName = localStorage.getItem("userName");
+      
+      if (savedAvatar) setAvatarUrl(savedAvatar);
+      if (savedUserName) setUsername(savedUserName);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("avatarUpdated", handleAvatarUpdate);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("avatarUpdated", handleAvatarUpdate);
+    };
+  }, []);
+
+  // nạp script GIS 1 lần
+  useEffect(() => {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      setGisReady(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setGisReady(true);
+    script.onerror = () => {
+      setGisReady(false);
+      console.error("❌ Không tải được Google Identity Services script");
+    };
+    document.body.appendChild(script);
+  }, []);
+
+  const onGoogleCredential = async (response) => {
+    try {
+      const idToken = response?.credential;
+      if (!idToken) {
+        showToastNotification("Không nhận được Google ID token.", "danger");
+        return;
+      }
+
+      const res = await api.post("/api/auth/login/google", { idToken });
+      const { accountID, accessToken, expiresIn, role, redirectUrl } = res.data || {};
+
+      const decodedToken = decodeJWT(accessToken);
+      const usernameFromToken =
+        decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+      const roleFromToken =
+        decodedToken?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
+      const loggedUser = {
+        accountID,
+        accessToken,
+        expiresIn,
+        role: role || roleFromToken,
+        username: usernameFromToken || "google_user",
+        email: decodedToken?.email || "",
+      };
+
+      localStorage.setItem("user", JSON.stringify(loggedUser));
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("userName", loggedUser.username);
+
+      setUser(loggedUser);
+      setUsername(loggedUser.username);
+
+      // ✅ Fetch avatar sau khi login
+      await fetchUserProfile();
+
+      showToastNotification("🎉 Đăng nhập Google thành công!", "success");
+
+      setTimeout(() => {
+        setShowAuthModal(false);
+        const targetUrl = redirectUrl || "/home";
+        navigate(targetUrl);
+        window.location.href = targetUrl;
+      }, 800);
+    } catch (err) {
+      console.error("❌ Google login error:", err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Đăng nhập Google thất bại!";
+      showToastNotification(`❌ ${errorMsg}`, "danger");
+    }
+  };
+
+  const handleGoogleLoginClick = () => {
+    if (!gisReady) {
+      showToastNotification("Google chưa sẵn sàng. Vui lòng thử lại sau.", "warning");
+      return;
+    }
+    if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID") {
+      showToastNotification("Thiếu GOOGLE_CLIENT_ID. Hãy cấu hình REACT_APP_GOOGLE_CLIENT_ID.", "warning");
+      return;
+    }
+    try {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: onGoogleCredential,
+        ux_mode: "popup",
+        auto_select: false,
+      });
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed()) {
+          window.google.accounts.id.renderButton(
+            document.getElementById("google-btn-fallback"),
+            { theme: "outline", size: "large", width: 320 }
+          );
+          const fb = document.getElementById("google-btn-fallback-wrap");
+          if (fb) fb.style.display = "block";
+        }
+      });
+    } catch (e) {
+      console.error("❌ Lỗi khởi tạo Google:", e);
+      showToastNotification("Không khởi tạo được Google Login.", "danger");
+    }
+  };
+
   const showToastNotification = (message, type = "danger") => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
   };
 
-  // 🟢 Đồng bộ dữ liệu từ localStorage
-  useEffect(() => {
-    const syncUserData = () => {
-      const savedAvatar = localStorage.getItem("avatarUrl");
-      const savedUserName = localStorage.getItem("userName");
-      const savedUser = localStorage.getItem("user");
-      
-      if (savedAvatar) setAvatarUrl(savedAvatar);
-      
-      if (savedUserName) {
-        setUsername(savedUserName);
-      } else if (savedUser && savedUser !== "undefined") {
-        const parsedUser = JSON.parse(savedUser);
-        setUsername(parsedUser.username || parsedUser.email?.split("@")[0] || "");
-      }
-    };
-
-    syncUserData();
-    
-    window.addEventListener("storage", syncUserData);
-    window.addEventListener("avatarUpdated", syncUserData);
-
-    return () => {
-      window.removeEventListener("storage", syncUserData);
-      window.removeEventListener("avatarUpdated", syncUserData);
-    };
-  }, []);
-
-  // 🟢 Reset form
   const resetLoginForm = () => {
     setEmailOrUsername("");
     setPassword("");
@@ -134,7 +291,6 @@ const Header = () => {
     setOtpError("");
   };
 
-  // 🟢 Đăng nhập - ✅ FIX: Decode JWT để lấy username
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     
@@ -142,25 +298,13 @@ const Header = () => {
     setLoginErrorMessage("");
     
     try {
-      console.log("🔐 Đang đăng nhập với:", { emailOrUsername, password: "***" });
-      
       const response = await loginApi(emailOrUsername, password);
-      
-      console.log("✅ Response từ API:", response.data);
-      
       const { accountID, accessToken, expiresIn, role, redirectUrl } = response.data;
 
-      // ✅ Decode JWT để lấy username
       const decodedToken = decodeJWT(accessToken);
-      console.log("🔓 Decoded JWT:", decodedToken);
-      
-      // Lấy username từ JWT claim
       const usernameFromToken = decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
       const roleFromToken = decodedToken?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-      
-      console.log("✅ Username từ JWT:", usernameFromToken);
-      console.log("✅ Role từ JWT:", roleFromToken);
-      
+
       const loggedUser = { 
         accountID, 
         accessToken, 
@@ -176,35 +320,31 @@ const Header = () => {
 
       setUser(loggedUser);
       setUsername(usernameFromToken || emailOrUsername);
+
+      // ✅ Fetch avatar sau khi login
+      await fetchUserProfile();
+
       setLoginMessage("Đăng nhập thành công!");
       showToastNotification("🎉 Đăng nhập thành công! Chào mừng bạn quay lại.", "success");
 
       setTimeout(() => {
         setShowAuthModal(false);
         resetLoginForm();
-        
         const targetUrl = redirectUrl || "/home";
         navigate(targetUrl);
         window.location.href = targetUrl;
-      }, 1500);
+      }, 1000);
 
     } catch (err) {
-      console.error("❌ Lỗi đăng nhập:", err);
-      console.error("❌ Response data:", err.response?.data);
-      console.error("❌ Status:", err.response?.status);
-      
       const errorMsg = err.response?.data?.message || 
                       err.response?.data?.error ||
-                      err.response?.data ||
                       err.message ||
                       "Đăng nhập thất bại! Vui lòng kiểm tra lại thông tin.";
-      
       setLoginErrorMessage(errorMsg);
       showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
-  // 🟢 Đăng ký
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
 
@@ -226,12 +366,6 @@ const Header = () => {
     setRegisterErrorMessage("");
 
     try {
-      console.log("📝 Đang đăng ký với:", { 
-        email: registerEmail, 
-        username: registerName,
-        otp: registerOtp 
-      });
-
       const response = await registerApi({
         email: registerEmail,
         username: registerName,
@@ -240,11 +374,8 @@ const Header = () => {
         otp: registerOtp,
       });
 
-      console.log("✅ Đăng ký thành công:", response.data);
-
       const { accountID, accessToken, expiresIn } = response.data;
 
-      // Decode JWT để lấy username từ token
       const decodedToken = decodeJWT(accessToken);
       const usernameFromToken = decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
 
@@ -262,6 +393,10 @@ const Header = () => {
 
       setUser(newUser);
       setUsername(usernameFromToken || registerName);
+
+      // ✅ Fetch avatar sau khi register
+      await fetchUserProfile();
+
       setRegisterMessage("Đăng ký thành công!");
       showToastNotification("🎉 Đăng ký thành công! Chào mừng bạn đến với EnglishMaster.", "success");
 
@@ -270,23 +405,17 @@ const Header = () => {
         resetRegisterForm();
         navigate("/home");
         window.location.reload();
-      }, 1500);
+      }, 1000);
     } catch (err) {
-      console.error("❌ Lỗi đăng ký:", err);
-      console.error("❌ Response data:", err.response?.data);
-      
       const errorMsg = err.response?.data?.message || 
                       err.response?.data?.error ||
-                      err.response?.data ||
                       err.message ||
                       "Đăng ký thất bại!";
-      
       setRegisterErrorMessage(errorMsg);
       showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
-  // 🟢 Gửi OTP
   const handleSendOtp = async () => {
     if (!registerEmail) {
       const msg = "Vui lòng nhập email trước khi gửi OTP!";
@@ -298,28 +427,20 @@ const Header = () => {
     try {
       setOtpMessage("Đang gửi OTP...");
       setOtpError("");
-      
-      console.log("📧 Đang gửi OTP đến:", registerEmail);
-      
       await sendOtpApi(registerEmail);
-      
       const successMsg = "✅ OTP đã được gửi đến email của bạn!";
       setOtpMessage(successMsg);
       showToastNotification(successMsg, "success");
     } catch (err) {
-      console.error("❌ Lỗi gửi OTP:", err);
-      
       const errorMsg = err.response?.data?.message || 
                       err.response?.data?.error ||
                       "Gửi OTP thất bại!";
-      
       setOtpError(errorMsg);
       setOtpMessage("");
       showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
-  // 🟢 Đăng xuất
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
@@ -332,7 +453,7 @@ const Header = () => {
     setTimeout(() => {
       navigate("/");
       window.location.reload();
-    }, 1000);
+    }, 800);
   };
 
   return (
@@ -407,7 +528,16 @@ const Header = () => {
                       src={avatarUrl}
                       alt="avatar"
                       className="user-avatar"
-                      onError={(e) => (e.target.src = "/default-avatar.png")}
+                      onError={(e) => {
+                        console.log("❌ Avatar load failed, using default");
+                        e.target.src = "/default-avatar.png";
+                      }}
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        objectFit: "cover"
+                      }}
                     />
                     <span className="user-name ms-2">
                       {username || user.username || "Người dùng"}
@@ -501,9 +631,30 @@ const Header = () => {
                 </div>
               </Form.Group>
 
-              <Button type="submit" className="w-100" variant="dark">
+              <Button type="submit" className="w-100 mb-2" variant="dark">
                 Đăng nhập
               </Button>
+
+              <Button
+                type="button"
+                className="w-100 mb-2"
+                variant="outline-secondary"
+                onClick={handleGoogleLoginClick}
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <svg width="18" height="18" viewBox="0 0 48 48">
+                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303C33.602,32.91,29.197,36,24,36c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.949,3.051l5.657-5.657C34.676,6.053,29.63,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.297,16.702,18.834,14,24,14c3.059,0,5.842,1.154,7.949,3.051l5.657-5.657 C34.676,6.053,29.63,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                    <path fill="#4CAF50" d="M24,44c5.138,0,9.801-1.969,13.305-5.181l-6.147-5.195C29.127,35.091,26.715,36,24,36 c-5.176,0-9.573-3.072-11.292-7.435l-6.53,5.034C9.488,39.556,16.227,44,24,44z"/>
+                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-1.33,3.08-3.879,5.456-7.003,6.541 c0.001-0.001,0.002-0.001,0.003-0.002l6.147,5.195C33.985,40.184,44,36,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                  </svg>
+                  Đăng nhập với Google
+                </span>
+              </Button>
+
+              <div id="google-btn-fallback-wrap" style={{ display: "none" }} className="d-grid">
+                <div id="google-btn-fallback" className="w-100" />
+              </div>
 
               <div className="text-center mt-2">
                 <Button 
