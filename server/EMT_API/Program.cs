@@ -1,4 +1,6 @@
-﻿using EMT_API.Data;
+﻿using EMT_API.DAOs.FlashcardDAO;
+using EMT_API.DAOs.UserDAO;
+using EMT_API.Data;
 using EMT_API.Middlewares;
 using EMT_API.Security; // để dùng TokenService
 using EMT_API.Services;
@@ -120,6 +122,12 @@ namespace EMT_API
 
             builder.Services.AddAuthorization();
 
+            // ===== DAO Services =====
+            builder.Services.AddScoped<IUserDAO, UserDAO>();
+            builder.Services.AddScoped<IFlashcardDAO, FlashcardDAO>();
+
+
+            // ===== OTP Service =====
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<IOtpService, OtpService>();
 
