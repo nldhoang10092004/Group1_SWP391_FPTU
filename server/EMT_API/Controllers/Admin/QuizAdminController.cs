@@ -184,6 +184,21 @@ namespace EMT_API.Controllers.AdminSide
                 if (quiz == null)
                     return NotFound(new { message = "Quiz not found or not global" });
 
+                var attemptIds = await _db.Attempts
+                    .Where(a => a.QuizID == quizId)
+                    .Select(a => a.AttemptID)
+                    .ToListAsync();
+                if (attemptIds.Any())
+                {
+                    var answers = _db.Answers.Where(a => attemptIds.Contains(a.AttemptID));
+                    if (answers.Any()) _db.Answers.RemoveRange(answers);
+
+                    var attempts = _db.Attempts.Where(a => attemptIds.Contains(a.AttemptID));
+                    if (attempts.Any()) _db.Attempts.RemoveRange(attempts);
+                }
+
+
+
                 var gIds = quiz.QuestionGroups.Select(g => g.GroupID).ToList();
                 var qIds = quiz.QuestionGroups.SelectMany(g => g.Questions.Select(q => q.QuestionID)).ToList();
                 var flatQIds = await _db.Questions
