@@ -1,4 +1,5 @@
-﻿using EMT_API.Data;
+﻿using EMT_API.DAOs.CourseDAO;
+using EMT_API.DTOs.Public;
 using EMT_API.DTOs.TeacherCourse;
 using EMT_API.Models;
 using EMT_API.Services;
@@ -14,20 +15,19 @@ namespace EMT_API.Controllers.TeacherSide
     [Authorize(Roles = "TEACHER")]
     public class TeacherCourseController : ControllerBase
     {
-        private readonly EMTDbContext _db;
+        private readonly ICourseDAO _dao;
         private readonly CloudflareService _r2;
+        private readonly EMT_API.Data.EMTDbContext _db;
 
-        public TeacherCourseController(EMTDbContext db, CloudflareService r2)
+        public TeacherCourseController(ICourseDAO dao, CloudflareService r2, EMT_API.Data.EMTDbContext db)
         {
-            _db = db;
+            _dao = dao;
             _r2 = r2;
+            _db = db;
         }
 
         private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // ===================================================
-        // 🔹 Helper methods
-        // ===================================================
         private async Task<bool> EnsureTeacherOwnsCourse(int courseId)
         {
             var uid = GetUserId();
@@ -38,102 +38,110 @@ namespace EMT_API.Controllers.TeacherSide
         private async Task<bool> EnsureTeacherOwnsChapter(int chapterId)
         {
             var uid = GetUserId();
-            var chapter = await _db.CourseChapters
-                .Include(c => c.Course)
-                .FirstOrDefaultAsync(c => c.ChapterID == chapterId);
+            var chapter = await _db.CourseChapters.Include(c => c.Course).FirstOrDefaultAsync(c => c.ChapterID == chapterId);
             return chapter != null && chapter.Course.TeacherID == uid;
         }
 
         private async Task<bool> EnsureTeacherOwnsVideo(int videoId)
         {
             var uid = GetUserId();
-            var video = await _db.CourseVideos
-                .Include(v => v.Course)
-                .FirstOrDefaultAsync(v => v.VideoID == videoId);
+            var video = await _db.CourseVideos.Include(v => v.Course).FirstOrDefaultAsync(v => v.VideoID == videoId);
             return video != null && video.Course.TeacherID == uid;
         }
 
-        // ===================================================
-        // 🔹 1️⃣ Lấy danh sách course thuộc teacher hiện tại
-        // ===================================================
+        // =============================
+        // Lấy danh sách course của GV
+        // =============================
         [HttpGet]
         public async Task<IActionResult> GetMyCourses()
         {
             var uid = GetUserId();
-            var courses = await _db.Courses
-                .Where(c => c.TeacherID == uid)
-                .OrderBy(c => c.CourseLevel)
-                .Select(c => new CourseSummaryDto
-                {
-                    CourseID = c.CourseID,
-                    CourseName = c.CourseName,
-                    Description = c.Description ?? "",
-                    CourseLevel = c.CourseLevel,
-                    CreatedAt = c.CreateAt
-                })
-                .ToListAsync();
-
-            return Ok(new { Courses = courses });
+            var courses = await _dao.GetCoursesByTeacherAsync(uid);
+            var result = courses.Select(c => new CourseSummaryDto
+            {
+                CourseID = c.CourseID,
+                CourseName = c.CourseName,
+                Description = c.Description ?? "",
+                CourseLevel = c.CourseLevel,
+                CreatedAt = c.CreateAt
+            });
+            return Ok(new { Courses = result });
         }
 
-        // ===================================================
-        // 🔹 2️⃣ Lấy chi tiết 1 course của teacher
-        // ===================================================
+        // =============================
+        // Chi tiết course
+        // =============================
         [HttpGet("{courseId:int}")]
         public async Task<IActionResult> GetCourseDetail(int courseId)
         {
             if (!await EnsureTeacherOwnsCourse(courseId))
                 return Forbid();
 
-            var course = await _db.Courses
-                .Where(c => c.CourseID == courseId)
-                .Select(c => new CourseDetailDto
-                {
-                    CourseID = c.CourseID,
-                    CourseName = c.CourseName,
-                    Description = c.Description ?? "",
-                    CourseLevel = c.CourseLevel,
-                    Chapters = c.CourseChapters.Select(ch => new ChapterDetailDto
-                    {
-                        ChapterID = ch.ChapterID,
-                        ChapterName = ch.ChapterName,
-                        Videos = ch.CourseVideos.Select(v => new VideoDetailDto
-                        {
-                            VideoID = v.VideoID,
-                            VideoName = v.VideoName,
-                            VideoURL = v.VideoURL, // ✅ Giáo viên luôn được xem full URL
-                            IsPreview = v.IsPreview
-                        }).ToList()
-                    }).ToList()
-                })
-                .FirstOrDefaultAsync();
-
+            var course = await _dao.GetCourseDetailAsync(courseId);
             if (course == null)
                 return NotFound(new { message = "Course not found" });
 
-            return Ok(course);
+            var dto = new CourseDetailDto
+            {
+                CourseID = course.CourseID,
+                CourseName = course.CourseName,
+                Description = course.Description ?? "",
+                CourseLevel = course.CourseLevel,
+                Chapters = course.CourseChapters.Select(ch => new ChapterDetailDto
+                {
+                    ChapterID = ch.ChapterID,
+                    ChapterName = ch.ChapterName,
+                    Videos = ch.CourseVideos.Select(v => new VideoDetailDto
+                    {
+                        VideoID = v.VideoID,
+                        VideoName = v.VideoName,
+                        VideoURL = v.VideoURL,
+                        IsPreview = v.IsPreview
+                    }).ToList()
+                }).ToList()
+            };
+
+            var orphanVideos = course.CourseVideos
+                .Where(v => v.ChapterID == null)
+                .Select(v => new VideoDetailDto
+                {
+                    VideoID = v.VideoID,
+                    VideoName = v.VideoName,
+                    VideoURL = v.VideoURL,
+                    IsPreview = v.IsPreview
+                }).ToList();
+
+            if (orphanVideos.Any())
+            {
+                dto.Chapters.Add(new ChapterDetailDto
+                {
+                    ChapterID = 0,
+                    ChapterName = "(Uncategorized Videos)",
+                    Videos = orphanVideos
+                });
+            }
+
+
+            return Ok(dto);
         }
 
-        // ===================================================
-        // 🔹 COURSE CRUD
-        // ===================================================
+        // =============================
+        // COURSE CRUD
+        // =============================
         [HttpPost]
         public async Task<IActionResult> CreateCourse([FromBody] CreateCourseRequest req)
         {
-            var teacherId = GetUserId();
-
             var course = new Course
             {
-                TeacherID = teacherId,
+                TeacherID = GetUserId(),
                 CourseName = req.CourseName,
                 Description = req.Description,
                 CourseLevel = req.CourseLevel,
                 CreateAt = DateTime.UtcNow
             };
 
-            _db.Courses.Add(course);
-            await _db.SaveChangesAsync();
-            return Ok(new { message = "Course created", courseId = course.CourseID });
+            var created = await _dao.CreateCourseAsync(course);
+            return Ok(new { message = "Course created", courseId = created.CourseID });
         }
 
         [HttpPut("{courseId:int}")]
@@ -141,15 +149,15 @@ namespace EMT_API.Controllers.TeacherSide
         {
             if (!await EnsureTeacherOwnsCourse(courseId)) return Forbid();
 
-            var course = await _db.Courses.FindAsync(courseId);
-            if (course == null) return NotFound();
+            var course = new Course
+            {
+                CourseID = courseId,
+                CourseName = req.CourseName,
+                Description = req.Description
+            };
 
-            course.CourseName = req.CourseName;
-            course.Description = req.Description;
-
-            _db.Courses.Update(course);
-            await _db.SaveChangesAsync();
-            return Ok(new { message = "Course updated" });
+            var ok = await _dao.UpdateCourseAsync(course);
+            return ok ? Ok(new { message = "Course updated" }) : NotFound();
         }
 
         [HttpDelete("{courseId:int}")]
@@ -157,44 +165,27 @@ namespace EMT_API.Controllers.TeacherSide
         {
             if (!await EnsureTeacherOwnsCourse(courseId)) return Forbid();
 
-            var course = await _db.Courses
-                .Include(c => c.CourseChapters)
-                .ThenInclude(ch => ch.CourseVideos)
-                .FirstOrDefaultAsync(c => c.CourseID == courseId);
+            var ok = await _dao.DeleteCourseAsync(courseId);
+            if (!ok) return NotFound();
 
-            if (course == null) return NotFound();
-
-            foreach (var chapter in course.CourseChapters)
-            {
-                foreach (var video in chapter.CourseVideos)
-                {
-                    if (video.VideoURL.Contains("r2.cloudflarestorage.com"))
-                        await _r2.DeleteFileAsync(video.VideoURL);
-                }
-            }
-
-            _db.Courses.Remove(course);
-            await _db.SaveChangesAsync();
             return Ok(new { message = "Course deleted" });
         }
 
-        // ===================================================
-        // 🔹 CHAPTER CRUD
-        // ===================================================
+        // =============================
+        // CHAPTER CRUD
+        // =============================
         [HttpPost("{courseId:int}/chapter")]
         public async Task<IActionResult> AddChapter(int courseId, [FromBody] CreateChapterRequest req)
         {
             if (!await EnsureTeacherOwnsCourse(courseId)) return Forbid();
 
-            var chapter = new CourseChapter
+            var created = await _dao.AddChapterAsync(new CourseChapter
             {
                 CourseID = courseId,
                 ChapterName = req.ChapterName
-            };
+            });
 
-            _db.CourseChapters.Add(chapter);
-            await _db.SaveChangesAsync();
-            return Ok(new { message = "Chapter added", chapterId = chapter.ChapterID });
+            return Ok(new { message = "Chapter added", chapterId = created!.ChapterID });
         }
 
         [HttpPut("chapter/{chapterId:int}")]
@@ -202,13 +193,13 @@ namespace EMT_API.Controllers.TeacherSide
         {
             if (!await EnsureTeacherOwnsChapter(chapterId)) return Forbid();
 
-            var chapter = await _db.CourseChapters.FindAsync(chapterId);
-            if (chapter == null) return NotFound();
+            var ok = await _dao.UpdateChapterAsync(new CourseChapter
+            {
+                ChapterID = chapterId,
+                ChapterName = req.ChapterName
+            });
 
-            chapter.ChapterName = req.ChapterName;
-            _db.CourseChapters.Update(chapter);
-            await _db.SaveChangesAsync();
-            return Ok(new { message = "Chapter updated" });
+            return ok ? Ok(new { message = "Chapter updated" }) : NotFound();
         }
 
         [HttpDelete("chapter/{chapterId:int}")]
@@ -216,26 +207,13 @@ namespace EMT_API.Controllers.TeacherSide
         {
             if (!await EnsureTeacherOwnsChapter(chapterId)) return Forbid();
 
-            var chapter = await _db.CourseChapters
-                .Include(ch => ch.CourseVideos)
-                .FirstOrDefaultAsync(ch => ch.ChapterID == chapterId);
-
-            if (chapter == null) return NotFound();
-
-            foreach (var video in chapter.CourseVideos)
-            {
-                if (video.VideoURL.Contains("r2.cloudflarestorage.com"))
-                    await _r2.DeleteFileAsync(video.VideoURL);
-            }
-
-            _db.CourseChapters.Remove(chapter);
-            await _db.SaveChangesAsync();
-            return Ok(new { message = "Chapter deleted" });
+            var ok = await _dao.DeleteChapterAsync(chapterId);
+            return ok ? Ok(new { message = "Chapter deleted" }) : NotFound();
         }
 
-        // ===================================================
-        // 🔹 VIDEO CRUD (Chỉ nhận URL)
-        // ===================================================
+        // =============================
+        // VIDEO CRUD
+        // =============================
         [HttpPost("{chapterId:int}/video")]
         public async Task<IActionResult> AddVideo(int chapterId, [FromBody] CreateVideoRequest req)
         {
@@ -244,18 +222,16 @@ namespace EMT_API.Controllers.TeacherSide
             var chapter = await _db.CourseChapters.FirstOrDefaultAsync(ch => ch.ChapterID == chapterId);
             if (chapter == null) return NotFound();
 
-            var video = new CourseVideo
+            var created = await _dao.AddVideoAsync(new CourseVideo
             {
                 CourseID = chapter.CourseID,
                 ChapterID = chapterId,
                 VideoName = req.VideoName,
                 VideoURL = req.VideoURL,
                 IsPreview = req.IsPreview
-            };
+            });
 
-            _db.CourseVideos.Add(video);
-            await _db.SaveChangesAsync();
-            return Ok(new { message = "Video added", videoId = video.VideoID });
+            return Ok(new { message = "Video added", videoId = created!.VideoID });
         }
 
         [HttpDelete("video/{videoId:int}")]
@@ -263,15 +239,8 @@ namespace EMT_API.Controllers.TeacherSide
         {
             if (!await EnsureTeacherOwnsVideo(videoId)) return Forbid();
 
-            var video = await _db.CourseVideos.FindAsync(videoId);
-            if (video == null) return NotFound();
-
-            if (video.VideoURL.Contains("r2.cloudflarestorage.com"))
-                await _r2.DeleteFileAsync(video.VideoURL);
-
-            _db.CourseVideos.Remove(video);
-            await _db.SaveChangesAsync();
-            return Ok(new { message = "Video deleted" });
+            var ok = await _dao.DeleteVideoAsync(videoId);
+            return ok ? Ok(new { message = "Video deleted" }) : NotFound();
         }
     }
 }

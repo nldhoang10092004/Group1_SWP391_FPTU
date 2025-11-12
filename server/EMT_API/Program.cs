@@ -1,6 +1,8 @@
-﻿using EMT_API.DAOs.FlashcardDAO;
+﻿using EMT_API.DAOs.CourseDAO;
+using EMT_API.DAOs.FlashcardDAO;
 using EMT_API.DAOs.UserDAO;
 using EMT_API.Data;
+using EMT_API.DTOs.Public;
 using EMT_API.Middlewares;
 using EMT_API.Security; // để dùng TokenService
 using EMT_API.Services;
@@ -125,6 +127,7 @@ namespace EMT_API
             // ===== DAO Services =====
             builder.Services.AddScoped<IUserDAO, UserDAO>();
             builder.Services.AddScoped<IFlashcardDAO, FlashcardDAO>();
+            builder.Services.AddScoped<ICourseDAO, CourseDAO>();
 
 
             // ===== OTP Service =====
