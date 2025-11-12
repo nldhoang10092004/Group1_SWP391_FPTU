@@ -1,115 +1,79 @@
-﻿using EMT_API.Data;
+﻿using EMT_API.DAOs.PaymentDAO;
 using EMT_API.DTOs.Payment;
 using EMT_API.Models;
 using EMT_API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
 
-[ApiController]
-[Route("api/payment")]
-public class PaymentController : ControllerBase
+namespace EMT_API.Controllers.UserSide
 {
-    private readonly PayOSService _payos;
-    private readonly EMTDbContext _db;
-
-    public PaymentController(PayOSService payos, EMTDbContext db)
+    [ApiController]
+    [Route("api/payment")]
+    public class PaymentController : ControllerBase
     {
-        _payos = payos;
-        _db = db;
-    }
+        private readonly IPaymentDAO _dao;
+        private readonly PayOSService _payos;
 
-    [HttpPost("create")]
-    [Authorize(Roles = "STUDENT")]
-    public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentRequest request)
-    {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-        // ✅ Lấy planId từ object
-        int planId = request.PlanId;
-
-        var url = await _payos.CreatePaymentAsync(userId, planId);
-
-        // Trả về URL cho FE (FE sẽ redirect client-side)
-        return Ok(new { paymentUrl = url });
-    }
-
-
-    [HttpPost("webhook")]
-    [AllowAnonymous]
-    public async Task<IActionResult> Webhook([FromBody] JsonElement body)
-    {
-        try
+        public PaymentController(IPaymentDAO dao, PayOSService payos)
         {
-            if (!body.TryGetProperty("data", out var dataElem))
-                return BadRequest("Invalid payload: missing data");
+            _dao = dao;
+            _payos = payos;
+        }
 
-            var orderId = dataElem.GetProperty("orderCode").GetInt32();
+        // ===============================
+        // 🔹 Student tạo đơn thanh toán
+        // ===============================
+        [HttpPost("create")]
+        [Authorize(Roles = "STUDENT")]
+        public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentRequest request)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            // ✅ Đọc code thay vì status
-            var code = dataElem.TryGetProperty("code", out var codeElem)
-                ? codeElem.GetString()
-                : "UNKNOWN";
-            var desc = dataElem.TryGetProperty("desc", out var descElem)
-                ? descElem.GetString()
-                : "";
+            int planId = request.PlanId;
 
-            string status = code switch
+            var url = await _payos.CreatePaymentAsync(userId, planId);
+            return Ok(new { paymentUrl = url });
+        }
+
+        // ===============================
+        // 🔹 PayOS Webhook Callback
+        // ===============================
+        [HttpPost("webhook")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Webhook([FromBody] JsonElement body)
+        {
+            try
             {
-                "00" => "PAID",
-                _ => "FAILED"
-            };
+                if (!body.TryGetProperty("data", out var dataElem))
+                    return BadRequest("Invalid payload: missing data");
 
-            // Ghi log webhook
-            _db.WebhookEvents.Add(new WebhookEvent
-            {
-                OrderID = orderId,
-                UniqueKey = Guid.NewGuid().ToString(),
-                Payload = body.ToString(),
-                ReceivedAt = DateTime.UtcNow
-            });
+                var orderId = dataElem.GetProperty("orderCode").GetInt32();
+                var code = dataElem.TryGetProperty("code", out var codeElem)
+                    ? codeElem.GetString() : "UNKNOWN";
 
-            var order = await _db.PaymentOrders.FindAsync(orderId);
-            if (order == null) return Ok();
+                string status = code == "00" ? "PAID" : "FAILED";
 
-            switch (status)
-            {
-                case "PAID":
-                    order.Status = "PAID";
-                    order.PaidAt = DateTime.UtcNow;
+                await _dao.LogWebhookEventAsync(orderId, body.ToString() ?? "{}");
 
-                    var plan = await _db.SubscriptionPlans.FindAsync(order.PlanID);
-                    if (plan != null)
-                    {
-                        _db.UserMemberships.Add(new UserMembership
-                        {
-                            UserID = order.BuyerID,
-                            PlanID = plan.PlanID,
-                            StartsAt = DateTime.UtcNow,
-                            EndsAt = DateTime.UtcNow.AddDays(plan.DurationDays),
-                            Status = "ACTIVE"
-                        });
-                    }
-                    break;
+                var order = await _dao.GetOrderByIdAsync(orderId);
+                if (order == null)
+                    return Ok(new { message = "Order not found, ignored" });
 
-                case "FAILED":
-                    order.Status = "CANCELED";
-                    break;
+                if (status == "PAID")
+                    await _dao.HandlePaymentSuccessAsync(order);
+                else
+                    await _dao.HandlePaymentFailedAsync(order);
+
+                Console.WriteLine($"✅ Webhook handled for order {orderId} - {status}");
+                return Ok();
             }
-
-            await _db.SaveChangesAsync();
-            Console.WriteLine($"✅ Webhook xử lý thành công cho order {orderId} - {status}");
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Webhook error: {ex.Message}");
-            return Ok();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Webhook error: {ex.Message}");
+                return Ok();
+            }
         }
     }
-
-
-
 }
