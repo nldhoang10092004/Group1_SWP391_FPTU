@@ -419,7 +419,5 @@ namespace EMT_API.Controllers.AdminSide
 
             return Ok(new { message = "Quiz updated successfully", quizId = quiz.QuizID });
         }
-
     }
-
 }
