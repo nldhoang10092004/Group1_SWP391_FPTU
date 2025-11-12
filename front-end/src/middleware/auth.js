@@ -9,7 +9,6 @@ const api = axios.create({
   },
 });
 
-// ✨ INTERCEPTOR để bắt lỗi và hiển thị popup
 api.interceptors.response.use(
   (response) => response, // Nếu thành công, trả về bình thường
   (error) => {
@@ -23,7 +22,6 @@ api.interceptors.response.use(
     // Hiển thị popup
     alert(`Lỗi: ${message}`);
 
-    // Từ chối Promise để FE vẫn biết là lỗi
     return Promise.reject(error);
   }
 );

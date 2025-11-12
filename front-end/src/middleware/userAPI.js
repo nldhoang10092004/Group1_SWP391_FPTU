@@ -38,11 +38,11 @@ const handleApiError = (error) => {
 };
 
 // 🟢 Lấy thông tin chi tiết profile
-export const getUser = async (token) => {
+export const getUser = async (accessToken) => {
   try {
     console.log("🔍 GET /user/profile/detail");
     const res = await axios.get(`${API_URL}/user/profile/detail`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     console.log("✅ Response:", res.data);
     return res.data;
@@ -52,13 +52,13 @@ export const getUser = async (token) => {
 };
 
 // 🟢 Cập nhật thông tin profile (PUT JSON)
-export const updateUser = async (userData, token) => {
+export const updateUser = async (userData, accessToken) => {
   try {
     console.log("📤 PUT /user/profile/detail", userData);
 
     const res = await axios.put(`${API_URL}/user/profile/detail`, userData, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     });

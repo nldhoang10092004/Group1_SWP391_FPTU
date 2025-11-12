@@ -62,4 +62,8 @@ public partial class Account
 
     [InverseProperty("User")]
     public virtual ICollection<UserMembership> UserMemberships { get; set; } = new List<UserMembership>();
+
+    [InverseProperty("User")]
+    public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+
 }

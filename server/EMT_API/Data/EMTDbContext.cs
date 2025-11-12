@@ -51,6 +51,8 @@ public partial class EMTDbContext : DbContext
     public virtual DbSet<FlashcardSet> FlashcardSets { get; set; }
     public virtual DbSet<FlashcardItem> FlashcardItems { get; set; }
 
+    public virtual DbSet<Feedback> Feedbacks { get; set; } = null!;
+
 
     public virtual DbSet<WebhookEvent> WebhookEvents { get; set; }
 
@@ -291,6 +293,24 @@ public partial class EMTDbContext : DbContext
             entity.HasKey(e => e.ItemId).HasName("PK__Flashcar__ItemID");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
         });
+
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("PK__Feedback__6A4BEDF68952B373");
+
+            entity.ToTable("Feedback");
+
+            entity.HasIndex(e => new { e.CourseId, e.CreatedAt }, "IX_Feedback_Course").IsDescending(false, true);
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt }, "IX_Feedback_User").IsDescending(false, true);
+
+            entity.Property(e => e.FeedbackId).HasColumnName("FeedbackID");
+            entity.Property(e => e.CourseId).HasColumnName("CourseID");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.IsVisible).HasDefaultValue(true);
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+        });
+
+
 
 
         modelBuilder.Entity<WebhookEvent>(entity =>

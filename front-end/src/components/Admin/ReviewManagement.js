@@ -1,31 +1,55 @@
 import { useState, useEffect } from "react";
-import { Star, Trash } from "lucide-react";
+import { Star, Trash, Eye, EyeOff } from "lucide-react";
+import { getAllFeedbacks, toggleFeedbackVisibility, deleteFeedback } from "../../middleware/admin/feedbackAdminAPI";
 import "./management-styles.scss";
-
-// Mock data for reviews - replace with API call
-const mockReviews = [
-  { id: 1, courseName: "ReactJS for Beginners", userName: "Nguyễn Văn A", rating: 5, comment: "Khóa học rất tuyệt vời, dễ hiểu!", createdAt: "2025-10-26T10:00:00Z" },
-  { id: 2, courseName: "Advanced CSS", userName: "Trần Thị B", rating: 4, comment: "Nhiều kiến thức bổ ích, nhưng phần grid hơi khó.", createdAt: "2025-10-25T14:30:00Z" },
-  { id: 3, courseName: "ReactJS for Beginners", userName: "Lê Văn C", rating: 5, comment: "Giảng viên dạy hay, nhiệt tình.", createdAt: "2025-10-25T09:00:00Z" },
-  { id: 4, courseName: "UI/UX Design Principles", userName: "Phạm Thị D", rating: 3, comment: "Nội dung ổn nhưng cần thêm ví dụ thực tế.", createdAt: "2025-10-24T18:00:00Z" },
-];
 
 export function ReviewManagement() {
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+
+  const showPopup = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "" }), 3000);
+  };
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setReviews(mockReviews);
-      setIsLoading(false);
-    }, 1000);
+    loadReviews();
   }, []);
 
-  const handleDeleteReview = (reviewId) => {
-    if (window.confirm("Bạn có chắc muốn xóa đánh giá này không?")) {
-      setReviews(reviews.filter(r => r.id !== reviewId));
-      // Add API call to delete review here
+  const loadReviews = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getAllFeedbacks();
+      setReviews(data);
+    } catch (error) {
+      showPopup("Không thể tải danh sách đánh giá", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleToggleVisibility = async (feedbackId) => {
+    try {
+      await toggleFeedbackVisibility(feedbackId);
+      // Update local state
+      setReviews(reviews.map(review => 
+        review.feedbackId === feedbackId 
+          ? { ...review, isVisible: !review.isVisible }
+          : review
+      ));
+    } catch (error) {
+      showPopup("Không thể cập nhật trạng thái hiển thị", "error");
+    }
+  };
+
+  const handleDeleteReview = async (feedbackId) => {
+    if (!window.confirm("Bạn có chắc muốn xóa đánh giá này không?")) return;
+    try {
+      await deleteFeedback(feedbackId);
+      setReviews(reviews.filter(r => r.feedbackId !== feedbackId));
+    } catch (error) {
+      showPopup("Không thể xóa đánh giá", "error");
     }
   };
 
@@ -50,10 +74,18 @@ export function ReviewManagement() {
 
   return (
     <div className="management-page-container">
+      {toast.show && (
+        <div className={`toast-notification ${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
+
       <div className="management-card">
         <div className="management-card-header">
-          <h2 className="card-title">Quản lý Đánh giá</h2>
-          <p className="card-description">Tổng số: {reviews.length} đánh giá</p>
+          <div>
+            <h2 className="card-title">Quản lý Đánh giá</h2>
+            <p className="card-description">Tổng số: {reviews.length} đánh giá</p>
+          </div>
         </div>
 
         <div className="management-card-content">
@@ -65,28 +97,58 @@ export function ReviewManagement() {
                 <th>Đánh giá</th>
                 <th>Bình luận</th>
                 <th>Ngày tạo</th>
+                <th>Trạng thái</th>
                 <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
               {reviews.map((review) => (
-                <tr key={review.id}>
+                <tr key={review.feedbackId}>
                   <td className="font-bold">{review.courseName}</td>
-                  <td>{review.userName}</td>
+                  <td>{review.username}</td>
                   <td>
-                    <div className="flex items-center gap-1">{renderStars(review.rating)}</div>
+                    <div className="flex items-center gap-1">
+                      {renderStars(review.rating)}
+                      <span className="ml-2 text-sm font-medium">({review.rating}/5)</span>
+                    </div>
                   </td>
-                  <td className="max-w-sm">{review.comment}</td>
-                  <td>{new Date(review.createdAt).toLocaleDateString()}</td>
+                  <td className="max-w-sm">
+                    <div className="text-sm line-clamp-2">{review.comment}</div>
+                  </td>
+                  <td>{new Date(review.createdAt).toLocaleDateString('vi-VN')}</td>
                   <td>
-                    <button onClick={() => handleDeleteReview(review.id)} className="action-button delete-button">
-                      <Trash size={16} />
-                    </button>
+                    <span className={`status-badge ${review.isVisible ? 'active' : 'inactive'}`}>
+                      {review.isVisible ? 'Hiển thị' : 'Đã ẩn'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleToggleVisibility(review.feedbackId)} 
+                        className={`action-button ${review.isVisible ? 'hide-button' : 'show-button'}`}
+                        title={review.isVisible ? 'Ẩn đánh giá' : 'Hiện đánh giá'}
+                      >
+                        {review.isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteReview(review.feedbackId)} 
+                        className="action-button delete-button"
+                        title="Xóa đánh giá"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {reviews.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              Chưa có đánh giá nào
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -12,8 +12,10 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 
+
 namespace EMT_API
 {
+
     public class Program
     {
         public static void Main(string[] args)
@@ -132,6 +134,8 @@ namespace EMT_API
             //AI Exam Services
             builder.Services.AddScoped<AIWritingService>();
             builder.Services.AddScoped<AISpeakingService>();
+            builder.Services.AddScoped<AIQuizService>();
+
 
             //Google Drive Service
             builder.Services.AddSingleton<GoogleDriveService>();

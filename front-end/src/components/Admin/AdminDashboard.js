@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { Input } from "./ui/input";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import {
   Users,
@@ -12,10 +13,17 @@ import {
   GraduationCap,
   DollarSign,
   X,
+  CreditCard,
+  Search,
+  Eye,
+  CheckCircle,
+  Clock,
+  XCircle,
+  User,
+  Package,
+  Calendar,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
   XAxis,
@@ -26,7 +34,10 @@ import {
   PieChart,
   Pie,
   Cell,
+  BarChart,
+  Bar,
 } from "recharts";
+
 import { UserManagement } from "./UserManagement";
 import { TeacherManagement } from "./TeacherManagement";
 import { CourseManagement } from "./CourseManagement";
@@ -34,12 +45,23 @@ import { ReviewManagement } from "./ReviewManagement";
 import { ExamManagement } from "./ExamManagement";
 import { FlashcardManagement } from "./FlashcardManagement";
 import { VoucherManagement } from "./VoucherManagement";
+
 import { getDashboardOverview } from "../../middleware/admin/dashboardAdminAPI";
 import {
   getAllUsers,
   getStudents,
   getTeachers,
 } from "../../middleware/admin/userManagementAPI";
+
+import {
+  getAllTransactions,
+  searchTransactions,
+  getTransactionDetail,
+  formatCurrency,
+  formatDateTime,
+  getStatusLabel,
+} from "../../middleware/admin/transactionAPI";
+
 import "./admin-dashboard-styles.scss";
 
 export function AdminDashboard({ onClose }) {
@@ -58,6 +80,19 @@ export function AdminDashboard({ onClose }) {
     inactiveUsers: 0,
   });
 
+  // Transactions state
+  const [transactions, setTransactions] = useState([]);
+  const [transactionStats, setTransactionStats] = useState({
+    total: 0,
+    paid: 0,
+    pending: 0,
+    totalRevenue: 0,
+    monthlyRevenue: {},
+  });
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
   // Toast state
   const [toast, setToast] = useState({
     show: false,
@@ -73,6 +108,7 @@ export function AdminDashboard({ onClose }) {
   useEffect(() => {
     loadAdminData();
     loadStats();
+    loadTransactions();
   }, []);
 
   const loadAdminData = async () => {
@@ -82,46 +118,45 @@ export function AdminDashboard({ onClose }) {
       const [allUsersData, teachersData, studentsData] = await Promise.all([
         getAllUsers(),
         getTeachers(),
-        getStudents()
+        getStudents(),
       ]);
 
-      const mappedUsers = allUsersData.map(user => ({
+      const mappedUsers = allUsersData.map((user) => ({
         id: user.name,
         accountID: user.name,
         fullName: user.username,
         email: user.email,
-        userType: user.role.toLowerCase(),
+        userType: user.role?.toLowerCase?.() ?? "",
         role: user.role,
         status: user.status,
-        isActive: user.status === 'ACTIVE',
+        isActive: user.status === "ACTIVE",
         joinedDate: new Date().toISOString(),
-        lastLogin: new Date().toISOString()
+        lastLogin: new Date().toISOString(),
       }));
 
-      const mappedTeachers = teachersData.map(t => ({
+      const mappedTeachers = teachersData.map((t) => ({
         id: t.accountID,
         accountID: t.accountID,
         fullName: t.username,
         email: t.email,
         role: t.role,
         status: t.status,
-        isActive: t.status === 'ACTIVE',
+        isActive: t.status === "ACTIVE",
       }));
 
-      const mappedStudents = studentsData.map(s => ({
+      const mappedStudents = studentsData.map((s) => ({
         id: s.accountID,
         accountID: s.accountID,
         fullName: s.username,
         email: s.email,
         role: s.role,
         status: s.status,
-        isActive: s.status === 'ACTIVE',
+        isActive: s.status === "ACTIVE",
       }));
 
-      // Tính toán thống kê từ dữ liệu users
-      const activeUsers = mappedUsers.filter(u => u.isActive).length;
-      const inactiveUsers = mappedUsers.filter(u => !u.isActive).length;
-      const totalAdmins = mappedUsers.filter(u => u.role === 'ADMIN').length;
+      const activeUsers = mappedUsers.filter((u) => u.isActive).length;
+      const inactiveUsers = mappedUsers.filter((u) => !u.isActive).length;
+      const totalAdmins = mappedUsers.filter((u) => u.role === "ADMIN").length;
       const totalTeachers = mappedTeachers.length;
       const totalStudents = mappedStudents.length;
 
@@ -136,7 +171,7 @@ export function AdminDashboard({ onClose }) {
         inactiveUsers,
       });
     } catch (error) {
-      console.error('Error loading admin data:', error);
+      console.error("Error loading admin data:", error);
       showPopup("Không thể tải dữ liệu admin", "danger");
     } finally {
       setIsLoading(false);
@@ -152,41 +187,122 @@ export function AdminDashboard({ onClose }) {
     }
   };
 
-  // Dữ liệu biểu đồ mẫu
-  const revenueData = [
-    { month: "T1", revenue: 15000000 },
-    { month: "T2", revenue: 18000000 },
-    { month: "T3", revenue: 16500000 },
-    { month: "T4", revenue: 22000000 },
-    { month: "T5", revenue: 19500000 },
-    { month: "T6", revenue: stats?.currentMonthRevenue || 0 },
-  ];
+  const loadTransactions = async () => {
+    try {
+      const data = await getAllTransactions(); // từ transactionAPI
+      setTransactions(data);
+      calculateTransactionStats(data);
+    } catch (error) {
+      console.error("Error loading transactions:", error);
+      showPopup("Không thể tải giao dịch", "danger");
+    }
+  };
 
-  const userGrowthData = [
-    { month: "T1", users: 250 },
-    { month: "T2", users: 310 },
-    { month: "T3", users: 450 },
-    { month: "T4", users: 620 },
-    { month: "T5", users: 780 },
-    { month: "T6", users: stats?.totalUsers || 850 },
-  ];
+  const calculateTransactionStats = (transactionsData) => {
+    const total = transactionsData.length;
+    const paid = transactionsData.filter((t) => t.status === "PAID").length;
+    const pending = transactionsData.filter((t) => t.status === "PENDING").length;
+    const totalRevenue = transactionsData
+      .filter((t) => t.status === "PAID")
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  const formatCurrency = (amount) =>
-    new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(amount);
+    // Tính doanh thu theo tháng (6 tháng gần nhất)
+    const monthlyRevenue = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      monthlyRevenue[monthKey] = 0;
+    }
+    transactionsData
+      .filter((t) => t.status === "PAID" && t.paidAt)
+      .forEach((t) => {
+        const paidDate = new Date(t.paidAt);
+        const monthKey = `${paidDate.getFullYear()}-${String(paidDate.getMonth() + 1).padStart(2, "0")}`;
+        if (monthlyRevenue.hasOwnProperty(monthKey)) {
+          monthlyRevenue[monthKey] += t.amount || 0;
+        }
+      });
+
+    setTransactionStats({
+      total,
+      paid,
+      pending,
+      totalRevenue,
+      monthlyRevenue,
+    });
+  };
+
+  const handleSearchTransactions = async () => {
+    if (!searchKeyword.trim()) {
+      loadTransactions();
+      return;
+    }
+    try {
+      const data = await searchTransactions(searchKeyword);
+      setTransactions(data);
+      calculateTransactionStats(data);
+    } catch (error) {
+      console.error("Error searching transactions:", error);
+      showPopup("Không thể tìm kiếm giao dịch", "danger");
+    }
+  };
+
+  const handleViewTransactionDetail = async (orderId) => {
+    try {
+      const detail = await getTransactionDetail(orderId);
+      setSelectedTransaction(detail);
+      setShowDetailModal(true);
+    } catch (error) {
+      console.error("Error loading transaction detail:", error);
+      showPopup("Không thể tải chi tiết giao dịch", "danger");
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const map = {
+      PAID: { Icon: CheckCircle, cls: "bg-green-500" },
+      PENDING: { Icon: Clock, cls: "bg-yellow-500" },
+      FAILED: { Icon: XCircle, cls: "bg-red-500" },
+      CANCELLED: { Icon: XCircle, cls: "bg-gray-500" },
+    };
+    const picked = map[status] || map.PENDING;
+    const IconCmp = picked.Icon;
+    return (
+      <Badge className={`${picked.cls} text-white flex items-center gap-1`}>
+        <IconCmp size={12} />
+        {getStatusLabel(status)}
+      </Badge>
+    );
+  };
+
+  // Data cho biểu đồ doanh thu 6 tháng gần nhất (từ transactions)
+  const getRevenueChartData = () => {
+    const months = ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"];
+    const now = new Date();
+    const data = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const monthIndex = date.getMonth();
+      data.push({
+        month: months[monthIndex],
+        revenue: transactionStats.monthlyRevenue[monthKey] || 0,
+      });
+    }
+    return data;
+  };
 
   const menuItems = [
     { id: "analytics", icon: BarChart3, label: "Thống kê" },
+    { id: "transactions", icon: CreditCard, label: "Giao dịch" },
     { id: "users", icon: Users, label: "Người dùng" },
     { id: "teachers", icon: GraduationCap, label: "Giảng viên" },
     { id: "courses", icon: BookOpen, label: "Khóa học" },
     { id: "flashcard", icon: BookOpen, label: "Flashcard" },
     { id: "reviews", icon: Star, label: "Đánh giá" },
     { id: "exams", icon: Award, label: "Kiểm tra" },
-    { id: "vouchers", icon: Ticket, label: "Voucher" },
+    { id: "vouchers", icon: Ticket, label: "Subscription Plan" },
   ];
 
   const renderContent = () => {
@@ -199,6 +315,8 @@ export function AdminDashboard({ onClose }) {
           </div>
         );
       }
+
+      const revenueData = getRevenueChartData();
 
       return (
         <div className="admin-analytics-content">
@@ -214,9 +332,7 @@ export function AdminDashboard({ onClose }) {
               <div className="admin-stat-value">{stats?.totalUsers || 0}</div>
               <p className="admin-stat-footer">
                 <Badge className="bg-green-500 mr-1">
-                  {stats?.membershipRate
-                    ? `${stats.membershipRate.toFixed(2)}%`
-                    : "0%"}
+                  {stats?.membershipRate ? `${stats.membershipRate.toFixed(2)}%` : "0%"}
                 </Badge>
                 có gói thành viên
               </p>
@@ -235,16 +351,14 @@ export function AdminDashboard({ onClose }) {
 
             <div className="admin-stat-card">
               <div className="admin-stat-header">
-                <h3 className="admin-stat-title">Doanh thu tháng</h3>
+                <h3 className="admin-stat-title">Tổng doanh thu</h3>
                 <div className="admin-stat-icon-wrapper bg-green-100">
                   <DollarSign className="text-green-600" size={20} />
                 </div>
               </div>
-              <div className="admin-stat-value">
-                {formatCurrency(stats?.currentMonthRevenue || 0)}
-              </div>
+              <div className="admin-stat-value">{formatCurrency(transactionStats.totalRevenue)}</div>
               <p className="admin-stat-footer">
-                Tổng {formatCurrency(stats?.totalRevenue || 0)}
+                Từ {transactionStats.paid} giao dịch thành công
               </p>
             </div>
 
@@ -265,7 +379,7 @@ export function AdminDashboard({ onClose }) {
             <div className="admin-chart-card">
               <CardHeader>
                 <CardTitle>Doanh thu theo tháng</CardTitle>
-                <CardDescription>Xu hướng doanh thu 6 tháng gần đây</CardDescription>
+                <CardDescription>Doanh thu từ giao dịch 6 tháng gần đây</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -286,34 +400,351 @@ export function AdminDashboard({ onClose }) {
               </CardContent>
             </div>
 
-            {/* Biểu đồ tăng trưởng người dùng */}
             <div className="admin-chart-card">
               <CardHeader>
-                <CardTitle>Tăng trưởng người dùng</CardTitle>
-                <CardDescription>Số lượng người dùng mới mỗi tháng</CardDescription>
+                <CardTitle>Thống kê giao dịch</CardTitle>
+                <CardDescription>Phân bố trạng thái giao dịch</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={userGrowthData}>
+                  <BarChart
+                    data={[
+                      { name: "Tổng GD", value: transactionStats.total, fill: "#667eea" },
+                      { name: "Đã thanh toán", value: transactionStats.paid, fill: "#4caf50" },
+                      { name: "Chờ thanh toán", value: transactionStats.pending, fill: "#ff9800" },
+                    ]}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
+                    <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Area
-                      type="monotone"
-                      dataKey="users"
-                      stroke="#4caf50"
-                      fill="#4caf50"
-                      fillOpacity={0.3}
-                    />
-                  </AreaChart>
+                    <Bar dataKey="value" />
+                  </BarChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </div>
+
+            <div className="admin-chart-card">
+              <CardHeader>
+                <CardTitle>Phân bố vai trò</CardTitle>
+                <CardDescription>Phân loại người dùng theo vai trò</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const roleData = [
+                    { name: "Học viên", value: userStats.totalStudents, color: "#667eea" },
+                    { name: "Giảng viên", value: userStats.totalTeachers, color: "#4caf50" },
+                    { name: "Admin", value: userStats.totalAdmins, color: "#ff9800" },
+                  ];
+                  return roleData.some((item) => item.value > 0) ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={roleData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={(entry) => `${entry.name}: ${entry.value}`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {roleData.map((entry, index) => (
+                            <Cell key={`cell-role-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div
+                      style={{
+                        height: 300,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#999",
+                      }}
+                    >
+                      Chưa có dữ liệu
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </div>
+
+            <div className="admin-chart-card">
+              <CardHeader>
+                <CardTitle>Trạng thái tài khoản</CardTitle>
+                <CardDescription>Phân bố người dùng theo trạng thái</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const statusData = [
+                    { name: "Đang hoạt động", value: userStats.activeUsers, color: "#4caf50" },
+                    { name: "Không hoạt động", value: userStats.inactiveUsers, color: "#f44336" },
+                  ];
+                  return statusData.some((item) => item.value > 0) ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={statusData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={(entry) => `${entry.name}: ${entry.value}`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {statusData.map((entry, index) => (
+                            <Cell key={`cell-status-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div
+                      style={{
+                        height: 300,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#999",
+                      }}
+                    >
+                      Chưa có dữ liệu
+                    </div>
+                  );
+                })()}
               </CardContent>
             </div>
           </div>
         </div>
       );
     }
+
+    // Transactions page (đã chuyển sang style management-styles.scss)
+if (activeMenu === "transactions") {
+  return (
+    <div className="management-page-container">
+      {/* Toast */}
+      {toast.show && <div className={`toast ${toast.type}`}>{toast.message}</div>}
+
+      <div className="management-card">
+        <div className="management-card-header">
+          <h2 className="card-title">Quản lý giao dịch</h2>
+          <p className="card-description">Tổng số: {transactionStats.total} giao dịch</p>
+        </div>
+
+        {/* Thanh tìm kiếm */}
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Tìm theo Order ID, email, username..."
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearchTransactions()}
+          />
+          <button className="btn-primary" onClick={handleSearchTransactions}>Tìm kiếm</button>
+          <button className="btn-secondary" onClick={loadTransactions}>Làm mới</button>
+        </div>
+
+        <div className="management-card-content">
+          <table className="management-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Người mua</th>
+                <th>Gói</th>
+                <th>Số tiền</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((t) => (
+                <tr key={t.orderID}>
+                  <td className="font-bold">#{t.orderID}</td>
+                  <td>
+                    <div className="user-info">
+                      <p className="font-medium">{t.buyerUsername}</p>
+                      <p className="text-muted">{t.buyerEmail}</p>
+                    </div>
+                  </td>
+                  <td>{t.planName}</td>
+                  <td>{formatCurrency(t.amount || 0)}</td>
+                  <td>
+                    <span className={`status-badge ${t.status.toLowerCase()}`}>
+                      {getStatusLabel(t.status)}
+                    </span>
+                  </td>
+                  <td>{formatDateTime(t.createdAt)}</td>
+                  <td>
+                    <button
+                      className="action-button view-button"
+                      title="Xem chi tiết"
+                      onClick={() => handleViewTransactionDetail(t.orderID)}
+                    >
+                      <Eye size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {transactions.length === 0 && (
+            <div className="empty-state">
+              <p>Không có giao dịch nào</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal chi tiết giao dịch */}
+      {showDetailModal && selectedTransaction && (
+        <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Chi tiết giao dịch</h3>
+              <button className="modal-close" onClick={() => setShowDetailModal(false)}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {/* Buyer */}
+              <div className="detail-section">
+                <h6 className="section-title">Thông tin người mua</h6>
+                <div className="detail-row">
+                  <span className="detail-label">Username: </span>
+                  <span className="detail-value">{selectedTransaction.buyer?.username}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Email: </span>
+                  <span className="detail-value">{selectedTransaction.buyer?.email}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Buyer ID: </span>
+                  <span className="detail-value">#{selectedTransaction.buyer?.buyerID}</span>
+                </div>
+              </div>
+
+              {/* Plan */}
+              <div className="detail-section">
+                <h6 className="section-title">Thông tin gói</h6>
+                <div className="detail-row">
+                  <span className="detail-label">Tên gói: </span>
+                  <span className="detail-value">{selectedTransaction.plan?.name}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Mã gói: </span>
+                  <span className="detail-value">{selectedTransaction.plan?.planCode}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Giá gốc: </span>
+                  <span className="detail-value">
+                    {formatCurrency(selectedTransaction.plan?.price || 0)}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Thời hạn: </span>
+                  <span className="detail-value">{selectedTransaction.plan?.durationDays} ngày</span>
+                </div>
+              </div>
+
+              {/* Transaction */}
+              <div className="detail-section">
+                <h6 className="section-title">Thông tin giao dịch</h6>
+                <div className="detail-row">
+                  <span className="detail-label">Order ID: </span>
+                  <span className="detail-value">#{selectedTransaction.orderID}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Trạng thái: </span>
+                  <span className="detail-value">
+                    <span className={`status-badge ${selectedTransaction.status.toLowerCase()}`}>
+                      {getStatusLabel(selectedTransaction.status)}
+                    </span>
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Số tiền: </span>
+                  <span className="detail-value">
+                    {formatCurrency(selectedTransaction.amount || 0)}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Ngày tạo: </span>
+                  <span className="detail-value">{formatDateTime(selectedTransaction.createdAt)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Ngày thanh toán: </span>
+                  <span className="detail-value">
+                    {selectedTransaction.paidAt ? formatDateTime(selectedTransaction.paidAt) : "-"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Webhook events (nếu có) */}
+              <div className="detail-section">
+                <h6 className="section-title">Webhook events</h6>
+                {!selectedTransaction.webhookEvents ||
+                selectedTransaction.webhookEvents.length === 0 ? (
+                  <div className="text-muted">Chưa ghi nhận webhook nào.</div>
+                ) : (
+                  <div className="webhook-list">
+                    {selectedTransaction.webhookEvents.map((wh, idx) => {
+                      let prettyPayload = wh.payload;
+                      try {
+                        const parsed = JSON.parse(wh.payload);
+                        prettyPayload = JSON.stringify(parsed, null, 2);
+                      } catch (_) {}
+                      return (
+                        <div key={wh.webhookID ?? idx} className="webhook-item">
+                          <div className="detail-row">
+                            <span className="detail-label">Webhook ID:</span>
+                            <span className="detail-value">#{wh.webhookID ?? "-"}</span>
+                          </div>
+                          <div className="detail-row">
+                            <span className="detail-label">Unique Key:</span>
+                            <span className="detail-value break-all">{wh.uniqueKey ?? "-"}</span>
+                          </div>
+                          <div className="detail-row">
+                            <span className="detail-label">Signature:</span>
+                            <span className="detail-value break-all">{wh.signature ?? "(none)"}</span>
+                          </div>
+                          <div className="detail-row">
+                            <span className="detail-label">Received At:</span>
+                            <span className="detail-value">{formatDateTime(wh.receivedAt)}</span>
+                          </div>
+                          <div className="payload-block">
+                            <span className="detail-label">Payload:</span>
+                            <pre className="payload-pre">{prettyPayload}</pre>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowDetailModal(false)}>
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
     // Các trang quản lý khác
     switch (activeMenu) {
@@ -353,13 +784,10 @@ export function AdminDashboard({ onClose }) {
                 <button
                   key={item.id}
                   onClick={() => setActiveMenu(item.id)}
-                  className={`admin-sidebar-menu-item ${isActive ? "active" : ""
-                    }`}
+                  className={`admin-sidebar-menu-item ${isActive ? "active" : ""}`}
                 >
                   <Icon size={20} className="admin-sidebar-menu-icon" />
-                  <span className="admin-sidebar-menu-label">
-                    {item.label}
-                  </span>
+                  <span className="admin-sidebar-menu-label">{item.label}</span>
                 </button>
               );
             })}
@@ -373,12 +801,9 @@ export function AdminDashboard({ onClose }) {
           <div className="admin-main-header-wrapper">
             <div>
               <h2 className="admin-main-header-title">
-                {menuItems.find((item) => item.id === activeMenu)?.label ||
-                  "Dashboard"}
+                {menuItems.find((item) => item.id === activeMenu)?.label || "Dashboard"}
               </h2>
-              <p className="admin-main-header-subtitle">
-                Quản lý hệ thống và theo dõi hoạt động
-              </p>
+              <p className="admin-main-header-subtitle">Quản lý hệ thống và theo dõi hoạt động</p>
             </div>
             <Button variant="outline" onClick={onClose} className="admin-close-button">
               <X size={16} />

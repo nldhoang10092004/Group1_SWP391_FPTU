@@ -7,8 +7,7 @@ const api = axios.create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
-        'ngrok-skip-browser-warning': 'true'
-
+    'ngrok-skip-browser-warning': 'true'
   },
 });
 
@@ -19,6 +18,29 @@ const getAuthHeader = () => {
     throw new Error("❌ No token found. Please login again.");
   }
   return { Authorization: `Bearer ${token}` };
+};
+
+// Lấy tất cả quizzes
+export const getAllQuizzes = async () => {
+  try {
+    const res = await api.get('/', { headers: getAuthHeader() });
+    console.log("📚 getAllQuizzes response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("❌ getAllQuizzes error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+export const getAllQuizzesPublish = async () => {
+  try {
+    const res = await api.get('/system-quiz', { headers: getAuthHeader() });
+    console.log("📚 getAllQuizzes response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("❌ getAllQuizzes error:", err.response?.data || err.message);
+    throw err;
+  }
 };
 
 // Lấy quiz theo course
