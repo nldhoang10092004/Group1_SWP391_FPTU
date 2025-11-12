@@ -1,13 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, ProgressBar, Button, Form, Badge } from "react-bootstrap";
-import "./Home.scss"; 
+import { Container, Row, Col, Card, ProgressBar, Button, Form, Badge, Modal, Table, Spinner } from "react-bootstrap";
+import "./Home.scss";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
-import { getCourses } from "../../middleware/courseAPI"; 
+import { getCourses } from "../../middleware/courseAPI";
 import { checkMembership } from "../../middleware/membershipAPI";
 import { getAllQuizzes } from "../../middleware/QuizAPI";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faFire, faBookOpen, faHourglassHalf, faCheckCircle, faClock, faStar, faLock, faGraduationCap, faLayerGroup, faMicrophone, faHeadphones, faPencilAlt, faFileAlt, faComments } from '@fortawesome/free-solid-svg-icons';
+import {
+  faTrophy,
+  faFire,
+  faBookOpen,
+  faHourglassHalf,
+  faCheckCircle,
+  faClock,
+  faStar,
+  faLock,
+  faGraduationCap,
+  faLayerGroup,
+  faMicrophone,
+  faHeadphones,
+  faPencilAlt,
+  faFileAlt,
+  faComments,
+  faListCheck
+} from '@fortawesome/free-solid-svg-icons';
 import Footer from "../Footer/footer";
 
 const Home = () => {
@@ -26,6 +43,11 @@ const Home = () => {
   const [quizzes, setQuizzes] = useState([]);
   const [loadingQuizzes, setLoadingQuizzes] = useState(false);
 
+  // Attempts state
+  const [attempts, setAttempts] = useState([]);
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
+  const [showAttemptModal, setShowAttemptModal] = useState(false);
+
   const emptyData = {
     user: {
       name: "Student",
@@ -38,7 +60,7 @@ const Home = () => {
       khoahoc: { currentLevel: "Level 1", xpToNext: 0 },
       streak: { days: 0, message: "Bắt đầu học ngay hôm nay!" },
       luyentap: { lessonsCompleted: 0, averageScore: "0%" },
-      timeSpent: {time: "0h 0m", times:"This week"},
+      timeSpent: { time: "0h 0m", times: "This week" },
       achievements: [],
       weeklyGoal: {
         lessons: { completed: 0, total: 7 },
@@ -63,56 +85,35 @@ const Home = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        
+
         const userName = localStorage.getItem("userName") || "Student";
         const token = localStorage.getItem("accessToken");
-        
-        // DEBUG LOGS
-        console.log("=== MEMBERSHIP DEBUG START ===");
-        console.log("1. Token exists:", !!token);
-        console.log("2. Token preview:", token ? token.substring(0, 30) + "..." : "NO TOKEN");
-        
+
         // Initialize with empty data
         setUser({ ...emptyData.user, name: userName });
         setStatsData(emptyData.stats);
-        
+
         // Check membership if user is logged in
         if (token) {
-          console.log("3. Calling checkMembership API...");
           const membershipData = await checkMembership();
-          
-          console.log("4. API Response:", membershipData);
-          console.log("5. hasMembership value:", membershipData.hasMembership);
-          console.log("6. hasMembership type:", typeof membershipData.hasMembership);
-          console.log("7. planName:", membershipData.planName);
-          console.log("8. status:", membershipData.status);
-          
+
           setHasMembership(membershipData.hasMembership);
           setMembershipInfo(membershipData);
-          
-          console.log("9. Setting hasMembership state to:", membershipData.hasMembership);
-          
+
           // Load lessons if has membership
           if (membershipData.hasMembership) {
-            console.log("10. User HAS membership - Loading lessons");
             setLessons(tempLessons);
           } else {
-            console.log("10. User DOES NOT have membership - No lessons");
             setLessons([]);
           }
         } else {
-          console.log("3. No token found - User not logged in");
           // Not logged in
           setHasMembership(false);
           setMembershipInfo(null);
           setLessons([]);
         }
-        
-        console.log("=== MEMBERSHIP DEBUG END ===");
-        
       } catch (error) {
-        console.error("!!! Error loading data:", error);
-        console.error("Error details:", error.message);
+        console.error("Error loading data:", error);
         setUser(emptyData.user);
         setStatsData(emptyData.stats);
         setLessons([]);
@@ -154,11 +155,11 @@ const Home = () => {
 
   const getFilteredLessons = () => {
     if (!lessons || lessons.length === 0) return [];
-    
+
     if (selectedLevel === "all") {
       return lessons;
     }
-    
+
     return lessons.filter(lesson => {
       const lessonLevel = lesson.level?.toLowerCase() || '';
       return lessonLevel === selectedLevel.toLowerCase();
@@ -166,6 +167,42 @@ const Home = () => {
   };
 
   const filteredLessons = getFilteredLessons();
+
+  // ===== Attempts helpers =====
+  const formatVNDateTime = (iso) => {
+    if (!iso) return "-";
+    const d = new Date(iso);
+    return new Intl.DateTimeFormat("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(d);
+  };
+
+  const openAttemptModal = async () => {
+    setShowAttemptModal(true);
+    setLoadingAttempts(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch("https://localhost:7010/api/attempts", {
+        headers: {
+          Accept: "*/*",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      });
+      const data = await res.json();
+      setAttempts(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Load attempts error:", e);
+      setAttempts([]);
+    } finally {
+      setLoadingAttempts(false);
+    }
+  };
+
+  const closeAttemptModal = () => setShowAttemptModal(false);
 
   if (isLoading) {
     return (
@@ -194,39 +231,39 @@ const Home = () => {
 
         {/* Stats Section */}
         <Row className="stats-row">
-          <Col md={4} className="mb-4">
+          {/* <Col md={4} className="mb-4">
             <Card className="stat-card">
               <Card.Body>
                 <div className="stat-icon-wrapper" style={{ backgroundColor: 'rgba(102, 126, 234, 0.1)' }}>
-                  <FontAwesomeIcon icon={faTrophy} className="stat-icon" style={{ color: '#667eea' }}/>
+                  <FontAwesomeIcon icon={faTrophy} className="stat-icon" style={{ color: '#667eea' }} />
                 </div>
                 <h3 className="stat-value">{user?.xp || 0}</h3>
                 <p className="stat-label">Tổng XP</p>
               </Card.Body>
             </Card>
-          </Col>
+          </Col> */}
           <Col md={4} className="mb-4">
             <Card className="stat-card">
               <Card.Body>
                 <div className="stat-icon-wrapper" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)' }}>
-                  <FontAwesomeIcon icon={faFire} className="stat-icon" style={{ color: '#ffc107' }}/>
+                  <FontAwesomeIcon icon={faFire} className="stat-icon" style={{ color: '#ffc107' }} />
                 </div>
                 <h3 className="stat-value">{user?.streak || 0}</h3>
                 <p className="stat-label">Chuỗi ngày</p>
               </Card.Body>
             </Card>
           </Col>
-          <Col md={4} className="mb-4">
+          {/* <Col md={4} className="mb-4">
             <Card className="stat-card">
               <Card.Body>
                 <div className="stat-icon-wrapper" style={{ backgroundColor: 'rgba(40, 167, 69, 0.1)' }}>
-                  <FontAwesomeIcon icon={faBookOpen} className="stat-icon" style={{ color: '#28a745' }}/>
+                  <FontAwesomeIcon icon={faBookOpen} className="stat-icon" style={{ color: '#28a745' }} />
                 </div>
                 <h3 className="stat-value">{user?.level || 1}</h3>
                 <p className="stat-label">Cấp độ</p>
               </Card.Body>
             </Card>
-          </Col>
+          </Col> */}
         </Row>
 
         {/* Tab Navigation */}
@@ -286,7 +323,7 @@ const Home = () => {
                               <h6>{lesson.title}</h6>
                               <Badge bg={
                                 lesson.level === "Beginner" ? "primary" :
-                                lesson.level === "Intermediate" ? "warning" : "danger"
+                                  lesson.level === "Intermediate" ? "warning" : "danger"
                               }>
                                 {lesson.level}
                               </Badge>
@@ -373,7 +410,7 @@ const Home = () => {
               </div>
             ) : !courses || courses.length === 0 ? (
               <div className="text-center py-4">
-                <FontAwesomeIcon icon={faGraduationCap} size="3x" className="mb-3" style={{color: '#ccc'}}/>
+                <FontAwesomeIcon icon={faGraduationCap} size="3x" className="mb-3" style={{ color: '#ccc' }} />
                 <p className="text-muted">Hiện chưa có khóa học nào</p>
               </div>
             ) : (
@@ -387,8 +424,8 @@ const Home = () => {
                           <Badge bg="info">Level {course.courseLevel}</Badge>
                         </div>
                         <p className="text-muted">{course.description}</p>
-                        <Button 
-                          variant="primary" 
+                        <Button
+                          variant="primary"
                           size="sm"
                           onClick={() => navigate(`/course/${course.courseID}`)}
                         >
@@ -411,38 +448,25 @@ const Home = () => {
                 <h4 className="mb-4">Luyện tập kỹ năng</h4>
                 <Row>
                   {[
-                    { title: "Flashcards", icon: faLayerGroup, color: '#4A90E2', available: true, path: '/flashcard' },
+                    { title: "Flashcards", icon: faLayerGroup, color: '#4A90E2', available: true, path: '/flashcards' },
                     { title: "Luyện nói", icon: faMicrophone, color: '#50E3C2', available: hasMembership, path: '/speakingpractice' },
                     { title: "Luyện nghe", icon: faHeadphones, color: '#9013FE', available: hasMembership, path: '/listeningpractice' },
                     { title: "Luyện viết", icon: faPencilAlt, color: '#F5A623', available: true, path: '/writingpractice' },
                     { title: "Ngữ pháp", icon: faFileAlt, color: '#D0021B', available: true, path: '/grammar' },
-                    { title: "Quizz", icon: faComments, color: '#4A90E2', available: hasMembership, action: 'showQuizzes' }
+                    { title: "Quizz", icon: faComments, color: '#4A90E2', available: true, action: 'showQuizzes' }
                   ].map((skill, index) => (
                     <Col md={4} key={index} className="mb-4">
-                      <div 
+                      <div
                         className={`skill-card ${!skill.available ? 'skill-locked' : ''}`}
                         onClick={async () => {
                           if (skill.available) {
-                            if (skill.action === 'showQuizzes') {
-                              setLoadingQuizzes(true);
-                              try {
-                                const quizData = await getAllQuizzes();
-                                setQuizzes(quizData || []);
-                                setPracticeView('quizList');
-                              } catch (error) {
-                                console.error("Failed to fetch quizzes:", error);
-                              } finally {
-                                setLoadingQuizzes(false);
-                              }
-                            } else {
-                              navigate(skill.path);
-                            }
+                            navigate(skill.path);
                           } else {
                             navigate("/membership");
                           }
                         }}
                       >
-                        <div className="skill-icon-wrapper" style={{ backgroundColor: `${skill.color}20`}}>
+                        <div className="skill-icon-wrapper" style={{ backgroundColor: `${skill.color}20` }}>
                           <FontAwesomeIcon icon={skill.icon} className="skill-icon" style={{ color: skill.color }} />
                         </div>
                         <h6 className="skill-title">{skill.title}</h6>
@@ -457,52 +481,6 @@ const Home = () => {
                 </Row>
               </>
             )}
-
-            {practiceView === 'quizList' && (
-              <div className="quiz-list-section">
-                <div className="d-flex align-items-center mb-4">
-                  <Button variant="light" onClick={() => setPracticeView('main')} className="me-3">
-                    &larr; Quay lại
-                  </Button>
-                  <h4>Danh sách Quizz</h4>
-                </div>
-                {loadingQuizzes ? (
-                  <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-3">Đang tải danh sách quizz...</p>
-                  </div>
-                ) : quizzes.length > 0 ? (
-                  <Row>
-                    {quizzes.map(quiz => (
-                      <Col md={6} lg={4} key={quiz.id} className="mb-4">
-                        <Card 
-                          className="quiz-card h-100"
-                          onClick={() => navigate(`/quiz/start/${quiz.id}`)}
-                        >
-                          <Card.Body>
-                            <Card.Title>{quiz.title}</Card.Title>
-                            <Card.Text className="text-muted">
-                              {quiz.description}
-                            </Card.Text>
-                            <div className="d-flex justify-content-between align-items-center text-muted small">
-                              <span>{quiz.questionCount} câu hỏi</span>
-                              <span>{quiz.duration} phút</span>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                ) : (
-                  <div className="text-center py-5">
-                    <FontAwesomeIcon icon={faFileAlt} size="3x" className="mb-3 text-muted" />
-                    <p className="text-muted">Không có quizz nào để hiển thị.</p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
 
@@ -512,38 +490,38 @@ const Home = () => {
             <h4 className="mb-4">Tổng quan thành tích</h4>
             <Row>
               {[
-                { 
-                  title: "Cấp độ hiện tại", 
-                  icon: faGraduationCap, 
-                  color: '#667eea', 
-                  value: statsData?.khoahoc?.currentLevel || 'Level 1', 
-                  label: `${statsData?.khoahoc?.xpToNext || 0} XP để lên cấp` 
+                {
+                  title: "Cấp độ hiện tại",
+                  icon: faGraduationCap,
+                  color: '#667eea',
+                  value: statsData?.khoahoc?.currentLevel || 'Level 1',
+                  label: `${statsData?.khoahoc?.xpToNext || 0} XP để lên cấp`
                 },
-                { 
-                  title: "Chuỗi ngày học", 
-                  icon: faFire, 
-                  color: '#ffc107', 
-                  value: `${statsData?.streak?.days || 0} ngày`, 
-                  label: statsData?.streak?.message || 'Bắt đầu học ngay!' 
+                {
+                  title: "Chuỗi ngày học",
+                  icon: faFire,
+                  color: '#ffc107',
+                  value: `${statsData?.streak?.days || 0} ngày`,
+                  label: statsData?.streak?.message || 'Bắt đầu học ngay!'
                 },
-                { 
-                  title: "Bài học hoàn thành", 
-                  icon: faCheckCircle, 
-                  color: '#28a745', 
-                  value: statsData?.luyentap?.lessonsCompleted || 0, 
-                  label: `Điểm trung bình: ${statsData?.luyentap?.averageScore || '0%'}` 
+                {
+                  title: "Bài học hoàn thành",
+                  icon: faCheckCircle,
+                  color: '#28a745',
+                  value: statsData?.luyentap?.lessonsCompleted || 0,
+                  label: `Điểm trung bình: ${statsData?.luyentap?.averageScore || '0%'}`
                 },
-                { 
-                  title: "Thời gian học", 
-                  icon: faClock, 
-                  color: '#17a2b8', 
-                  value: statsData?.timeSpent?.time || '0h 0m', 
-                  label: statsData?.timeSpent?.times || 'Tuần này' 
+                {
+                  title: "Thời gian học",
+                  icon: faClock,
+                  color: '#17a2b8',
+                  value: statsData?.timeSpent?.time || '0h 0m',
+                  label: statsData?.timeSpent?.times || 'Tuần này'
                 }
               ].map((stat, index) => (
                 <Col md={6} lg={3} key={index} className="mb-4">
                   <div className="stat-overview-card">
-                    <div className="icon-wrapper" style={{ backgroundColor: `${stat.color}20`}}>
+                    <div className="icon-wrapper" style={{ backgroundColor: `${stat.color}20` }}>
                       <FontAwesomeIcon icon={stat.icon} className="stat-icon" style={{ color: stat.color }} />
                     </div>
                     <h6 className="stat-title">{stat.title}</h6>
@@ -560,59 +538,148 @@ const Home = () => {
                   <Card.Body>
                     <h5>Mục tiêu hàng tuần</h5>
                     <p className="text-muted">Duy trì đà học tập của bạn!</p>
-                    
+
                     <div className="weekly-goal-item mb-3">
                       <div className="d-flex justify-content-between mb-1">
                         <span>Hoàn thành bài học</span>
                         <span>{statsData?.weeklyGoal?.lessons?.completed || 0}/{statsData?.weeklyGoal?.lessons?.total || 7}</span>
                       </div>
-                      <ProgressBar 
-                        now={((statsData?.weeklyGoal?.lessons?.completed || 0) / (statsData?.weeklyGoal?.lessons?.total || 7)) * 100} 
+                      <ProgressBar
+                        now={((statsData?.weeklyGoal?.lessons?.completed || 0) / (statsData?.weeklyGoal?.lessons?.total || 7)) * 100}
                         className="custom-progress-bar"
                       />
                     </div>
-                    
+
                     <div className="weekly-goal-item">
                       <div className="d-flex justify-content-between mb-1">
                         <span>Thời gian học</span>
                         <span>{statsData?.weeklyGoal?.studyTime?.completed || 0}/{statsData?.weeklyGoal?.studyTime?.total || 300} {statsData?.weeklyGoal?.studyTime?.unit || 'min'}</span>
                       </div>
-                      <ProgressBar 
-                        now={((statsData?.weeklyGoal?.studyTime?.completed || 0) / (statsData?.weeklyGoal?.studyTime?.total || 300)) * 100} 
+                      <ProgressBar
+                        now={((statsData?.weeklyGoal?.studyTime?.completed || 0) / (statsData?.weeklyGoal?.studyTime?.total || 300)) * 100}
                         className="custom-progress-bar"
                       />
                     </div>
                   </Card.Body>
                 </Card>
               </Col>
+
+              {/* ĐÃ ĐỔI thành thẻ Attempt */}
               <Col md={12} lg={6} className="mb-4">
                 <Card className="h-100 detail-card">
-                  <Card.Body>
-                    <h5>Thành tích gần đây</h5>
-                    <p className="text-muted">Các cột mốc mới nhất của bạn.</p>
-                    {statsData?.achievements && statsData.achievements.length > 0 ? (
-                      statsData.achievements.map((achievement, index) => (
-                        <div key={index} className="achievement-item">
-                          <FontAwesomeIcon icon={faTrophy} className="achievement-icon" />
-                          <div className="achievement-details">
-                            <h6>{achievement.title}</h6>
-                            <p className="mb-0 text-muted">{achievement.description}</p>
-                          </div>
-                          <span className="achievement-time text-muted">{achievement.time}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-3">
-                        <FontAwesomeIcon icon={faTrophy} size="2x" className="text-muted mb-2"/>
-                        <p className="text-muted">Chưa có thành tích nào.</p>
+                  <Card.Body className="d-flex flex-column">
+                    <div className="d-flex align-items-center justify-content-between mb-2">
+                      <div>
+                        <h5 className="mb-1">Attempt</h5>
+                        <p className="text-muted mb-0">Danh sách bài làm (quiz attempts) của bạn</p>
                       </div>
-                    )}
+                      <div className="d-flex align-items-center gap-2">
+                        <div
+                          className="d-inline-flex align-items-center px-3 py-1 rounded"
+                          style={{ backgroundColor: "rgba(102,126,234,0.1)" }}
+                        >
+                          <FontAwesomeIcon icon={faListCheck} className="me-2" style={{ color: "#667eea" }} />
+                          <strong>{attempts.length}</strong>
+                        </div>
+                        <Button variant="primary" size="sm" onClick={openAttemptModal}>
+                          Xem Attempt
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Gợi ý 3 attempt gần nhất (nếu đã từng load) */}
+                    <div className="mt-3">
+                      {attempts && attempts.length > 0 ? (
+                        attempts.slice(0, 3).map((a) => (
+                          <div
+                            key={a.attemptID}
+                            className="d-flex align-items-center justify-content-between border rounded p-2 mb-2"
+                          >
+                            <div>
+                              <div className="fw-semibold">{a.quizTitle || "Quiz"}</div>
+                              <div className="text-muted small">
+                                #{a.attemptID} • {a.course || "—"} • {formatVNDateTime(a.submittedAt)}
+                              </div>
+                            </div>
+                            <div className="text-end">
+                              <div className="badge bg-light text-dark">
+                                {a.status || "SUBMITTED"}
+                              </div>
+                              <div className="small text-muted mt-1">
+                                Score: {a.autoScore ?? 0}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted py-3">
+                          Chưa có attempt nào — bấm “Xem Attempt” để tải danh sách.
+                        </div>
+                      )}
+                    </div>
                   </Card.Body>
                 </Card>
               </Col>
             </Row>
           </div>
         )}
+
+        {/* ===== Attempt Modal ===== */}
+        <Modal show={showAttemptModal} onHide={closeAttemptModal} size="lg" centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Danh sách Attempt</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {loadingAttempts ? (
+              <div className="text-center py-4">
+                <Spinner animation="border" variant="primary" />
+                <div className="mt-2">Đang tải attempts...</div>
+              </div>
+            ) : attempts.length === 0 ? (
+              <div className="text-center text-muted py-3">
+                Không có attempt nào để hiển thị.
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <Table hover bordered>
+                  <thead>
+                    <tr>
+                      <th>Attempt ID</th>
+                      <th>Quiz</th>
+                      <th>Khoá học</th>
+                      <th>Nộp lúc</th>
+                      <th>Điểm</th>
+                      <th>Trạng thái</th>
+                      <th>Student ID</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attempts.map((a) => (
+                      <tr key={a.attemptID}>
+                        <td>#{a.attemptID}</td>
+                        <td>{a.quizTitle || "—"}</td>
+                        <td>{a.course || "—"}</td>
+                        <td>{formatVNDateTime(a.submittedAt)}</td>
+                        <td>{a.autoScore ?? 0}</td>
+                        <td>
+                          <Badge bg={a.status === "SUBMITTED" ? "info" : "secondary"}>
+                            {a.status || "SUBMITTED"}
+                          </Badge>
+                        </td>
+                        <td>{a.studentID}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={closeAttemptModal}>
+              Đóng
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </Container>
     </div>
   );

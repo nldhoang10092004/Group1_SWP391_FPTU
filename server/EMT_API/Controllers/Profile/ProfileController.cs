@@ -28,13 +28,15 @@ namespace EMT_API.Controllers.Profile
         public async Task<ActionResult> GetDetail()
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var detail = await _db.UserDetails.FirstOrDefaultAsync(x => x.AccountID == userId);
-            if (detail == null) return NotFound("Account not found");
+            var user = await _db.Accounts.FirstOrDefaultAsync(x => x.AccountID == userId);
+            if (user == null) return NotFound("Account not found");
+            var detail = await _db.UserDetails.FirstOrDefaultAsync(x => x.AccountID == user.AccountID);
 
             return Ok(new
             {
                 detail.AccountID,
                 detail.FullName,
+                user.Email,
                 detail.Dob,
                 detail.Address,
                 detail.Phone

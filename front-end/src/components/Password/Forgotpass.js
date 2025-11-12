@@ -16,8 +16,6 @@ export default function ForgotPass() {
       const res = await forgotPasswordApi(email);
       console.log("✅ Kết quả gửi OTP:", res.data);
       setSent(true);
-      // Nếu backend gửi token qua email thật, bạn không cần navigate ngay
-      // navigate("/resetpassword?token=fakeToken123"); // nếu cần test nhanh thì bỏ comment dòng này
     } catch (err) {
       console.error("❌ Lỗi khi gửi OTP:", err);
       setError("Gửi OTP thất bại. Vui lòng kiểm tra lại email.");

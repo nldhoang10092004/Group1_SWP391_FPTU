@@ -184,6 +184,21 @@ namespace EMT_API.Controllers.AdminSide
                 if (quiz == null)
                     return NotFound(new { message = "Quiz not found or not global" });
 
+                var attemptIds = await _db.Attempts
+                    .Where(a => a.QuizID == quizId)
+                    .Select(a => a.AttemptID)
+                    .ToListAsync();
+                if (attemptIds.Any())
+                {
+                    var answers = _db.Answers.Where(a => attemptIds.Contains(a.AttemptID));
+                    if (answers.Any()) _db.Answers.RemoveRange(answers);
+
+                    var attempts = _db.Attempts.Where(a => attemptIds.Contains(a.AttemptID));
+                    if (attempts.Any()) _db.Attempts.RemoveRange(attempts);
+                }
+
+
+
                 var gIds = quiz.QuestionGroups.Select(g => g.GroupID).ToList();
                 var qIds = quiz.QuestionGroups.SelectMany(g => g.Questions.Select(q => q.QuestionID)).ToList();
                 var flatQIds = await _db.Questions
@@ -340,6 +355,84 @@ namespace EMT_API.Controllers.AdminSide
                 await tx.RollbackAsync();
                 return StatusCode(500, new { message = "Import failed", error = ex.Message });
             }
+        }
+        // ===========================================
+        // 6️⃣ Cập nhật thông tin quiz global
+        // ===========================================
+        [HttpPut("{quizId:int}")]
+        public async Task<IActionResult> UpdateGlobalQuiz(int quizId, [FromBody] UpdateQuizRequest req)
+        {
+            var quiz = await _db.Quizzes
+                .Include(q => q.QuestionGroups)
+                    .ThenInclude(g => g.Questions)
+                        .ThenInclude(qs => qs.Options)
+                .FirstOrDefaultAsync(q => q.QuizID == quizId && q.CourseID == null);
+
+            if (quiz == null)
+                return NotFound(new { message = "Quiz not found or not global" });
+
+            // ✅ Cập nhật thông tin cơ bản
+            if (!string.IsNullOrWhiteSpace(req.Title))
+                quiz.Title = req.Title;
+
+            if (!string.IsNullOrWhiteSpace(req.Description))
+                quiz.Description = req.Description;
+
+            if (!string.IsNullOrWhiteSpace(req.QuizType) && byte.TryParse(req.QuizType, out var quizType))
+                quiz.QuizType = quizType;
+
+            if (req.IsActive.HasValue)
+                quiz.IsActive = req.IsActive.Value;
+
+            // ✅ Cập nhật nhóm và câu hỏi nếu có gửi kèm
+            if (req.Groups != null && req.Groups.Any())
+            {
+                foreach (var g in req.Groups)
+                {
+                    var existingGroup = quiz.QuestionGroups.FirstOrDefault(x => x.GroupID == g.GroupID);
+                    if (existingGroup != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(g.Instruction))
+                            existingGroup.Instruction = g.Instruction;
+
+                        // ✅ Cập nhật câu hỏi trong group
+                        if (g.Questions != null && g.Questions.Any())
+                        {
+                            foreach (var q in g.Questions)
+                            {
+                                var existingQ = existingGroup.Questions.FirstOrDefault(x => x.QuestionID == q.QuestionID);
+                                if (existingQ != null)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(q.Content))
+                                        existingQ.Content = q.Content;
+                                    if (!string.IsNullOrWhiteSpace(q.QuestionType) && byte.TryParse(q.QuestionType, out var qType))
+                                        existingQ.QuestionType = qType;
+
+                                    if (q.Options != null && q.Options.Any())
+                                    {
+                                        foreach (var o in q.Options)
+                                        {
+                                            var existingOpt = existingQ.Options.FirstOrDefault(x => x.OptionID == o.OptionID);
+                                            if (existingOpt != null)
+                                            {
+                                                if (!string.IsNullOrWhiteSpace(o.Content))
+                                                    existingOpt.Content = o.Content;
+                                                if (o.IsCorrect.HasValue)
+                                                    existingOpt.IsCorrect = o.IsCorrect.Value;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            quiz.CreatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            return Ok(new { message = "Quiz updated successfully", quizId = quiz.QuizID });
         }
     }
 }

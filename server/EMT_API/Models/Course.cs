@@ -37,7 +37,13 @@ public partial class Course
     [InverseProperty("Course")]
     public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
 
+    [InverseProperty("Course")]
+    public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+
+
     [ForeignKey("TeacherID")]
     [InverseProperty("Courses")]
     public virtual Teacher Teacher { get; set; } = null!;
+
+
 }

@@ -1,4 +1,8 @@
-﻿using EMT_API.Data;
+﻿using EMT_API.DAOs.CourseDAO;
+using EMT_API.DAOs.FlashcardDAO;
+using EMT_API.DAOs.UserDAO;
+using EMT_API.Data;
+using EMT_API.DTOs.Public;
 using EMT_API.Middlewares;
 using EMT_API.Security; // để dùng TokenService
 using EMT_API.Services;
@@ -11,6 +15,7 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+
 
 namespace EMT_API
 {
@@ -119,6 +124,13 @@ namespace EMT_API
 
             builder.Services.AddAuthorization();
 
+            // ===== DAO Services =====
+            builder.Services.AddScoped<IUserDAO, UserDAO>();
+            builder.Services.AddScoped<IFlashcardDAO, FlashcardDAO>();
+            builder.Services.AddScoped<ICourseDAO, CourseDAO>();
+
+
+            // ===== OTP Service =====
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<IOtpService, OtpService>();
 
@@ -133,6 +145,8 @@ namespace EMT_API
             //AI Exam Services
             builder.Services.AddScoped<AIWritingService>();
             builder.Services.AddScoped<AISpeakingService>();
+            builder.Services.AddScoped<AIQuizService>();
+
 
             //Google Drive Service
             builder.Services.AddSingleton<GoogleDriveService>();
