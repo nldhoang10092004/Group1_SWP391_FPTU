@@ -1,10 +1,9 @@
-﻿using EMT_API.Data;
-using EMT_API.DTOs.Flashcard;
+﻿using EMT_API.DTOs.Flashcard;
 using EMT_API.DTOs.FlashCard;
 using EMT_API.Utils;
+using EMT_API.DAOs.FlashcardDAO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace EMT_API.Controllers
@@ -13,16 +12,13 @@ namespace EMT_API.Controllers
     [Route("api/flashcard")]
     public class FlashcardController : ControllerBase
     {
-        private readonly EMTDbContext _db;
+        private readonly IFlashcardDAO _dao;
 
-        public FlashcardController(EMTDbContext db)
+        public FlashcardController(IFlashcardDAO dao)
         {
-            _db = db;
+            _dao = dao;
         }
 
-        // ============================================
-        // Helper: Lấy userId từ JWT
-        // ============================================
         private int? GetUserId()
         {
             var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -30,76 +26,66 @@ namespace EMT_API.Controllers
             return string.IsNullOrEmpty(idClaim) ? null : int.Parse(idClaim);
         }
 
-        // ============================================
-        // 1️⃣ Lấy danh sách flashcard set
-        // ============================================
+        // ---------------------------
+        // 1️⃣ Lấy danh sách flashcard set public
+        // ---------------------------
         [HttpGet("sets")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllPublicSets()
         {
-            var sets = await _db.FlashcardSets
-                .Where(s => s.CourseId == null)
-                .Select(s => new FlashcardSetDto
-                {
-                    SetID = s.SetId,
-                    Title = s.Title,
-                    Description = s.Description
-                })
-                .ToListAsync();
-
-            return Ok(sets);
+            var sets = await _dao.GetAllPublicSetsAsync();
+            var dtos = sets.Select(s => new FlashcardSetDto
+            {
+                SetID = s.SetId,
+                Title = s.Title,
+                Description = s.Description
+            });
+            return Ok(dtos);
         }
 
+        // ---------------------------
+        // 2️⃣ Lấy danh sách theo course
+        // ---------------------------
         [HttpGet("sets/{courseId:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllSetsByCourse(int courseId)
         {
-            var sets = await _db.FlashcardSets
-                .Where(s => s.CourseId == courseId)
-                .Select(s => new FlashcardSetDto
-                {
-                    SetID = s.SetId,
-                    CourseID = s.CourseId,
-                    Title = s.Title,
-                    Description = s.Description
-                })
-                .ToListAsync();
-
-            return Ok(sets);
+            var sets = await _dao.GetSetsByCourseAsync(courseId);
+            var dtos = sets.Select(s => new FlashcardSetDto
+            {
+                SetID = s.SetId,
+                CourseID = s.CourseId,
+                Title = s.Title,
+                Description = s.Description
+            });
+            return Ok(dtos);
         }
 
-        // ============================================
-        // 2️⃣ Lấy chi tiết 1 set (check membership nếu có CourseId)
-        // ============================================
+        // ---------------------------
+        // 3️⃣ Lấy chi tiết 1 set (check membership)
+        // ---------------------------
         [HttpGet("set/{setId:int}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetSetDetail(int setId)
+        public async Task<IActionResult> GetSetDetail(int setId, [FromServices] EMT_API.Data.EMTDbContext db)
         {
-            var set = await _db.FlashcardSets
-                .Include(s => s.FlashcardItems)
-                .FirstOrDefaultAsync(s => s.SetId == setId);
-
+            var set = await _dao.GetSetDetailAsync(setId);
             if (set == null)
                 return NotFound(new { message = "Flashcard set not found" });
 
-            // Nếu có CourseId → yêu cầu membership
+            // Check quyền nếu có CourseId
             if (set.CourseId.HasValue)
             {
-                if (User.IsInRole("ADMIN") || User.IsInRole("TEACHER"))
-                {
-                }
-                else
+                if (!User.IsInRole("ADMIN") && !User.IsInRole("TEACHER"))
                 {
                     var userId = GetUserId();
                     if (userId == null)
                         return Unauthorized(new { message = "Login required to access this flashcard set." });
 
-                    bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, userId.Value);
+                    bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(db, userId.Value);
                     if (!hasMembership)
                         return StatusCode(403, new { message = "Membership required or expired." });
                 }
             }
-
 
             var dto = new FlashcardSetDetailDto
             {
@@ -118,7 +104,5 @@ namespace EMT_API.Controllers
 
             return Ok(dto);
         }
-
-      
     }
 }
