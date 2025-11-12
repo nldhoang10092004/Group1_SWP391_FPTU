@@ -18,6 +18,7 @@ server/EMT_API.Tests/obj/
 .idea/
 bin/
 obj/
+node_modules/
 # Visual Studio cache
 .vs/
 *.vscode/
