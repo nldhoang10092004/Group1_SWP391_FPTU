@@ -118,6 +118,35 @@ namespace EMT_API.Services
             return $"{_publicBaseUrl}/{key}";
         }
 
+        // ===================================================
+        // 🔹 Upload chứng chỉ cho giáo viên (certificate)
+        // ===================================================
+        public async Task<string> UploadTeacherCertAsync(Stream fileStream, string fileName, string contentType)
+        {
+            // Cho phép file hình hoặc PDF
+            var allowed = new[] { "image/jpeg", "image/png", "application/pdf" };
+            if (!allowed.Contains(contentType.ToLower()))
+                throw new InvalidOperationException("Invalid certificate file type. Only JPG, PNG, or PDF allowed.");
+
+            var key = $"certificates/teacher/{Guid.NewGuid():N}{Path.GetExtension(fileName)}";
+
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key,
+                InputStream = fileStream,
+                ContentType = contentType,
+                CannedACL = S3CannedACL.PublicRead
+            };
+
+            // ⚙️ Fix lỗi STREAMING-AWS4-HMAC-SHA256-PAYLOAD-TRAILER
+            request.DisablePayloadSigning = true;
+
+            await _s3.PutObjectAsync(request);
+            return $"{_publicBaseUrl}/{key}";
+        }
+
+
 
         // ===================================================
         // 🔹 Xoá file cũ theo URL
