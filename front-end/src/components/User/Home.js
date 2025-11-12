@@ -453,7 +453,7 @@ const Home = () => {
                     { title: "Luyện nghe", icon: faHeadphones, color: '#9013FE', available: hasMembership, path: '/listeningpractice' },
                     { title: "Luyện viết", icon: faPencilAlt, color: '#F5A623', available: true, path: '/writingpractice' },
                     { title: "Ngữ pháp", icon: faFileAlt, color: '#D0021B', available: true, path: '/grammar' },
-                    { title: "Quizz", icon: faComments, color: '#4A90E2', available: hasMembership, path: '/quiz/publish' }
+                    { title: "Quizz", icon: faComments, color: '#4A90E2', available: true, action: 'showQuizzes' }
                   ].map((skill, index) => (
                     <Col md={4} key={index} className="mb-4">
                       <div
