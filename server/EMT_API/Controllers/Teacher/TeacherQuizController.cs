@@ -1,5 +1,6 @@
 ﻿using EMT_API.Data;
 using EMT_API.DTOs.Quiz;
+using EMT_API.DTOs.TeacherQuiz;
 using EMT_API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -203,6 +204,35 @@ namespace EMT_API.Controllers.TeacherSide
             });
         }
 
+        [HttpPut("{quizId:int}")]
+        public async Task<IActionResult> UpdateQuiz(int quizId, [FromBody] TeacherUpdateQuizRequest req)
+        {
+            if (!await EnsureTeacherOwnsQuiz(quizId))
+                return Forbid();
+
+            var quiz = await _db.Quizzes.FirstOrDefaultAsync(q => q.QuizID == quizId);
+            if (quiz == null)
+                return NotFound(new { message = "Quiz not found" });
+
+            // Cập nhật các trường cho phép
+            quiz.Title = req.Title ?? quiz.Title;
+            quiz.Description = req.Description ?? quiz.Description;
+            quiz.QuizType = (byte)(req.QuizType > 0 ? req.QuizType : quiz.QuizType);
+            quiz.IsActive = req.IsActive ?? quiz.IsActive;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Quiz updated successfully",
+                quizId = quiz.QuizID,
+                title = quiz.Title,
+                description = quiz.Description,
+                quizType = quiz.QuizType,
+                isActive = quiz.IsActive
+            });
+        }
+
         // ===========================================
         // 🔹 4️⃣ Xoá quiz (và toàn bộ dữ liệu con)
         // ===========================================
@@ -222,6 +252,19 @@ namespace EMT_API.Controllers.TeacherSide
 
                 if (quiz == null)
                     return NotFound(new { message = "Quiz not found" });
+
+                var attemptIds = await _db.Attempts
+                    .Where(a => a.QuizID == quizId)
+                    .Select(a => a.AttemptID)
+                    .ToListAsync();
+                if (attemptIds.Any())
+                {
+                    var answers = _db.Answers.Where(a => attemptIds.Contains(a.AttemptID));
+                    if (answers.Any()) _db.Answers.RemoveRange(answers);
+
+                    var attempts = _db.Attempts.Where(a => attemptIds.Contains(a.AttemptID));
+                    if (attempts.Any()) _db.Attempts.RemoveRange(attempts);
+                }
 
                 // Lấy danh sách GroupID và QuestionID để xoá phụ thuộc
                 var gIds = quiz.QuestionGroups.Select(g => g.GroupID).ToList();
