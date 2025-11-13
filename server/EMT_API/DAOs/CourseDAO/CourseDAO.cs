@@ -173,6 +173,11 @@ namespace EMT_API.DAOs.CourseDAO
         }
 
         // -------- VIDEO --------
+        public async Task<CourseVideo?> GetVideoAsync(int videoId)
+        {
+            var video = await _db.CourseVideos.FindAsync(videoId);
+            return video;
+        }
         public async Task<CourseVideo?> AddVideoAsync(CourseVideo video)
         {
             _db.CourseVideos.Add(video);

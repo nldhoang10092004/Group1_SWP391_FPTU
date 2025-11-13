@@ -1,10 +1,10 @@
-﻿using EMT_API.Data;
+﻿using EMT_API.DAOs;
+using EMT_API.DAOs.CourseDAO;
 using EMT_API.DTOs.Public;
-using EMT_API.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace EMT_API.Controllers.Video
 {
@@ -12,52 +12,52 @@ namespace EMT_API.Controllers.Video
     [Route("api/public/video")]
     public class VideoController : ControllerBase
     {
-        private readonly EMTDbContext _db;
-        public VideoController(EMTDbContext db) => _db = db;
+        private readonly ICourseDAO _courseDao;
+        private readonly IMembershipDAO _membershipDao;
+
+        public VideoController(ICourseDAO courseDao, IMembershipDAO membershipDao)
+        {
+            _courseDao = courseDao;
+            _membershipDao = membershipDao;
+        }
 
         [HttpGet("{videoId:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetVideo(int videoId)
         {
-            var videoDto = await _db.CourseVideos
-                .AsNoTracking()
-                .Where(v => v.VideoID == videoId)
-                .Select(v => new VideoDto
-                {
-                    VideoID = v.VideoID,
-                    VideoName = v.VideoName,
-                    VideoURL = v.VideoURL,
-                    IsPreview = v.IsPreview
-                })
-                .FirstOrDefaultAsync();
-
-            if (videoDto == null)
+            var video = await _courseDao.GetVideoAsync(videoId);
+            if (video == null)
                 return NotFound(new { message = "Video not found" });
 
-            // ✅ 1. Ai cũng xem được nếu là preview
-            if (videoDto.IsPreview)
+            var dto = new VideoDto
             {
-                videoDto.CanWatch = true;
-                videoDto.RequiresMembership = false;
-                return Ok(videoDto);
+                VideoID = video.VideoID,
+                VideoName = video.VideoName,
+                VideoURL = video.VideoURL,
+                IsPreview = video.IsPreview
+            };
+
+            // ✅ 1️⃣ Ai cũng xem được nếu là preview
+            if (dto.IsPreview)
+            {
+                dto.CanWatch = true;
+                dto.RequiresMembership = false;
+                return Ok(dto);
             }
 
-            // ✅ 2. Nếu có token -> check membership
+            // ✅ 2️⃣ Nếu user có token thì check membership
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                              ?? User.FindFirst("sub")?.Value; // fallback nếu claim nameid không có
+                            ?? User.FindFirst("sub")?.Value;
 
-            if (!string.IsNullOrEmpty(userIdClaim))
+            if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var userId))
             {
-                if (!int.TryParse(userIdClaim, out var userId))
-                    return Unauthorized(new { message = "Invalid token" });
-
-                bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, userId);
+                bool hasMembership = await _membershipDao.HasActiveMembershipAsync(userId);
 
                 if (hasMembership)
                 {
-                    videoDto.CanWatch = true;
-                    videoDto.RequiresMembership = true;
-                    return Ok(videoDto);
+                    dto.CanWatch = true;
+                    dto.RequiresMembership = true;
+                    return Ok(dto);
                 }
 
                 return StatusCode(403, new
@@ -65,17 +65,17 @@ namespace EMT_API.Controllers.Video
                     message = "Your membership has expired or is inactive",
                     video = new
                     {
-                        videoDto.VideoID,
-                        videoDto.VideoName,
-                        videoDto.IsPreview,
+                        dto.VideoID,
+                        dto.VideoName,
+                        dto.IsPreview,
                         CanWatch = false,
                         RequiresMembership = true
                     }
                 });
             }
 
-            // ✅ 3. Guest + không preview
-            return Unauthorized(new { message = "You have to buy membership to watch this video" });
+            // ✅ 3️⃣ Guest + không preview
+            return Unauthorized(new { message = "You must have an active membership to watch this video." });
         }
     }
 }

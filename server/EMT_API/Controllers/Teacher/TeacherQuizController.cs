@@ -1,12 +1,10 @@
-﻿using EMT_API.Data;
+﻿using EMT_API.DAOs;
 using EMT_API.DTOs.Quiz;
 using EMT_API.DTOs.TeacherQuiz;
-using EMT_API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace EMT_API.Controllers.TeacherSide
 {
@@ -15,431 +13,107 @@ namespace EMT_API.Controllers.TeacherSide
     [Authorize(Roles = "TEACHER")]
     public class TeacherQuizController : ControllerBase
     {
-        private readonly EMTDbContext _db;
-        public TeacherQuizController(EMTDbContext db) => _db = db;
+        private readonly IQuizDAO _quizDao;
+
+        public TeacherQuizController(IQuizDAO quizDao)
+        {
+            _quizDao = quizDao;
+        }
 
         private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // ✅ Check quyền sở hữu course
-        private async Task<bool> EnsureTeacherOwnsCourse(int courseId)
-        {
-            var uid = GetUserId();
-            return await _db.Courses.AsNoTracking()
-                .AnyAsync(c => c.CourseID == courseId && c.TeacherID == uid);
-        }
-
-        // ✅ Check quyền sở hữu quiz
-        private async Task<bool> EnsureTeacherOwnsQuiz(int quizId)
-        {
-            var uid = GetUserId();
-            return await _db.Quizzes
-                .Include(q => q.Course)
-                .AnyAsync(q => q.QuizID == quizId && q.Course.TeacherID == uid);
-        }
-
-        // ===========================================
-        // 🔹 1️⃣ Lấy danh sách quiz theo course (teacher)
-        // ===========================================
+        // =====================================================
+        // 🔹 1️⃣ Lấy danh sách quiz theo course
+        // =====================================================
         [HttpGet("course/{courseId:int}")]
         public async Task<IActionResult> GetQuizzesByCourse(int courseId)
         {
-            if (!await EnsureTeacherOwnsCourse(courseId))
+            var teacherId = GetUserId();
+
+            if (!await _quizDao.TeacherOwnsCourseAsync(teacherId, courseId))
                 return Forbid();
 
-            var quizzes = await _db.Quizzes
-                .Where(q => q.CourseID == courseId)
-                .Select(q => new QuizDto
-                {
-                    QuizID = q.QuizID,
-                    Title = q.Title,
-                    Description = q.Description,
-                    QuizType = q.QuizType
-                })
-                .ToListAsync();
-
+            var quizzes = await _quizDao.GetQuizzesByCourseAsync(courseId);
             return Ok(quizzes);
         }
 
-        // ===========================================
-        // 🔹 2️⃣ Lấy chi tiết quiz (giống student, nhưng không cần check membership)
-        // ===========================================
+        // =====================================================
+        // 🔹 2️⃣ Lấy chi tiết quiz
+        // =====================================================
         [HttpGet("{quizId:int}")]
         public async Task<IActionResult> GetQuizDetail(int quizId)
         {
-            if (!await EnsureTeacherOwnsQuiz(quizId))
+            var teacherId = GetUserId();
+
+            if (!await _quizDao.TeacherOwnsQuizAsync(teacherId, quizId))
                 return Forbid();
 
-            var quiz = await _db.Quizzes
-                .Include(q => q.QuestionGroups)
-                    .ThenInclude(g => g.Questions)
-                        .ThenInclude(qs => qs.Options)
-                .Include(q => q.Questions)
-                    .ThenInclude(qs => qs.Options)
-                .FirstOrDefaultAsync(q => q.QuizID == quizId);
+            var quiz = await _quizDao.GetQuizDetailAsync(quizId);
+            if (quiz == null) return NotFound(new { message = "Quiz not found" });
 
-            if (quiz == null)
-                return NotFound(new { message = "Quiz not found" });
-
-            // Lấy asset tương tự student
-            var groupIds = quiz.QuestionGroups.Select(g => g.GroupID).ToList();
-            var questionIds = quiz.QuestionGroups.SelectMany(g => g.Questions.Select(q => q.QuestionID)).ToList();
-
-            var assets = await _db.Assets
-                .Where(a => (a.OwnerType == 1 && groupIds.Contains(a.OwnerID))
-                         || (a.OwnerType == 2 && questionIds.Contains(a.OwnerID)))
-                .ToListAsync();
-
-            var dto = new QuizDetailDto
-            {
-                QuizID = quiz.QuizID,
-                Title = quiz.Title,
-                Description = quiz.Description,
-                Groups = new List<QuestionGroupDto>()
-            };
-
-            if (quiz.QuestionGroups.Any())
-            {
-                dto.Groups = quiz.QuestionGroups.Select(g => new QuestionGroupDto
-                {
-                    GroupID = g.GroupID,
-                    Instruction = g.Instruction,
-                    Assets = assets
-                        .Where(a => a.OwnerType == 1 && a.OwnerID == g.GroupID)
-                        .Select(a => new AssetDto
-                        {
-                            AssetID = a.AssetID,
-                            AssetType = a.AssetType,
-                            Url = a.Url,
-                            ContentText = a.ContentText,
-                            Caption = a.Caption,
-                            MimeType = a.MimeType
-                        }).ToList(),
-                    Questions = g.Questions.Select(qs => new QuestionDto
-                    {
-                        QuestionID = qs.QuestionID,
-                        Content = qs.Content,
-                        QuestionType = qs.QuestionType,
-                        Options = qs.Options.Select(o => new OptionDto
-                        {
-                            OptionID = o.OptionID,
-                            Content = o.Content,
-                            IsCorrect = o.IsCorrect
-                        }).ToList(),
-                        Assets = assets
-                            .Where(a => a.OwnerType == 2 && a.OwnerID == qs.QuestionID)
-                            .Select(a => new AssetDto
-                            {
-                                AssetID = a.AssetID,
-                                AssetType = a.AssetType,
-                                Url = a.Url,
-                                ContentText = a.ContentText,
-                                Caption = a.Caption,
-                                MimeType = a.MimeType
-                            }).ToList()
-                    }).ToList()
-                }).ToList();
-            }
-            else
-            {
-                // ✅ Nếu quiz không có group, vẫn thêm 1 group "ảo" để chứa câu hỏi rời
-                dto.Groups.Add(new QuestionGroupDto
-                {
-                    GroupID = 0,
-                    Instruction = "Ungrouped questions",
-                    Questions = quiz.Questions.Select(q => new QuestionDto
-                    {
-                        QuestionID = q.QuestionID,
-                        Content = q.Content,
-                        QuestionType = q.QuestionType,
-                        Options = q.Options.Select(o => new OptionDto
-                        {
-                            OptionID = o.OptionID,
-                            Content = o.Content,
-                            IsCorrect = o.IsCorrect
-                        }).ToList(),
-                        Assets = assets
-                            .Where(a => a.OwnerType == 2 && a.OwnerID == q.QuestionID)
-                            .Select(a => new AssetDto
-                            {
-                                AssetID = a.AssetID,
-                                AssetType = a.AssetType,
-                                Url = a.Url,
-                                ContentText = a.ContentText,
-                                Caption = a.Caption,
-                                MimeType = a.MimeType
-                            }).ToList()
-                    }).ToList()
-                });
-            }
-
-            return Ok(dto);
+            return Ok(quiz);
         }
 
-        // ===========================================
-        // 🔹 3️⃣ Tạo quiz mới (teacher tạo trong course của mình)
-        // ===========================================
+        // =====================================================
+        // 🔹 3️⃣ Tạo quiz mới trong course của giáo viên
+        // =====================================================
         [HttpPost]
         public async Task<IActionResult> CreateQuiz([FromBody] TeacherCreateQuizRequest req)
         {
-            if (!await EnsureTeacherOwnsCourse(req.CourseID))
+            var teacherId = GetUserId();
+
+            if (!await _quizDao.TeacherOwnsCourseAsync(teacherId, req.CourseID))
                 return Forbid();
 
-            var quiz = new EMT_API.Models.Quiz //Problem when use the same name as quiz dto namespace
-            {
-                CourseID = req.CourseID,
-                Title = req.Title,
-                Description = req.Description,
-                QuizType = req.QuizType,      // 1=Listening, 2=Reading, 3=Writing, 4=Speaking
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _db.Quizzes.Add(quiz);
-            await _db.SaveChangesAsync();
-
-            return Ok(new
-            {
-                message = "Quiz created successfully",
-                quizId = quiz.QuizID
-            });
+            var quizId = await _quizDao.CreateQuizAsync(req.CourseID, req.Title, req.Description, req.QuizType);
+            return Ok(new { message = "Quiz created successfully", quizId });
         }
 
+        // =====================================================
+        // 🔹 4️⃣ Cập nhật quiz
+        // =====================================================
         [HttpPut("{quizId:int}")]
         public async Task<IActionResult> UpdateQuiz(int quizId, [FromBody] TeacherUpdateQuizRequest req)
         {
-            if (!await EnsureTeacherOwnsQuiz(quizId))
+            var teacherId = GetUserId();
+
+            if (!await _quizDao.TeacherOwnsQuizAsync(teacherId, quizId))
                 return Forbid();
 
-            var quiz = await _db.Quizzes.FirstOrDefaultAsync(q => q.QuizID == quizId);
-            if (quiz == null)
-                return NotFound(new { message = "Quiz not found" });
-
-            // Cập nhật các trường cho phép
-            quiz.Title = req.Title ?? quiz.Title;
-            quiz.Description = req.Description ?? quiz.Description;
-            quiz.QuizType = (byte)(req.QuizType > 0 ? req.QuizType : quiz.QuizType);
-            quiz.IsActive = req.IsActive ?? quiz.IsActive;
-
-            await _db.SaveChangesAsync();
-
-            return Ok(new
-            {
-                message = "Quiz updated successfully",
-                quizId = quiz.QuizID,
-                title = quiz.Title,
-                description = quiz.Description,
-                quizType = quiz.QuizType,
-                isActive = quiz.IsActive
-            });
+            var ok = await _quizDao.UpdateQuizAsync(quizId, req.Title, req.Description, req.QuizType, req.IsActive);
+            return ok ? Ok(new { message = "Quiz updated successfully" }) : NotFound(new { message = "Quiz not found" });
         }
 
-        // ===========================================
-        // 🔹 4️⃣ Xoá quiz (và toàn bộ dữ liệu con)
-        // ===========================================
+        // =====================================================
+        // 🔹 5️⃣ Xoá quiz
+        // =====================================================
         [HttpDelete("{quizId:int}")]
         public async Task<IActionResult> DeleteQuiz(int quizId)
         {
-            if (!await EnsureTeacherOwnsQuiz(quizId))
+            var teacherId = GetUserId();
+
+            if (!await _quizDao.TeacherOwnsQuizAsync(teacherId, quizId))
                 return Forbid();
 
-            using var tx = await _db.Database.BeginTransactionAsync();
-            try
-            {
-                var quiz = await _db.Quizzes
-                    .Include(q => q.QuestionGroups)
-                        .ThenInclude(g => g.Questions)
-                    .FirstOrDefaultAsync(q => q.QuizID == quizId);
-
-                if (quiz == null)
-                    return NotFound(new { message = "Quiz not found" });
-
-                var attemptIds = await _db.Attempts
-                    .Where(a => a.QuizID == quizId)
-                    .Select(a => a.AttemptID)
-                    .ToListAsync();
-                if (attemptIds.Any())
-                {
-                    var answers = _db.Answers.Where(a => attemptIds.Contains(a.AttemptID));
-                    if (answers.Any()) _db.Answers.RemoveRange(answers);
-
-                    var attempts = _db.Attempts.Where(a => attemptIds.Contains(a.AttemptID));
-                    if (attempts.Any()) _db.Attempts.RemoveRange(attempts);
-                }
-
-                // Lấy danh sách GroupID và QuestionID để xoá phụ thuộc
-                var gIds = quiz.QuestionGroups.Select(g => g.GroupID).ToList();
-                var qIds = quiz.QuestionGroups
-                    .SelectMany(g => g.Questions.Select(q => q.QuestionID))
-                    .ToList();
-
-                // Nếu quiz có câu hỏi rời (không group)
-                var flatQIds = await _db.Questions
-                    .Where(q => q.QuizID == quizId && q.GroupID == null)
-                    .Select(q => q.QuestionID)
-                    .ToListAsync();
-                qIds.AddRange(flatQIds);
-
-                // Xoá Options
-                if (qIds.Any())
-                    _db.Options.RemoveRange(_db.Options.Where(o => qIds.Contains(o.QuestionID)));
-
-                // Xoá Assets
-                _db.Assets.RemoveRange(_db.Assets.Where(a =>
-                    (a.OwnerType == 1 && gIds.Contains(a.OwnerID)) ||
-                    (a.OwnerType == 2 && qIds.Contains(a.OwnerID))));
-
-                // Xoá Questions
-                if (qIds.Any())
-                    _db.Questions.RemoveRange(_db.Questions.Where(q => qIds.Contains(q.QuestionID)));
-
-                // Xoá Groups
-                if (gIds.Any())
-                    _db.QuestionGroups.RemoveRange(_db.QuestionGroups.Where(g => gIds.Contains(g.GroupID)));
-
-                // Cuối cùng xoá Quiz
-                _db.Quizzes.Remove(quiz);
-
-                await _db.SaveChangesAsync();
-                await tx.CommitAsync();
-
-                return Ok(new { message = "Quiz deleted successfully" });
-            }
-            catch (Exception ex)
-            {
-                await tx.RollbackAsync();
-                return StatusCode(500, new { message = "Delete failed", error = ex.Message });
-            }
+            var ok = await _quizDao.DeleteQuizAsync(quizId);
+            return ok ? Ok(new { message = "Quiz deleted successfully" }) : NotFound();
         }
 
-
+        // =====================================================
+        // 🔹 6️⃣ Import nội dung quiz
+        // =====================================================
         [HttpPost("{quizId:int}/import")]
-        public async Task<IActionResult> ImportQuiz(int quizId, [FromBody] ImportQuizRequest payload)
+        public async Task<IActionResult> ImportQuiz(int quizId, [FromBody] ImportQuizRequest req)
         {
-            if (!await EnsureTeacherOwnsQuiz(quizId))
+            var teacherId = GetUserId();
+
+            if (!await _quizDao.TeacherOwnsQuizAsync(teacherId, quizId))
                 return Forbid();
 
-            using var tx = await _db.Database.BeginTransactionAsync();
-            try
-            {
-                // 1️⃣ Xóa dữ liệu cũ (groups/questions/options/assets)
-                var gIds = await _db.QuestionGroups
-                    .Where(g => g.QuizID == quizId)
-                    .Select(g => g.GroupID)
-                    .ToListAsync();
-
-                var qIds = gIds.Any()
-                    ? await _db.Questions
-                        .Where(q => q.GroupID.HasValue && gIds.Contains(q.GroupID.Value))
-                        .Select(q => q.QuestionID)
-                        .ToListAsync()
-                    : await _db.Questions
-                        .Where(q => q.QuizID == quizId && q.GroupID == null)
-                        .Select(q => q.QuestionID)
-                        .ToListAsync();
-
-                if (qIds.Any())
-                    _db.Options.RemoveRange(_db.Options.Where(o => qIds.Contains(o.QuestionID)));
-
-                _db.Assets.RemoveRange(_db.Assets.Where(a =>
-                    (a.OwnerType == 1 && gIds.Contains(a.OwnerID)) ||
-                    (a.OwnerType == 2 && qIds.Contains(a.OwnerID))));
-
-                if (gIds.Any())
-                    _db.Questions.RemoveRange(_db.Questions.Where(q => q.GroupID.HasValue && gIds.Contains(q.GroupID.Value)));
-                else
-                    _db.Questions.RemoveRange(_db.Questions.Where(q => q.QuizID == quizId && q.GroupID == null));
-
-                if (gIds.Any())
-                    _db.QuestionGroups.RemoveRange(_db.QuestionGroups.Where(g => g.QuizID == quizId));
-
-                await _db.SaveChangesAsync();
-
-                // 2️⃣ Import lại dữ liệu từ payload
-                foreach (var g in payload.Groups)
-                {
-                    var group = new QuestionGroup
-                    {
-                        QuizID = quizId,
-                        Instruction = g.Instruction,
-                        GroupType = g.GroupType,
-                        GroupOrder = g.GroupOrder
-                    };
-                    _db.QuestionGroups.Add(group);
-                    await _db.SaveChangesAsync(); // Giữ lại 1 lần ở đây để có GroupID (bắt buộc vì cần FK)
-
-                    // Assets của Group
-                    if (g.Assets?.Any() == true)
-                    {
-                        _db.Assets.AddRange(g.Assets.Select(a => new Asset
-                        {
-                            OwnerType = 1,
-                            OwnerID = group.GroupID,
-                            AssetType = a.AssetType,
-                            Url = a.Url,
-                            ContentText = a.ContentText,
-                            Caption = a.Caption,
-                            MimeType = a.MimeType
-                        }));
-                    }
-
-                    // Câu hỏi
-                    if (g.Questions?.Any() == true)
-                    {
-                        foreach (var q in g.Questions)
-                        {
-                            var question = new Question
-                            {
-                                QuizID = quizId,
-                                GroupID = group.GroupID,
-                                Content = q.Content,
-                                QuestionType = q.QuestionType,
-                                QuestionOrder = q.QuestionOrder,
-                                ScoreWeight = q.ScoreWeight,
-                                MetaJson = q.MetaJson
-                            };
-                            _db.Questions.Add(question);
-                            await _db.SaveChangesAsync(); // giữ lại 1 lần để lấy QuestionID
-
-                            if (q.Options?.Any() == true)
-                            {
-                                _db.Options.AddRange(q.Options.Select(o => new Option
-                                {
-                                    QuestionID = question.QuestionID,
-                                    Content = o.Content,
-                                    IsCorrect = o.IsCorrect
-                                }));
-                            }
-
-                            if (q.Assets?.Any() == true)
-                            {
-                                _db.Assets.AddRange(q.Assets.Select(a => new Asset
-                                {
-                                    OwnerType = 2,
-                                    OwnerID = question.QuestionID,
-                                    AssetType = a.AssetType,
-                                    Url = a.Url,
-                                    ContentText = a.ContentText,
-                                    Caption = a.Caption,
-                                    MimeType = a.MimeType
-                                }));
-                            }
-                        }
-                    }
-                }
-
-                // ✅ Lưu toàn bộ còn lại (options + assets)
-                await _db.SaveChangesAsync();
-                await tx.CommitAsync();
-
-                return Ok(new { message = "Quiz saved successfully" });
-            }
-            catch (Exception ex)
-            {
-                await tx.RollbackAsync();
-                return StatusCode(500, new { message = "Import failed", error = ex.Message });
-            }
+            var ok = await _quizDao.ImportQuizAsync(quizId, req);
+            return ok
+                ? Ok(new { message = "Quiz imported successfully" })
+                : StatusCode(500, new { message = "Import failed" });
         }
     }
-
 }
-    

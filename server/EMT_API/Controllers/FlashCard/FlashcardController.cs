@@ -5,6 +5,7 @@ using EMT_API.DAOs.FlashcardDAO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using EMT_API.DAOs;
 
 namespace EMT_API.Controllers
 {
@@ -13,10 +14,13 @@ namespace EMT_API.Controllers
     public class FlashcardController : ControllerBase
     {
         private readonly IFlashcardDAO _dao;
+        private readonly IMembershipDAO _mdao;
 
-        public FlashcardController(IFlashcardDAO dao)
+
+        public FlashcardController(IFlashcardDAO dao, IMembershipDAO mdao)
         {
             _dao = dao;
+            _mdao = mdao;
         }
 
         private int? GetUserId()
@@ -66,7 +70,7 @@ namespace EMT_API.Controllers
         // ---------------------------
         [HttpGet("set/{setId:int}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetSetDetail(int setId, [FromServices] EMT_API.Data.EMTDbContext db)
+        public async Task<IActionResult> GetSetDetail(int setId)
         {
             var set = await _dao.GetSetDetailAsync(setId);
             if (set == null)
@@ -81,7 +85,7 @@ namespace EMT_API.Controllers
                     if (userId == null)
                         return Unauthorized(new { message = "Login required to access this flashcard set." });
 
-                    bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(db, userId.Value);
+                    bool hasMembership = await _mdao.HasActiveMembershipAsync(userId.Value);
                     if (!hasMembership)
                         return StatusCode(403, new { message = "Membership required or expired." });
                 }

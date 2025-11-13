@@ -1,4 +1,5 @@
-﻿using EMT_API.DAOs.CourseDAO;
+﻿using EMT_API.DAOs;
+using EMT_API.DAOs.CourseDAO;
 using EMT_API.DAOs.FlashcardDAO;
 using EMT_API.DAOs.MembershipDAO;
 using EMT_API.DAOs.PaymentDAO;
@@ -131,9 +132,11 @@ namespace EMT_API
             builder.Services.AddScoped<IUserDAO, UserDAO>();
             builder.Services.AddScoped<IFlashcardDAO, FlashcardDAO>();
             builder.Services.AddScoped<ICourseDAO, CourseDAO>();
+            builder.Services.AddScoped<IQuizDAO, QuizDAO>();
+            builder.Services.AddScoped<IMembershipDAO, MembershipDAO>();
+            builder.Services.AddScoped<IFeedbackDAO, FeedbackDAO>();
             builder.Services.AddScoped<ISubscriptionPlanDAO, SubscriptionPlanDAO>();
             builder.Services.AddScoped<IPaymentDAO, PaymentDAO>();
-            builder.Services.AddScoped<IMembershipDAO, MembershipDAO>();
 
             // ===== OTP Service =====
             builder.Services.AddMemoryCache();
