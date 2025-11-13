@@ -47,18 +47,24 @@ export const createGroupWithQuestions = async (quizId, groupData) => {
         });
 
         console.log("✅ Question created:", question);
+        const questionId =
+         question.questionID || question.questionId || question.id;
+       if (!questionId) {
+         console.error("❌ Không lấy được questionId từ response:", question);
+         throw new Error("questionId is undefined");
+       }
 
         // 4. Thêm assets cho câu hỏi (nếu có)
         if (questionData.assets && questionData.assets.length > 0) {
           for (const asset of questionData.assets) {
-            await createQuestionAsset(question.questionID, asset);
+            await createQuestionAsset(questionId, asset);
           }
         }
 
         // 5. Thêm options cho câu hỏi
         if (questionData.options && questionData.options.length > 0) {
           for (const optionData of questionData.options) {
-            await createOption(question.questionID, {
+            await createOption(questionId, {
               content: optionData.content,
               isCorrect: optionData.isCorrect || false,
             });
@@ -93,17 +99,24 @@ export const addQuestionsToGroup = async (groupId, questions) => {
 
       console.log("✅ Question created:", question);
 
+      const questionId =
+       question.questionID || question.questionId || question.id;
+     if (!questionId) {
+       console.error("❌ Không lấy được questionId từ response:", question);
+       throw new Error("questionId is undefined");
+     }
+
       // 2. Thêm assets cho câu hỏi (nếu có)
       if (questionData.assets && questionData.assets.length > 0) {
         for (const asset of questionData.assets) {
-          await createQuestionAsset(question.questionID, asset);
+          await createQuestionAsset(questionId, asset);
         }
       }
 
       // 3. Thêm options
       if (questionData.options && questionData.options.length > 0) {
         for (const optionData of questionData.options) {
-          await createOption(question.questionID, {
+          await createOption(questionId, {
             content: optionData.content,
             isCorrect: optionData.isCorrect || false,
           });

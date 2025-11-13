@@ -11,8 +11,13 @@ import {
   Badge,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { getAllQuizzes, createQuiz, deleteQuiz, updateQuiz } from "../../middleware/admin/quizManagementAPI";
-import { Eye, Trash2, Plus, BookOpen, BarChart3 } from "lucide-react";
+import { 
+  getAllQuizzes, 
+  createQuiz, 
+  deleteQuiz, 
+  updateQuiz 
+} from "../../middleware/admin/quizManagementAPI";
+import { Eye, Trash2, Plus, BookOpen, BarChart3, Edit2 } from "lucide-react";
 
 export function ExamManagement() {
   const navigate = useNavigate();
@@ -30,6 +35,17 @@ export function ExamManagement() {
     quizType: 1,
   });
   const [creating, setCreating] = useState(false);
+
+  // Update Quiz Modal
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updatingQuiz, setUpdatingQuiz] = useState(null);
+  const [updateData, setUpdateData] = useState({
+    title: "",
+    description: "",
+    quizType: 1,
+    isActive: true,
+  });
+  const [updating, setUpdating] = useState(false);
 
   // Delete Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -56,7 +72,6 @@ export function ExamManagement() {
       setLoading(false);
     }
   };
-
 
   const fetchSystemExamResults = async () => {
     try {
@@ -111,7 +126,7 @@ export function ExamManagement() {
         courseID: 0,
         title: "",
         description: "",
-        quizType: 0,
+        quizType: 1,
       });
       alert("✅ Tạo quiz thành công!");
     } catch (err) {
@@ -119,6 +134,50 @@ export function ExamManagement() {
       alert("❌ Lỗi: " + (err.response?.data?.message || err.message));
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleOpenUpdateModal = (quiz) => {
+    const quizId = quiz.quizID || quiz.quizId;
+    setUpdatingQuiz(quiz);
+    setUpdateData({
+      title: quiz.title || "",
+      description: quiz.description || "",
+      quizType: quiz.quizType || 1,
+      isActive: quiz.isActive ?? true,
+    });
+    setShowUpdateModal(true);
+  };
+
+  const handleUpdateQuiz = async () => {
+    if (!updateData.title.trim()) {
+      alert("❌ Vui lòng nhập tên quiz!");
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const quizId = updatingQuiz.quizID || updatingQuiz.quizId;
+      
+      // Chỉ update thông tin cơ bản, không động vào groups
+      const payload = {
+        title: updateData.title,
+        description: updateData.description,
+        quizType: updateData.quizType,
+        isActive: updateData.isActive,
+        groups: updatingQuiz.groups || updatingQuiz.questionGroups || []
+      };
+
+      await updateQuiz(quizId, payload);
+      await fetchQuizzes();
+      setShowUpdateModal(false);
+      setUpdatingQuiz(null);
+      alert("✅ Cập nhật quiz thành công!");
+    } catch (err) {
+      console.error("❌ Update quiz error:", err);
+      alert("❌ Lỗi: " + (err.response?.data?.message || err.message));
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -162,20 +221,19 @@ export function ExamManagement() {
     const numType = typeof type === "string" ? parseInt(type, 10) : type;
     switch (numType) {
       case 1:
-        return "info"; // MC
+        return "info";
       case 2:
-        return "danger"; // Listening
+        return "danger";
       case 3:
-        return "warning"; // Reading
+        return "warning";
       case 4:
-        return "secondary"; // Writing
+        return "secondary";
       case 5:
-        return "primary"; // Speaking
+        return "primary";
       default:
         return "secondary";
     }
   };
-
 
   if (loading) {
     return (
@@ -239,7 +297,8 @@ export function ExamManagement() {
                   <th>Mô tả</th>
                   <th style={{ width: "120px" }}>Loại</th>
                   <th style={{ width: "100px" }}>Course ID</th>
-                  <th style={{ width: "150px" }} className="text-center">
+                  <th style={{ width: "100px" }}>Trạng thái</th>
+                  <th style={{ width: "180px" }} className="text-center">
                     Thao tác
                   </th>
                 </tr>
@@ -271,6 +330,11 @@ export function ExamManagement() {
                         {quiz.courseID || "—"}
                       </td>
                       <td className="align-middle text-center">
+                        <Badge bg={quiz.isActive ? "success" : "secondary"}>
+                          {quiz.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </td>
+                      <td className="align-middle text-center">
                         <Button
                           variant="outline-primary"
                           size="sm"
@@ -281,6 +345,15 @@ export function ExamManagement() {
                           <Eye size={16} />
                         </Button>
 
+                        <Button
+                          variant="outline-warning"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => handleOpenUpdateModal(quiz)}
+                          title="Sửa quiz"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
 
                         <Button
                           variant="outline-danger"
@@ -294,7 +367,6 @@ export function ExamManagement() {
                           <Trash2 size={16} />
                         </Button>
                       </td>
-
                     </tr>
                   );
                 })}
@@ -420,6 +492,104 @@ export function ExamManagement() {
               </>
             ) : (
               "Tạo Quiz"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Update Quiz Modal */}
+      <Modal
+        show={showUpdateModal}
+        onHide={() => setShowUpdateModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Cập nhật Quiz</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Tên Quiz *</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Nhập tên quiz..."
+                value={updateData.title}
+                onChange={(e) =>
+                  setUpdateData({ ...updateData, title: e.target.value })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Mô tả</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Nhập mô tả quiz (tùy chọn)..."
+                value={updateData.description}
+                onChange={(e) =>
+                  setUpdateData({ ...updateData, description: e.target.value })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Loại Quiz</Form.Label>
+              <Form.Select
+                value={updateData.quizType}
+                onChange={(e) =>
+                  setUpdateData({
+                    ...updateData,
+                    quizType: parseInt(e.target.value),
+                  })
+                }
+              >
+                <option value={1}>Multiple Choice (Trắc nghiệm)</option>
+                <option value={2}>Listening</option>
+                <option value={3}>Reading</option>
+                <option value={4}>Writing</option>
+                <option value={5}>Speaking</option>
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Check
+                type="switch"
+                id="quiz-active-switch"
+                label="Quiz đang hoạt động"
+                checked={updateData.isActive}
+                onChange={(e) =>
+                  setUpdateData({ ...updateData, isActive: e.target.checked })
+                }
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowUpdateModal(false)}
+            disabled={updating}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleUpdateQuiz}
+            disabled={updating || !updateData.title.trim()}
+          >
+            {updating ? (
+              <>
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  className="me-2"
+                />
+                Đang cập nhật...
+              </>
+            ) : (
+              "Cập nhật"
             )}
           </Button>
         </Modal.Footer>
@@ -562,6 +732,6 @@ export function ExamManagement() {
       </Modal>
     </Container>
   );
-};
+}
 
 export default ExamManagement;
