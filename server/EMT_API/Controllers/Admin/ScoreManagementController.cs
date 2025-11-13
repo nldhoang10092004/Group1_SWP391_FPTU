@@ -17,28 +17,27 @@ namespace EMT_API.Controllers.Admin
             _dao = dao;
         }
 
-        // 1️⃣ Xem điểm quiz theo giáo viên
-        [HttpGet("teacher/{teacherId:int}")]
-        public async Task<IActionResult> GetScoresByTeacher(int teacherId)
-        {
-            var data = await _dao.GetScoresByTeacherAsync(teacherId);
-            if (!data.Any()) return NotFound(new { message = "No scores found for this teacher's courses." });
+        //// 1️⃣ Xem điểm quiz theo giáo viên
+        //[HttpGet("teacher/{teacherId:int}")]
+        //public async Task<IActionResult> GetScoresByTeacher(int teacherId)
+        //{
+        //    var data = await _dao.GetScoresByTeacherAsync(teacherId);
+        //    if (!data.Any()) return NotFound(new { message = "No scores found for this teacher's courses." });
 
-            var result = data.Select(a => new ScoreViewRequest
-            {
-                AttemptId = a.AttemptID,
-                QuizId = a.QuizID,
-                QuizTitle = a.Quiz.Title,
-                CourseId = a.Quiz.CourseID,
-                CourseName = a.Quiz.Course?.CourseName ?? "(No Course)",
-                UserId = a.UserID,
-                UserName = a.User.Username,
-                Score = (double)((a.AutoScore ?? 0) + (a.ManualScore ?? 0)),
-                AttemptDate = a.SubmittedAt ?? a.StartedAt
-            });
-
-            return Ok(result);
-        }
+        //    var result = data.Select(a => new ScoreViewRequest
+        //    {
+        //        AttemptId = a.AttemptID,
+        //        QuizId = a.QuizID,
+        //        QuizTitle = a.Quiz.Title,
+        //        CourseId = a.Quiz.CourseID,
+        //        CourseName = a.Quiz.Course?.CourseName ?? "(No Course)",
+        //        UserId = a.UserID,
+        //        UserName = a.User.Username,
+        //        Score = (double)((a.AutoScore ?? 0) + (a.ManualScore ?? 0)),
+        //        AttemptDate = a.SubmittedAt ?? a.StartedAt
+        //    });
+        //    return Ok(result);
+        //}
 
         // 2️⃣ Điểm System Exam
         [HttpGet("system-exams")]
