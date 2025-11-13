@@ -196,7 +196,7 @@ namespace EMT_API
             var app = builder.Build();
 
             // ===== Swagger =====
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
@@ -205,13 +205,6 @@ namespace EMT_API
             // ===== Middlewares =====
             app.UseHttpsRedirection();
 
-            //app.UseStaticFiles();
-            //app.UseStaticFiles(new StaticFileOptions
-            //{
-            //    FileProvider = new PhysicalFileProvider(
-            //        Path.Combine(Directory.GetCurrentDirectory(), "avatars")),
-            //    RequestPath = "/avatars"
-            //});
 
             app.UseRouting();
             app.UseCors(MyCors);

@@ -10,6 +10,7 @@ server/EMT_API/obj/
 server/EMT_API/wwwroot/avatars/
 server/EMT_API.Tests/bin/
 server/EMT_API.Tests/obj/
+appsettings.Production.json
 # Common
 *.log
 *.user
