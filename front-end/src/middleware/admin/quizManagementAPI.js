@@ -79,6 +79,41 @@ export const importQuizGroups = async (quizId, importData) => {
     throw err;
   }
 };
+export const updateQuiz = async (quizId, updateData) => {
+  try {
+    // Format data theo schema của API
+    const formattedData = {
+      title: updateData.title,
+      description: updateData.description,
+      quizType: updateData.quizType?.toString() || "0",
+      isActive: updateData.isActive ?? true,
+      groups: (updateData.groups || []).map(g => ({
+        groupID: g.groupID || 0,
+        instruction: g.instruction || "",
+        questions: (g.questions || []).map(q => ({
+          questionID: q.questionID || 0,
+          content: q.content || "",
+          questionType: q.questionType?.toString() || "1",
+          options: (q.options || []).map(o => ({
+            optionID: o.optionID || 0,
+            content: o.content || "",
+            isCorrect: o.isCorrect || false
+          }))
+        }))
+      }))
+    };
+
+    console.log("🔄 updateQuiz payload:", JSON.stringify(formattedData, null, 2));
+    
+    const res = await api.put(`/${quizId}`, formattedData, { headers: getAuthHeaders() });
+    console.log("🔄 updateQuiz response:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("❌ updateQuiz error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
 
 export default {
   getAllQuizzes,

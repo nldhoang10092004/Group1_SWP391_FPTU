@@ -11,8 +11,8 @@ import {
   Badge,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { getAllQuizzes, createQuiz, deleteQuiz } from "../../middleware/admin/quizManagementAPI";
-import { Eye, Trash2, Plus, BookOpen } from "lucide-react";
+import { getAllQuizzes, createQuiz, deleteQuiz, updateQuiz } from "../../middleware/admin/quizManagementAPI";
+import { Eye, Trash2, Plus, BookOpen, BarChart3 } from "lucide-react";
 
 export function ExamManagement() {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ export function ExamManagement() {
     courseID: 0,
     title: "",
     description: "",
-    quizType: 0,
+    quizType: 1,
   });
   const [creating, setCreating] = useState(false);
 
@@ -35,6 +35,12 @@ export function ExamManagement() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // System Exam Results Modal
+  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [systemExamResults, setSystemExamResults] = useState([]);
+  const [loadingResults, setLoadingResults] = useState(false);
+  const [resultsError, setResultsError] = useState("");
 
   const fetchQuizzes = async () => {
     try {
@@ -48,6 +54,41 @@ export function ExamManagement() {
       setError(err.response?.data?.message || err.message || "Không thể tải danh sách quiz");
     } finally {
       setLoading(false);
+    }
+  };
+
+
+  const fetchSystemExamResults = async () => {
+    try {
+      setLoadingResults(true);
+      setResultsError("");
+
+      const token = localStorage.getItem("accessToken");
+      const API_URL = process.env.REACT_APP_API_URL;
+
+      const response = await fetch(`${API_URL}/api/admin/score-management/system-exams`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ System exam results:", data);
+      setSystemExamResults(Array.isArray(data) ? data : []);
+      setShowResultsModal(true);
+    } catch (err) {
+      console.error("❌ Error fetching system exam results:", err);
+      setResultsError(err.message || "Không thể tải kết quả system exam");
+      alert("❌ Lỗi: " + err.message);
+    } finally {
+      setLoadingResults(false);
     }
   };
 
@@ -100,30 +141,41 @@ export function ExamManagement() {
   };
 
   const getQuizTypeName = (type) => {
-    switch (type) {
-      case 0:
-        return "Practice";
+    const numType = typeof type === "string" ? parseInt(type, 10) : type;
+    switch (numType) {
       case 1:
-        return "Exam";
+        return "Multiple Choice";
       case 2:
-        return "Assignment";
+        return "Listening";
+      case 3:
+        return "Reading";
+      case 4:
+        return "Writing";
+      case 5:
+        return "Speaking";
       default:
         return "Unknown";
     }
   };
 
   const getQuizTypeVariant = (type) => {
-    switch (type) {
-      case 0:
-        return "info";
+    const numType = typeof type === "string" ? parseInt(type, 10) : type;
+    switch (numType) {
       case 1:
-        return "danger";
+        return "info"; // MC
       case 2:
-        return "warning";
+        return "danger"; // Listening
+      case 3:
+        return "warning"; // Reading
+      case 4:
+        return "secondary"; // Writing
+      case 5:
+        return "primary"; // Speaking
       default:
         return "secondary";
     }
   };
+
 
   if (loading) {
     return (
@@ -145,13 +197,32 @@ export function ExamManagement() {
           </h3>
           <p className="text-muted mt-2">Tổng cộng: {quizzes.length} quiz</p>
         </div>
-        <Button
-          variant="success"
-          onClick={() => setShowCreateModal(true)}
-        >
-          <Plus size={18} className="me-2" />
-          Tạo Quiz Mới
-        </Button>
+        <div className="d-flex gap-2">
+          <Button
+            variant="info"
+            onClick={fetchSystemExamResults}
+            disabled={loadingResults}
+          >
+            {loadingResults ? (
+              <>
+                <Spinner as="span" animation="border" size="sm" className="me-2" />
+                Đang tải...
+              </>
+            ) : (
+              <>
+                <BarChart3 size={18} className="me-2" />
+                Xem System Exam Results
+              </>
+            )}
+          </Button>
+          <Button
+            variant="success"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <Plus size={18} className="me-2" />
+            Tạo Quiz Mới
+          </Button>
+        </div>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -177,7 +248,7 @@ export function ExamManagement() {
                 {quizzes.map((quiz) => {
                   const quizId = quiz.quizID || quiz.quizId;
                   const quizType = quiz.quizType ?? 0;
-                  
+
                   return (
                     <tr key={quizId}>
                       <td className="align-middle">
@@ -209,6 +280,8 @@ export function ExamManagement() {
                         >
                           <Eye size={16} />
                         </Button>
+
+
                         <Button
                           variant="outline-danger"
                           size="sm"
@@ -221,6 +294,7 @@ export function ExamManagement() {
                           <Trash2 size={16} />
                         </Button>
                       </td>
+
                     </tr>
                   );
                 })}
@@ -254,7 +328,7 @@ export function ExamManagement() {
         centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>📝 Tạo Quiz Mới</Modal.Title>
+          <Modal.Title>Tạo Quiz Mới</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -294,9 +368,11 @@ export function ExamManagement() {
                   })
                 }
               >
-                <option value={0}>Practice</option>
-                <option value={1}>Exam</option>
-                <option value={2}>Assignment</option>
+                <option value={1}>Multiple Choice (Trắc nghiệm)</option>
+                <option value={2}>Listening</option>
+                <option value={3}>Reading</option>
+                <option value={4}>Writing</option>
+                <option value={5}>Speaking</option>
               </Form.Select>
             </Form.Group>
 
@@ -365,7 +441,7 @@ export function ExamManagement() {
             <strong>"{deleteTarget?.title}"</strong>
             <br />
             <br />
-            Tất cả groups, câu hỏi và assets sẽ bị xóa vĩnh viễn!
+            Tất cả groups và câu hỏi sẽ bị xóa vĩnh viễn!
             <br />
             <strong>Hành động này không thể hoàn tác!</strong>
           </Alert>
@@ -396,6 +472,91 @@ export function ExamManagement() {
             ) : (
               "Xóa Quiz"
             )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* System Exam Results Modal */}
+      <Modal
+        show={showResultsModal}
+        onHide={() => setShowResultsModal(false)}
+        size="xl"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <BarChart3 size={24} className="me-2" />
+            System Exam Results
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
+          {resultsError && <Alert variant="danger">{resultsError}</Alert>}
+
+          {systemExamResults.length > 0 ? (
+            <>
+              <Alert variant="info">
+                <strong>Tổng số bài thi:</strong> {systemExamResults.length}
+              </Alert>
+              <Table responsive hover>
+                <thead className="bg-light">
+                  <tr>
+                    <th style={{ width: "80px" }}>Attempt ID</th>
+                    <th style={{ width: "80px" }}>Quiz ID</th>
+                    <th>Quiz Title</th>
+                    <th style={{ width: "100px" }}>User ID</th>
+                    <th>User Name</th>
+                    <th style={{ width: "80px" }}>Score</th>
+                    <th style={{ width: "180px" }}>Attempt Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {systemExamResults.map((result, index) => (
+                    <tr key={`${result.attemptId}-${index}`}>
+                      <td className="align-middle">
+                        <Badge bg="secondary">#{result.attemptId}</Badge>
+                      </td>
+                      <td className="align-middle">
+                        <Badge bg="primary">#{result.quizId}</Badge>
+                      </td>
+                      <td className="align-middle">
+                        <strong>{result.quizTitle}</strong>
+                        <br />
+                        <small className="text-muted">{result.courseName}</small>
+                      </td>
+                      <td className="align-middle text-center">
+                        {result.userId}
+                      </td>
+                      <td className="align-middle">
+                        <strong>{result.userName}</strong>
+                      </td>
+                      <td className="align-middle text-center">
+                        <Badge bg={result.score >= 50 ? "success" : "danger"}>
+                          {result.score}
+                        </Badge>
+                      </td>
+                      <td className="align-middle">
+                        <small>
+                          {new Date(result.attemptDate).toLocaleString('vi-VN')}
+                        </small>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </>
+          ) : (
+            <Alert variant="info" className="text-center">
+              <BarChart3 size={48} className="text-muted mb-3" />
+              <p className="mb-0">Chưa có kết quả system exam nào</p>
+            </Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowResultsModal(false)}
+          >
+            Đóng
           </Button>
         </Modal.Footer>
       </Modal>

@@ -1,0 +1,153 @@
+// Header
+.header-card {
+  overflow: hidden;
+}
+
+.header-gradient {
+  height: 200px;
+  position: relative;
+}
+
+.header-body {
+  padding-top: 80px;
+}
+
+// Avatar
+.avatar-container {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: white;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.avatar-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-circle {
+  font-size: 48px;
+  color: white;
+  font-weight: 600;
+}
+
+// Teacher Badge
+.teacher-badge {
+  font-size: 14px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+// Info Cards
+.info-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.info-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &.email-icon {
+    background-color: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+  }
+  
+  &.phone-icon {
+    background-color: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+  }
+  
+  &.calendar-icon {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+  }
+}
+
+.info-text {
+  font-size: 14px;
+}
+
+// Section Titles
+.section-title {
+  .title-icon {
+    color: #667eea;
+  }
+}
+
+.description-text {
+  line-height: 1.8;
+  color: #495057;
+}
+
+// Certificates
+.cert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cert-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+  
+  &:hover {
+    background-color: #e9ecef;
+    transform: translateX(4px);
+  }
+  
+  .cert-icon {
+    color: #ffc107;
+  }
+}
+
+// Statistics
+.stat-card {
+  .stat-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    
+    &.courses-stat {
+      color: #667eea;
+    }
+    
+    &.students-stat {
+      color: #28a745;
+    }
+    
+    &.certs-stat {
+      color: #ffc107;
+    }
+  }
+}

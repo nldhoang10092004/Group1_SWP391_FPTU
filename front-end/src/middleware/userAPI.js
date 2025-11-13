@@ -27,7 +27,7 @@ const handleApiError = (error) => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     alert("🔒 Phiên đăng nhập của bạn đã hết hạn, vui lòng đăng nhập lại!");
-    window.location.href = "/login";
+    window.location.href = "/";
     throw new Error("Token hết hạn");
   }
 
@@ -54,7 +54,7 @@ export const getUser = async (accessToken) => {
 // 🟢 Cập nhật thông tin profile (PUT JSON)
 export const updateUser = async (userData, accessToken) => {
   try {
-    console.log("📤 PUT /user/profile/detail", userData);
+    console.log("PUT /user/profile/detail", userData);
 
     const res = await axios.put(`${API_URL}/user/profile/detail`, userData, {
       headers: {
@@ -116,6 +116,19 @@ export const changePassword = async (
     console.log("✅ Password changed:", res.data);
     alert("✅ Mật khẩu đã được thay đổi thành công!");
     return res.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
+export const getAvatar = async (accessToken) => {
+  try {
+    console.log("🔍 GET /user/profile/avatar");
+    const res = await axios.get(`${API_URL}/user/profile/avatar`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    console.log("✅ Avatar response:", res.data);
+    return res.data; // { avatarUrl: "..." }
   } catch (error) {
     handleApiError(error);
   }

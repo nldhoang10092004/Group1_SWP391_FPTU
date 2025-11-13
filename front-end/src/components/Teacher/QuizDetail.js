@@ -12,15 +12,32 @@ import {
   Row,
   Col,
   Accordion,
+  Toast,
+  ToastContainer,
 } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getQuizById,
-  importQuizGroups,
+  updateQuizGroup,
+  deleteAsset,
+  createGroupAsset
 } from "../../middleware/teacher/quizTeacherAPI";
+
+import {
+  createGroupWithQuestions,
+  addQuestionsToGroup,
+  updateQuestionWithOptions,
+  deleteGroupCompletely,
+  deleteQuestionCompletely,
+} from "../../middleware/teacher/quizHelper";
 import { getQuizById as getUserQuizById } from "../../middleware/QuizAPI";
 import { uploadAsset } from "../../middleware/teacher/uploadAPI";
-import { Trash2, Plus, Check, Edit2, FolderPlus } from "lucide-react";
+import { 
+  generateAIQuiz, 
+  parseAIQuizResponse, 
+  convertAIQuestionsToImportFormat 
+} from "../../middleware/teacher/aiQuizAPI";
+import { Trash2, Plus, Check, Edit2, FolderPlus, Sparkles } from "lucide-react";
 
 const QuizDetail = () => {
   const { quizId, groupType } = useParams();
@@ -45,6 +62,12 @@ const QuizDetail = () => {
   ]);
   const [uploading, setUploading] = useState(false);
   
+  // AI Quiz Generator
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSelectedGroupIndex, setAiSelectedGroupIndex] = useState(null);
+  
   // Asset management
   const [uploadingAsset, setUploadingAsset] = useState(false);
   const [showTextAssetModal, setShowTextAssetModal] = useState(false);
@@ -64,6 +87,38 @@ const QuizDetail = () => {
   // Error modal
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Toast notifications
+  const [toasts, setToasts] = useState([]);
+  
+  // Confirmation modals
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: null,
+    variant: "danger"
+  });
+
+  const addToast = (message, variant = "success") => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, variant }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  };
+
+  const showConfirm = (title, message, onConfirm, variant = "danger") => {
+    setConfirmConfig({ title, message, onConfirm, variant });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirm = () => {
+    if (confirmConfig.onConfirm) {
+      confirmConfig.onConfirm();
+    }
+    setShowConfirmModal(false);
+  };
 
   const fetchQuiz = async () => {
     try {
@@ -161,6 +216,77 @@ const QuizDetail = () => {
     }
   }, [quizId]);
 
+  // ==================== AI QUIZ GENERATOR ====================
+  const handleGenerateAIQuiz = async () => {
+  if (!aiPrompt.trim()) {
+    setErrorMessage("❌ Vui lòng nhập prompt cho AI!");
+    setShowErrorModal(true);
+    return;
+  }
+  if (aiSelectedGroupIndex === null) {
+    setErrorMessage("❌ Vui lòng chọn group để thêm câu hỏi!");
+    setShowErrorModal(true);
+    return;
+  }
+
+  try {
+    setAiLoading(true);
+    const aiResponse = await generateAIQuiz(aiPrompt);
+    
+    if (aiResponse.error) throw new Error(aiResponse.error);
+
+    const parsedQuiz = parseAIQuizResponse(aiResponse);
+    if (!parsedQuiz.questions?.length) {
+      throw new Error("AI không tạo được câu hỏi. Vui lòng thử prompt khác.");
+    }
+
+    const convertedQuestions = convertAIQuestionsToImportFormat(parsedQuiz.questions);
+    const group = groups[aiSelectedGroupIndex];
+
+    if (!group.groupID) {
+      throw new Error("Group ID not found");
+    }
+
+    const currentCount = group.questions?.length || 0;
+
+    // Format questions cho API
+    const questionsToAdd = convertedQuestions.map((q, i) => ({
+      content: q.content,
+      questionType: q.questionType || 1,
+      questionOrder: currentCount + i + 1,
+      scoreWeight: q.scoreWeight,
+      metaJson: null,
+      options: q.options.map((opt, idx) => ({
+        content: opt,
+        isCorrect: idx === q.correctIndex,
+      })),
+      assets: [],
+    }));
+
+    // Thêm câu hỏi vào group
+    await addQuestionsToGroup(group.groupID, questionsToAdd);
+
+    // Lưu đáp án đúng
+    const newAnswersMap = { ...correctAnswersMap };
+    convertedQuestions.forEach((q, i) => {
+      newAnswersMap[`${aiSelectedGroupIndex}-${currentCount + i}`] = q.correctIndex;
+    });
+    setCorrectAnswersMap(newAnswersMap);
+    localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
+
+    await fetchQuiz();
+    setShowAIModal(false);
+    setAiPrompt("");
+    setAiSelectedGroupIndex(null);
+    addToast(`AI đã tạo ${convertedQuestions.length} câu hỏi!`, "success");
+  } catch (err) {
+    setErrorMessage("❌ " + err.message);
+    setShowErrorModal(true);
+  } finally {
+    setAiLoading(false);
+  }
+};
+
   // ==================== GROUP MANAGEMENT ====================
   // Helper function để format data theo đúng API schema
   const formatGroupsForAPI = (groupsData) => {
@@ -198,209 +324,184 @@ const QuizDetail = () => {
     };
   };
 
-  const handleSaveGroup = async () => {
-    if (!newGroupInstruction.trim()) {
-      alert("❌ Vui lòng nhập instruction cho group!");
-      return;
-    }
+  // ✅ Cập nhật handleSaveGroup - Tạo hoặc cập nhật group
+const handleSaveGroup = async () => {
+  if (!newGroupInstruction.trim()) {
+    addToast("❌ Vui lòng nhập instruction cho group!", "danger");
+    return;
+  }
 
-    try {
-      setUploading(true);
-      const updatedGroups = [...groups];
+  try {
+    setUploading(true);
+    
+    if (editingGroupIndex !== null) {
+      // CẬP NHẬT group có sẵn
+      const group = groups[editingGroupIndex];
       
-      if (editingGroupIndex !== null) {
-        updatedGroups[editingGroupIndex].instruction = newGroupInstruction.trim();
-      } else {
-        const newGroup = {
-          groupOrder: groups.length + 1,
-          groupType: 1,
-          instruction: newGroupInstruction.trim(),
-          assets: [],
-          questions: []
-        };
-        updatedGroups.push(newGroup);
+      if (!group.groupID) {
+        throw new Error("Group ID not found");
       }
 
-      // Format data giống code cũ
-      const importData = formatGroupsForAPI(updatedGroups);
+      await updateQuizGroup(group.groupID, {
+        instruction: newGroupInstruction.trim(),
+        groupType: group.groupType || 1,
+        groupOrder: group.groupOrder || editingGroupIndex + 1,
+      });
 
-      console.log("📤 Sending to backend (Save Group):", JSON.stringify(importData, null, 2));
+      addToast("Đã cập nhật group!", "success");
+    } else {
+      // TẠO MỚI group
+      await createGroupWithQuestions(quizId, {
+        instruction: newGroupInstruction.trim(),
+        groupType: 1,
+        groupOrder: groups.length + 1,
+        questions: [],
+        assets: [],
+      });
 
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-
-      setShowGroupModal(false);
-      setNewGroupInstruction("");
-      setEditingGroupIndex(null);
-      alert(editingGroupIndex !== null ? "✅ Đã cập nhật group!" : "✅ Đã thêm group mới!");
-    } catch (err) {
-      console.error("❌ Save group error:", err);
-      console.error("❌ Error response:", err.response?.data);
-      alert("❌ Lỗi: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleDeleteGroup = async (groupIndex) => {
-    if (!window.confirm(`Xóa group ${groupIndex + 1}? Tất cả câu hỏi và assets trong group này sẽ bị xóa!`)) {
-      return;
+      addToast("Đã thêm group mới!", "success");
     }
 
-    try {
-      setUploading(true);
-      const updatedGroups = groups.filter((_, idx) => idx !== groupIndex);
-      
-      // Re-order groups
-      updatedGroups.forEach((g, idx) => { g.groupOrder = idx + 1; });
+    await fetchQuiz();
+    setShowGroupModal(false);
+    setNewGroupInstruction("");
+    setEditingGroupIndex(null);
+  } catch (err) {
+    console.error("❌ Save group error:", err);
+    addToast("❌ Lỗi: " + (err.response?.data?.message || err.message), "danger");
+  } finally {
+    setUploading(false);
+  }
+};
 
-      // Format data giống code cũ
-      const importData = formatGroupsForAPI(updatedGroups);
+  // ✅ Cập nhật handleDeleteGroup - Xóa group hoàn toàn
+const handleDeleteGroup = async (groupIndex) => {
+  const group = groups[groupIndex];
+  
+  if (!group.groupID) {
+    addToast("❌ Group ID không hợp lệ!", "danger");
+    return;
+  }
 
-      console.log("📤 Sending to backend (Delete Group):", JSON.stringify(importData, null, 2));
-
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-      alert("✅ Đã xóa group!");
-    } catch (err) {
-      console.error("❌ Delete group error:", err);
-      console.error("❌ Error response:", err.response?.data);
-      alert("❌ Lỗi xóa group: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
+  showConfirm(
+    "⚠️ Xác nhận xóa Group",
+    `Xóa group ${groupIndex + 1}? Tất cả câu hỏi và assets trong group này sẽ bị xóa!`,
+    async () => {
+      try {
+        setUploading(true);
+        
+        // Xóa group và tất cả dữ liệu liên quan
+        await deleteGroupCompletely(group.groupID, group);
+        
+        await fetchQuiz();
+        addToast("Đã xóa group!", "success");
+      } catch (err) {
+        console.error("❌ Delete group error:", err);
+        addToast("❌ Lỗi xóa group: " + (err.response?.data?.message || err.message), "danger");
+      } finally {
+        setUploading(false);
+      }
     }
-  };
+  );
+};
 
   // ==================== ASSET MANAGEMENT ====================
   const handleAssetUpload = async (e, assetType, groupIndex) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
 
-    console.log("📤 Uploading file:", {
-      name: file.name,
-      size: file.size,
-      type: file.type,
+  if (file.size > 50 * 1024 * 1024) {
+    addToast("❌ File quá lớn! Giới hạn 50MB", "danger");
+    return;
+  }
+
+  let typeString;
+  if (assetType === 1) typeString = "audio";
+  else if (assetType === 2) typeString = "image";
+  else if (assetType === 5) typeString = "video";
+  else {
+    addToast("❌ Loại asset không hỗ trợ!", "danger");
+    return;
+  }
+
+  try {
+    setUploadingAsset(true);
+
+    // Upload file
+    const result = await uploadAsset(file, typeString, quizId, groupType);
+    console.log("Upload success:", result);
+
+    const group = groups[groupIndex];
+    if (!group.groupID) {
+      throw new Error("Group ID not found");
+    }
+
+    // Tạo asset mới qua API
+    await createGroupAsset(group.groupID, {
       assetType: assetType,
-      groupIndex: groupIndex
+      url: result.url,
+      caption: file.name,
+      mimeType: file.type,
+      contentText: "",
     });
 
-    if (file.size > 50 * 1024 * 1024) {
-      alert("❌ File quá lớn! Giới hạn 50MB");
-      return;
-    }
-
-    // Map assetType (number) sang string cho API
-    let typeString;
-    if (assetType === 1) typeString = "audio";
-    else if (assetType === 2) typeString = "image";
-    else if (assetType === 5) typeString = "video";
-    else {
-      alert("❌ Loại asset không hỗ trợ!");
-      return;
-    }
-
-    try {
-      setUploadingAsset(true);
-
-      // Upload file lên server
-      const result = await uploadAsset(file, typeString, quizId, groupType);
-
-      console.log("✅ Upload success:", result);
-
-      // Tạo object asset mới
-      const newAsset = {
-        assetType: assetType,
-        url: result.url,
-        caption: file.name,
-        mimeType: file.type,
-      };
-
-      // Cập nhật quiz state trước
-      setQuiz((prev) => {
-        const updatedGroups = prev?.groups ? [...prev.groups] : [...groups];
-        
-        // Đảm bảo group tồn tại
-        if (updatedGroups[groupIndex]) {
-          updatedGroups[groupIndex] = {
-            ...updatedGroups[groupIndex],
-            assets: [...(updatedGroups[groupIndex].assets || []), newAsset]
-          };
-        }
-
-        return {
-          ...prev,
-          groups: updatedGroups
-        };
-      });
-
-      // Sau đó gọi API để lưu vào backend
-      const updatedGroups = [...groups];
-      if (!updatedGroups[groupIndex].assets) {
-        updatedGroups[groupIndex].assets = [];
-      }
-      updatedGroups[groupIndex].assets.push(newAsset);
-
-      // Format data giống code cũ
-      const importData = formatGroupsForAPI(updatedGroups);
-
-      console.log("📤 Sending to backend (Upload Asset):", JSON.stringify(importData, null, 2));
-
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-
-      alert("✅ Upload thành công!");
-    } catch (err) {
-      console.error("❌ Upload error:", err);
-      const errorMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
-      alert(`❌ Lỗi upload: ${errorMsg}`);
-    } finally {
-      setUploadingAsset(false);
-      e.target.value = "";
-    }
-  };
+    await fetchQuiz();
+    addToast("Upload thành công!", "success");
+  } catch (err) {
+    console.error("❌ Upload error:", err);
+    const errorMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
+    addToast(`❌ Lỗi upload: ${errorMsg}`, "danger");
+  } finally {
+    setUploadingAsset(false);
+    e.target.value = "";
+  }
+};
 
   const handleAddTextAsset = async () => {
-    if (!textAssetContent.trim()) {
-      alert("❌ Vui lòng nhập nội dung text!");
-      return;
+  if (!textAssetContent.trim()) {
+    addToast("❌ Vui lòng nhập nội dung text!", "danger");
+    return;
+  }
+
+  try {
+    setUploading(true);
+    const group = groups[textAssetGroupIndex];
+
+    if (!group.groupID) {
+      throw new Error("Group ID not found");
     }
 
-    try {
-      setUploading(true);
-      const updatedGroups = [...groups];
-      const targetGroup = updatedGroups[textAssetGroupIndex];
-
-      if (isEditingAsset && editingAssetIndex !== null) {
-        targetGroup.assets[editingAssetIndex].contentText = textAssetContent.trim();
-      } else {
-        targetGroup.assets.push({
-          assetType: 3,
-          contentText: textAssetContent.trim()
-        });
+    if (isEditingAsset && editingAssetIndex !== null) {
+      // CẬP NHẬT text asset (cần xóa và tạo mới vì API không có update asset)
+      const oldAsset = group.assets[editingAssetIndex];
+      if (oldAsset.assetID) {
+        await deleteAsset(oldAsset.assetID);
       }
-
-      // Format data giống code cũ
-      const importData = formatGroupsForAPI(updatedGroups);
-
-      console.log("📤 Sending to backend (Text Asset):", JSON.stringify(importData, null, 2));
-
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-
-      setShowTextAssetModal(false);
-      setTextAssetContent("");
-      setTextAssetGroupIndex(null);
-      setIsEditingAsset(false);
-      setEditingAssetIndex(null);
-      alert(isEditingAsset ? "✅ Đã cập nhật text asset!" : "✅ Đã thêm text asset!");
-    } catch (err) {
-      console.error("❌ Text asset error:", err);
-      console.error("❌ Error response:", err.response?.data);
-      alert("❌ Lỗi: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
     }
-  };
+
+    // Tạo text asset mới
+    await createGroupAsset(group.groupID, {
+      assetType: 3,
+      url: "",
+      contentText: textAssetContent.trim(),
+      caption: "",
+      mimeType: "",
+    });
+
+    await fetchQuiz();
+    setShowTextAssetModal(false);
+    setTextAssetContent("");
+    setTextAssetGroupIndex(null);
+    setIsEditingAsset(false);
+    setEditingAssetIndex(null);
+    addToast(isEditingAsset ? "Đã cập nhật text asset!" : "Đã thêm text asset!", "success");
+  } catch (err) {
+    console.error("❌ Text asset error:", err);
+    addToast("❌ Lỗi: " + (err.response?.data?.message || err.message), "danger");
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleEditAsset = (groupIndex, assetIndex, asset) => {
     if (asset.assetType === 3) {
@@ -410,34 +511,37 @@ const QuizDetail = () => {
       setIsEditingAsset(true);
       setShowTextAssetModal(true);
     } else {
-      alert("⚠️ Để sửa file (audio/image/video), vui lòng xóa và upload lại file mới.");
+      addToast("⚠️ Để sửa file (audio/image/video), vui lòng xóa và upload lại file mới.", "warning");
     }
   };
 
   const removeAsset = async (groupIndex, assetIndex) => {
-    if (!window.confirm("Xóa asset này?")) return;
+  const group = groups[groupIndex];
+  const asset = group.assets[assetIndex];
 
-    try {
-      setUploading(true);
-      const updatedGroups = [...groups];
-      updatedGroups[groupIndex].assets.splice(assetIndex, 1);
+  if (!asset.assetID) {
+    addToast("❌ Asset ID không hợp lệ!", "danger");
+    return;
+  }
 
-      // Format data giống code cũ
-      const importData = formatGroupsForAPI(updatedGroups);
-
-      console.log("📤 Sending to backend (Remove Asset):", JSON.stringify(importData, null, 2));
-
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-      alert("✅ Đã xóa asset");
-    } catch (err) {
-      console.error("❌ Delete asset error:", err);
-      console.error("❌ Error response:", err.response?.data);
-      alert("❌ Lỗi xóa asset: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
+  showConfirm(
+    "⚠️ Xác nhận xóa Asset",
+    "Bạn có chắc chắn muốn xóa asset này?",
+    async () => {
+      try {
+        setUploading(true);
+        await deleteAsset(asset.assetID);
+        await fetchQuiz();
+        addToast("Đã xóa asset", "success");
+      } catch (err) {
+        console.error("❌ Delete asset error:", err);
+        addToast("❌ Lỗi xóa asset: " + (err.response?.data?.message || err.message), "danger");
+      } finally {
+        setUploading(false);
+      }
     }
-  };
+  );
+};
 
   // ==================== QUESTION MANAGEMENT ====================
   const addQuestion = () => {
@@ -480,7 +584,7 @@ const QuizDetail = () => {
       }
       setImportQuestions(updated);
     } else {
-      alert("Phải có ít nhất 2 đáp án!");
+      addToast("Phải có ít nhất 2 đáp án!", "warning");
     }
   };
 
@@ -490,70 +594,72 @@ const QuizDetail = () => {
     setImportQuestions(updated);
   };
 
-  const handleImport = async () => {
-    for (let i = 0; i < importQuestions.length; i++) {
-      const q = importQuestions[i];
-      if (!q.content.trim()) {
-        setErrorMessage(`Câu hỏi ${i + 1} chưa có nội dung!`);
-        setShowErrorModal(true);
-        return;
-      }
-      if (q.options.some(opt => !opt.trim())) {
-        setErrorMessage(`Câu hỏi ${i + 1} có đáp án trống!`);
-        setShowErrorModal(true);
-        return;
-      }
-    }
-
-    try {
-      setUploading(true);
-      const updatedGroups = [...groups];
-      const targetGroup = updatedGroups[selectedGroupIndex];
-      
-      const currentQuestionCount = targetGroup.questions?.length || 0;
-
-      const newQuestions = importQuestions.map((q, index) => ({
-        questionOrder: currentQuestionCount + index + 1,
-        questionType: 1,
-        content: q.content.trim(),
-        scoreWeight: q.scoreWeight,
-        metaJson: null,
-        options: q.options.map((opt, optIndex) => ({
-          content: opt.trim(),
-          isCorrect: optIndex === q.correctIndex,
-        })),
-        assets: [],
-      }));
-
-      targetGroup.questions = [...(targetGroup.questions || []), ...newQuestions];
-
-      const importData = formatGroupsForAPI(updatedGroups);
-      console.log("📤 Sending to backend (Import Questions):", JSON.stringify(importData, null, 2));
-
-      await importQuizGroups(quizId, importData);
-
-      const newAnswersMap = { ...correctAnswersMap };
-      newQuestions.forEach((q, idx) => {
-        const key = `${selectedGroupIndex}-${currentQuestionCount + idx}`;
-        newAnswersMap[key] = importQuestions[idx].correctIndex;
-      });
-      setCorrectAnswersMap(newAnswersMap);
-      localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
-
-      await fetchQuiz();
-
-      setShowImportModal(false);
-      setImportQuestions([{ content: "", options: ["", "", "", ""], correctIndex: 0, scoreWeight: 1.00 }]);
-      setSelectedGroupIndex(null);
-      alert("✅ Thêm câu hỏi thành công!");
-    } catch (err) {
-      console.error("❌ Import error:", err);
-      setErrorMessage("❌ Lỗi import quiz: " + (err.response?.data?.message || err.message));
+  // ✅ Cập nhật handleImport - Thêm câu hỏi mới vào group
+const handleImport = async () => {
+  // Validate
+  for (let i = 0; i < importQuestions.length; i++) {
+    const q = importQuestions[i];
+    if (!q.content.trim()) {
+      setErrorMessage(`Câu hỏi ${i + 1} chưa có nội dung!`);
       setShowErrorModal(true);
-    } finally {
-      setUploading(false);
+      return;
     }
-  };
+    if (q.options.some(opt => !opt.trim())) {
+      setErrorMessage(`Câu hỏi ${i + 1} có đáp án trống!`);
+      setShowErrorModal(true);
+      return;
+    }
+  }
+
+  try {
+    setUploading(true);
+    const group = groups[selectedGroupIndex];
+
+    if (!group.groupID) {
+      throw new Error("Group ID not found");
+    }
+
+    const currentQuestionCount = group.questions?.length || 0;
+
+    // Format questions cho API
+    const questionsToAdd = importQuestions.map((q, index) => ({
+      content: q.content.trim(),
+      questionType: 1,
+      questionOrder: currentQuestionCount + index + 1,
+      scoreWeight: q.scoreWeight || 1.0,
+      metaJson: null,
+      options: q.options.map((opt, optIndex) => ({
+        content: opt.trim(),
+        isCorrect: optIndex === q.correctIndex,
+      })),
+      assets: [],
+    }));
+
+    // Gọi helper để thêm câu hỏi
+    await addQuestionsToGroup(group.groupID, questionsToAdd);
+
+    // Lưu đáp án đúng vào localStorage
+    const newAnswersMap = { ...correctAnswersMap };
+    questionsToAdd.forEach((q, idx) => {
+      const key = `${selectedGroupIndex}-${currentQuestionCount + idx}`;
+      newAnswersMap[key] = importQuestions[idx].correctIndex;
+    });
+    setCorrectAnswersMap(newAnswersMap);
+    localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
+
+    await fetchQuiz();
+    setShowImportModal(false);
+    setImportQuestions([{ content: "", options: ["", ""], correctIndex: 0, scoreWeight: 1.00 }]);
+    setSelectedGroupIndex(null);
+    addToast("Thêm câu hỏi thành công!", "success");
+  } catch (err) {
+    console.error("❌ Import error:", err);
+    setErrorMessage("❌ Lỗi thêm câu hỏi: " + (err.response?.data?.message || err.message));
+    setShowErrorModal(true);
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleEditQuestion = (groupIndex, questionIndex, question) => {
     const qOptions = question.options || question.choices || [];
@@ -570,96 +676,103 @@ const QuizDetail = () => {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingQuestion.content.trim()) {
-      setErrorMessage("Câu hỏi chưa có nội dung!");
-      setShowErrorModal(true);
-      return;
-    }
-    if (editingQuestion.options.some(opt => !opt.trim())) {
-      setErrorMessage("Có đáp án trống!");
-      setShowErrorModal(true);
-      return;
+  // ✅ Cập nhật handleSaveEdit - Cập nhật câu hỏi
+const handleSaveEdit = async () => {
+  if (!editingQuestion.content.trim()) {
+    setErrorMessage("Câu hỏi chưa có nội dung!");
+    setShowErrorModal(true);
+    return;
+  }
+  if (editingQuestion.options.some(opt => !opt.trim())) {
+    setErrorMessage("Có đáp án trống!");
+    setShowErrorModal(true);
+    return;
+  }
+
+  try {
+    setUploading(true);
+    const group = groups[editingQuestionGroupIndex];
+    const question = group.questions[editingQuestionIndex];
+
+    if (!question.questionID) {
+      throw new Error("Question ID not found");
     }
 
-    try {
-      setUploading(true);
-      const updatedGroups = [...groups];
-      const targetGroup = updatedGroups[editingQuestionGroupIndex];
+    // Format options với ID nếu có
+    const formattedOptions = editingQuestion.options.map((opt, optIndex) => ({
+      optionID: question.options?.[optIndex]?.optionID || null,
+      content: opt,
+      isCorrect: optIndex === editingQuestion.correctIndex,
+    }));
 
-      targetGroup.questions[editingQuestionIndex] = {
-        ...targetGroup.questions[editingQuestionIndex],
+    // Cập nhật câu hỏi và options
+    await updateQuestionWithOptions(
+      question.questionID,
+      {
         content: editingQuestion.content,
+        questionType: 1,
+        questionOrder: question.questionOrder,
         scoreWeight: editingQuestion.scoreWeight,
-        options: editingQuestion.options.map((opt, optIndex) => ({
-          content: opt,
-          isCorrect: optIndex === editingQuestion.correctIndex,
-        })),
-      };
+        metaJson: null,
+        options: formattedOptions,
+      },
+      question.options || []
+    );
 
-      const importData = formatGroupsForAPI(updatedGroups);
-      console.log("📤 Sending to backend (Edit Question):", JSON.stringify(importData, null, 2));
+    // Lưu đáp án đúng
+    const newAnswersMap = { ...correctAnswersMap };
+    const key = `${editingQuestionGroupIndex}-${editingQuestionIndex}`;
+    newAnswersMap[key] = editingQuestion.correctIndex;
+    setCorrectAnswersMap(newAnswersMap);
+    localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
 
-      await importQuizGroups(quizId, importData);
-      
-      const newAnswersMap = { ...correctAnswersMap };
-      const key = `${editingQuestionGroupIndex}-${editingQuestionIndex}`;
-      newAnswersMap[key] = editingQuestion.correctIndex;
-      setCorrectAnswersMap(newAnswersMap);
-      localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
-      
-      await fetchQuiz();
-
-      setShowEditModal(false);
-      setEditingQuestion(null);
-      setEditingQuestionGroupIndex(null);
-      setEditingQuestionIndex(null);
-      alert("✅ Cập nhật câu hỏi thành công!");
-    } catch (err) {
-      console.error("❌ Edit error:", err);
-      setErrorMessage("❌ Lỗi cập nhật: " + (err.response?.data?.message || err.message));
-      setShowErrorModal(true);
-    } finally {
-      setUploading(false);
-    }
-  };
+    await fetchQuiz();
+    setShowEditModal(false);
+    setEditingQuestion(null);
+    setEditingQuestionGroupIndex(null);
+    setEditingQuestionIndex(null);
+    addToast("Cập nhật câu hỏi thành công!", "success");
+  } catch (err) {
+    console.error("❌ Edit error:", err);
+    setErrorMessage("❌ Lỗi cập nhật: " + (err.response?.data?.message || err.message));
+    setShowErrorModal(true);
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleDeleteQuestion = async () => {
-    try {
-      setUploading(true);
-      const { groupIndex, questionIndex } = deleteTarget;
+  try {
+    setUploading(true);
+    const { groupIndex, questionIndex } = deleteTarget;
+    const group = groups[groupIndex];
+    const question = group.questions[questionIndex];
 
-      const updatedGroups = [...groups];
-      updatedGroups[groupIndex].questions.splice(questionIndex, 1);
-
-      // Re-order questions
-      updatedGroups[groupIndex].questions.forEach((q, idx) => {
-        q.questionOrder = idx + 1;
-      });
-
-      const importData = formatGroupsForAPI(updatedGroups);
-      console.log("📤 Sending to backend (Delete Question):", JSON.stringify(importData, null, 2));
-
-      await importQuizGroups(quizId, importData);
-      
-      const newAnswersMap = { ...correctAnswersMap };
-      delete newAnswersMap[`${groupIndex}-${questionIndex}`];
-      setCorrectAnswersMap(newAnswersMap);
-      localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
-
-      await fetchQuiz();
-      setShowDeleteModal(false);
-      setDeleteTarget(null);
-      alert("✅ Xóa câu hỏi thành công!");
-    } catch (err) {
-      console.error("❌ Delete error:", err);
-      setErrorMessage("❌ Lỗi xóa: " + (err.response?.data?.message || err.message));
-      setShowErrorModal(true);
-    } finally {
-      setUploading(false);
+    if (!question.questionID) {
+      throw new Error("Question ID not found");
     }
-  };
 
+    // Xóa câu hỏi hoàn toàn
+    await deleteQuestionCompletely(question.questionID, question);
+
+    // Xóa đáp án đúng khỏi localStorage
+    const newAnswersMap = { ...correctAnswersMap };
+    delete newAnswersMap[`${groupIndex}-${questionIndex}`];
+    setCorrectAnswersMap(newAnswersMap);
+    localStorage.setItem(`quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
+
+    await fetchQuiz();
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
+    addToast("Xóa câu hỏi thành công!", "success");
+  } catch (err) {
+    console.error("❌ Delete error:", err);
+    setErrorMessage("❌ Lỗi xóa: " + (err.response?.data?.message || err.message));
+    setShowErrorModal(true);
+  } finally {
+    setUploading(false);
+  }
+};
   // ==================== RENDER HELPERS ====================
   const renderAsset = (asset, idx) => {
     if (!asset) return null;
@@ -729,8 +842,7 @@ const QuizDetail = () => {
           <Button
             variant="link"
             onClick={() => navigate("/teacher/dashboard")}
-            className="p-0 mb-2"
-          >
+            className="p-0 mb-2">
             ← Quay lại Dashboard
           </Button>
           <h3 className="text-primary mb-0">{quiz?.title || "Quiz Detail"}</h3>
@@ -740,17 +852,39 @@ const QuizDetail = () => {
             <Badge bg="secondary">{getTotalQuestions()} câu hỏi</Badge>
           </div>
         </div>
-        <Button 
-          variant="success" 
-          onClick={() => {
-            setEditingGroupIndex(null);
-            setNewGroupInstruction("");
-            setShowGroupModal(true);
-          }}
-        >
-          <FolderPlus size={18} className="me-2" />
-          Thêm Group
-        </Button>
+        <div className="d-flex gap-2">
+          <Button 
+            variant="success" 
+            onClick={() => {
+              setEditingGroupIndex(null);
+              setNewGroupInstruction("");
+              setShowGroupModal(true);
+            }}
+          >
+            <FolderPlus size={18} className="me-2" />
+            Thêm Group
+          </Button>
+          {/* AI BUTTON */}
+          <Button 
+            variant="gradient" 
+            style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              border: "none",
+              color: "white"
+            }}
+            onClick={() => {
+              if (groups.length === 0) {
+                addToast("⚠️ Vui lòng tạo ít nhất 1 group trước khi dùng AI!", "warning");
+                return;
+              }
+              setAiSelectedGroupIndex(0);
+              setAiPrompt("");
+              setShowAIModal(true);
+            }}
+          >
+            Tạo đề bằng AI
+          </Button>
+        </div>
       </div>
 
       {/* Groups List */}
@@ -789,12 +923,23 @@ const QuizDetail = () => {
                     size="sm"
                     onClick={() => {
                       setSelectedGroupIndex(groupIdx);
-                      setImportQuestions([{ content: "", options: ["", "", "", ""], correctIndex: 0, scoreWeight: 1.00 }]);
+                      setImportQuestions([{ content: "", options: ["", ""], correctIndex: 0, scoreWeight: 1.00 }]);
                       setShowImportModal(true);
                     }}
                   >
                     <Plus size={14} className="me-1" />
                     Thêm câu hỏi
+                  </Button>
+                  <Button
+                    variant="outline-info"
+                    size="sm"
+                    onClick={() => {
+                      setAiSelectedGroupIndex(groupIdx);
+                      setAiPrompt("");
+                      setShowAIModal(true);
+                    }}
+                  >
+                    AI
                   </Button>
                   <Button
                     variant="outline-danger"
@@ -817,7 +962,7 @@ const QuizDetail = () => {
                         disabled={uploadingAsset}
                         onClick={() => document.getElementById(`audio-${groupIdx}`).click()}
                       >
-                        🎵 Audio
+                        Audio
                       </Button>
                       <input
                         id={`audio-${groupIdx}`}
@@ -833,7 +978,7 @@ const QuizDetail = () => {
                         disabled={uploadingAsset}
                         onClick={() => document.getElementById(`image-${groupIdx}`).click()}
                       >
-                        🖼️ Image
+                        Image
                       </Button>
                       <input
                         id={`image-${groupIdx}`}
@@ -849,7 +994,7 @@ const QuizDetail = () => {
                         disabled={uploadingAsset}
                         onClick={() => document.getElementById(`video-${groupIdx}`).click()}
                       >
-                        🎬 Video
+                        Video
                       </Button>
                       <input
                         id={`video-${groupIdx}`}
@@ -869,7 +1014,7 @@ const QuizDetail = () => {
                           setShowTextAssetModal(true);
                         }}
                       >
-                        📝 Text
+                        Text
                       </Button>
                     </div>
                   </Card.Header>
@@ -880,10 +1025,10 @@ const QuizDetail = () => {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-start mb-3">
                               <Badge bg="info" style={{ fontSize: "0.9rem" }}>
-                                {asset.assetType === 1 ? '🎵 Audio' : 
-                                 asset.assetType === 2 ? '🖼️ Image' : 
-                                 asset.assetType === 3 ? '📝 Text' : 
-                                 '🎬 Video'}
+                                {asset.assetType === 1 ? 'Audio' : 
+                                 asset.assetType === 2 ? 'Image' : 
+                                 asset.assetType === 3 ? 'Text' : 
+                                 'Video'}
                               </Badge>
                               <div className="d-flex gap-2">
                                 <Button
@@ -1048,7 +1193,7 @@ const QuizDetail = () => {
       <Modal show={showGroupModal} onHide={() => setShowGroupModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>
-            {editingGroupIndex !== null ? "✏️ Sửa Group" : "📁 Thêm Group Mới"}
+            {editingGroupIndex !== null ? "Sửa Group" : "Thêm Group Mới"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -1083,6 +1228,78 @@ const QuizDetail = () => {
         </Modal.Footer>
       </Modal>
 
+      {/* AI Modal */}
+      <Modal show={showAIModal} onHide={() => setShowAIModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Tạo đề bằng AI
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Alert variant="info" className="mb-3">
+            <strong>Hướng dẫn:</strong>
+            <ul className="mb-0 mt-2">
+              <li>Mô tả chi tiết nội dung bạn muốn tạo đề</li>
+              <li>Ví dụ: "Create 10 questions about Present Continuous Tense for intermediate level"</li>
+              <li>Ví dụ: "Tạo 5 câu hỏi về thì hiện tại hoàn thành, level trung bình"</li>
+            </ul>
+          </Alert>
+
+          {groups.length > 0 && (
+            <Form.Group className="mb-3">
+              <Form.Label>Chọn Group để thêm câu hỏi</Form.Label>
+              <Form.Select value={aiSelectedGroupIndex || 0} onChange={(e) => setAiSelectedGroupIndex(parseInt(e.target.value))}>
+                {groups.map((g, i) => (
+                  <option key={i} value={i}>Group {i + 1}: {g.instruction}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          )}
+
+          <Form.Group>
+            <Form.Label>Prompt cho AI</Form.Label>
+            <Form.Control 
+              as="textarea" 
+              rows={5} 
+              placeholder="Ví dụ: Create 10 multiple choice questions about English grammar, focusing on present perfect tense..."
+              value={aiPrompt} 
+              onChange={(e) => setAiPrompt(e.target.value)}
+              disabled={aiLoading}
+            />
+            <Form.Text className="text-muted">
+              Mô tả càng chi tiết, AI sẽ tạo đề càng chính xác
+            </Form.Text>
+          </Form.Group>
+
+          {aiLoading && (
+            <Alert variant="warning" className="mt-3 mb-0">
+              <div className="d-flex align-items-center">
+                <Spinner animation="border" size="sm" className="me-2" />
+                <span>AI đang tạo đề... Vui lòng đợi (có thể mất 30-60 giây)</span>
+              </div>
+            </Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAIModal(false)} disabled={aiLoading}>Hủy</Button>
+          <Button 
+            variant="primary" 
+            onClick={handleGenerateAIQuiz} 
+            disabled={!aiPrompt.trim() || aiLoading}
+            style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              border: "none"
+            }}
+          >
+            {aiLoading ? (
+              <><Spinner as="span" animation="border" size="sm" className="me-2" />Đang tạo...</>
+            ) : (
+              <>Tạo bằng AI</>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Import Questions Modal */}
       <Modal
         show={showImportModal}
@@ -1092,13 +1309,13 @@ const QuizDetail = () => {
       >
         <Modal.Header closeButton>
           <Modal.Title>
-            📝 Thêm câu hỏi vào Group {selectedGroupIndex !== null ? selectedGroupIndex + 1 : ""}
+            Thêm câu hỏi vào Group {selectedGroupIndex !== null ? selectedGroupIndex + 1 : ""}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
           {selectedGroupIndex !== null && groups[selectedGroupIndex] && (
             <Alert variant="info" className="mb-4">
-              <strong>📁 Group Instruction:</strong> {groups[selectedGroupIndex].instruction}
+              <strong>Group Instruction:</strong> {groups[selectedGroupIndex].instruction}
             </Alert>
           )}
 
@@ -1135,9 +1352,10 @@ const QuizDetail = () => {
                   <Form.Control
                     type="number"
                     min="1"
+                    step="0.01"
                     value={q.scoreWeight}
                     onChange={(e) =>
-                      updateQuestion(qIndex, "scoreWeight", parseInt(e.target.value))
+                      updateQuestion(qIndex, "scoreWeight", parseFloat(e.target.value) || 1)
                     }
                     style={{ width: "100px" }}
                   />
@@ -1251,11 +1469,12 @@ const QuizDetail = () => {
                 <Form.Control
                   type="number"
                   min="1"
+                  step="0.01"
                   value={editingQuestion.scoreWeight}
                   onChange={(e) =>
                     setEditingQuestion({
                       ...editingQuestion,
-                      scoreWeight: parseInt(e.target.value),
+                      scoreWeight: parseFloat(e.target.value) || 1,
                     })
                   }
                   style={{ width: "100px" }}
@@ -1411,7 +1630,7 @@ const QuizDetail = () => {
       >
         <Modal.Header closeButton>
           <Modal.Title>
-            {isEditingAsset ? "✏️ Sửa Text Asset" : "📝 Thêm Text Asset"}
+            {isEditingAsset ? "Sửa Text Asset" : "Thêm Text Asset"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -1461,22 +1680,49 @@ const QuizDetail = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Error Modal */}
-      <Modal show={showErrorModal} onHide={() => setShowErrorModal(false)} centered>
+      {/* Confirmation Modal */}
+      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>❌ Lỗi</Modal.Title>
+          <Modal.Title>{confirmConfig.title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Alert variant="danger" className="mb-0">
-            {errorMessage}
+          <Alert variant={confirmConfig.variant === "danger" ? "warning" : confirmConfig.variant}>
+            {confirmConfig.message}
           </Alert>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowErrorModal(false)}>
-            Đóng
+          <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
+            Hủy
+          </Button>
+          <Button variant={confirmConfig.variant} onClick={handleConfirm}>
+            Xác nhận
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Toast Notifications */}
+      <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+            bg={toast.variant}
+            autohide
+            delay={4000}
+          >
+            <Toast.Header closeButton={true}>
+              <strong className="me-auto">
+                {toast.variant === "success" ? "Thành công" : 
+                 toast.variant === "danger" ? "❌ Lỗi" : 
+                 toast.variant === "warning" ? "⚠️ Cảnh báo" : "ℹ️ Thông báo"}
+              </strong>
+            </Toast.Header>
+            <Toast.Body className={toast.variant === "success" || toast.variant === "danger" ? "text-white" : ""}>
+              {toast.message}
+            </Toast.Body>
+          </Toast>
+        ))}
+      </ToastContainer>
     </Container>
   );
 };

@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
-  Container,
-  Card,
-  Button,
-  Spinner,
-  Alert,
-  Form,
-  ListGroup,
-  Modal,
-  Badge,
-  Row,
-  Col,
-  Accordion,
+  Container, Card, Button, Spinner, Alert, Form, ListGroup,
+  Modal, Badge, Row, Col, Accordion,
 } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -19,7 +9,12 @@ import {
   importQuizGroups,
 } from "../../middleware/admin/quizManagementAPI";
 import { uploadAsset } from "../../middleware/teacher/uploadAPI";
-import { Trash2, Plus, Check, Edit2, FolderPlus } from "lucide-react";
+import { 
+  generateAIQuiz, 
+  parseAIQuizResponse, 
+  convertAIQuestionsToImportFormat 
+} from "../../middleware/teacher/aiQuizAPI";
+import { Trash2, Plus, Check, Edit2, FolderPlus, Sparkles } from "lucide-react";
 
 const ExamDetail = () => {
   const { quizId } = useParams();
@@ -31,12 +26,10 @@ const ExamDetail = () => {
   const [error, setError] = useState("");
   const [correctAnswersMap, setCorrectAnswersMap] = useState({});
 
-  // Group management
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [editingGroupIndex, setEditingGroupIndex] = useState(null);
   const [newGroupInstruction, setNewGroupInstruction] = useState("");
   
-  // Import questions to group
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(null);
   const [importQuestions, setImportQuestions] = useState([
@@ -44,7 +37,12 @@ const ExamDetail = () => {
   ]);
   const [uploading, setUploading] = useState(false);
   
-  // Asset management
+  // AI Quiz
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSelectedGroupIndex, setAiSelectedGroupIndex] = useState(null);
+  
   const [uploadingAsset, setUploadingAsset] = useState(false);
   const [showTextAssetModal, setShowTextAssetModal] = useState(false);
   const [textAssetContent, setTextAssetContent] = useState("");
@@ -52,7 +50,6 @@ const ExamDetail = () => {
   const [editingAssetIndex, setEditingAssetIndex] = useState(null);
   const [isEditingAsset, setIsEditingAsset] = useState(false);
 
-  // Edit/Delete question
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [editingQuestionGroupIndex, setEditingQuestionGroupIndex] = useState(null);
@@ -60,7 +57,6 @@ const ExamDetail = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Error modal
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -68,33 +64,27 @@ const ExamDetail = () => {
     try {
       setLoading(true);
       setError("");
-
       const data = await getQuizById(quizId);
-      console.log("✅ Admin API response:", data);
-
       setQuiz(data);
 
       let parsedGroups = [];
-      
-      if (data.groups && Array.isArray(data.groups) && data.groups.length > 0) {
-        parsedGroups = data.groups.map(group => ({
-          groupOrder: group.groupOrder || 1,
-          groupType: group.groupType || 1,
-          instruction: group.instruction || "",
-          assets: group.assets || [],
-          questions: group.questions || []
+      if (data.groups?.length > 0) {
+        parsedGroups = data.groups.map(g => ({
+          groupOrder: g.groupOrder || 1,
+          groupType: g.groupType || 1,
+          instruction: g.instruction || "",
+          assets: g.assets || [],
+          questions: g.questions || []
         }));
-      } else if (data.questionGroups && Array.isArray(data.questionGroups)) {
-        parsedGroups = data.questionGroups.map(group => ({
-          groupOrder: group.groupOrder || 1,
-          groupType: group.groupType || 1,
-          instruction: group.instruction || "",
-          assets: group.assets || [],
-          questions: group.questions || []
+      } else if (data.questionGroups?.length > 0) {
+        parsedGroups = data.questionGroups.map(g => ({
+          groupOrder: g.groupOrder || 1,
+          groupType: g.groupType || 1,
+          instruction: g.instruction || "",
+          assets: g.assets || [],
+          questions: g.questions || []
         }));
-      }
-
-      if (parsedGroups.length === 0 && data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+      } else if (data.questions?.length > 0) {
         parsedGroups = [{
           groupOrder: 1,
           groupType: 1,
@@ -103,11 +93,8 @@ const ExamDetail = () => {
           questions: data.questions
         }];
       }
-
-      console.log("✅ Total groups:", parsedGroups.length);
       setGroups(parsedGroups);
     } catch (err) {
-      console.error("❌ Error loading quiz:", err);
       setError(err.response?.data?.message || err.message || "Không thể tải quiz");
     } finally {
       setLoading(false);
@@ -121,314 +108,49 @@ const ExamDetail = () => {
       if (saved) {
         try {
           setCorrectAnswersMap(JSON.parse(saved));
-        } catch (e) {
-          console.error("Error parsing saved answers:", e);
-        }
+        } catch (e) {}
       }
     }
   }, [quizId]);
 
-  // ==================== GROUP MANAGEMENT ====================
-  const formatGroupsForAPI = (groupsData) => {
-    return {
-      groups: groupsData.map(g => ({
-        groupOrder: g.groupOrder || 1,
-        groupType: g.groupType || 1,
-        instruction: g.instruction || "",
-        assets: (g.assets || []).map(asset => ({
-          assetType: asset.assetType || 0,
-          url: asset.url || "",
-          contentText: asset.contentText || "",
-          caption: asset.caption || "",
-          mimeType: asset.mimeType || ""
-        })),
-        questions: (g.questions || []).map((q, idx) => ({
-          content: q.content || "",
-          questionType: q.questionType || 1,
-          questionOrder: idx + 1,
-          scoreWeight: q.scoreWeight || 1.00,
-          metaJson: q.metaJson || null,
-          options: (q.options || []).map(opt => ({
-            content: opt.content || opt || "",
-            isCorrect: opt.isCorrect || false
-          })),
-          assets: (q.assets || []).map(asset => ({
-            assetType: asset.assetType || 0,
-            url: asset.url || "",
-            contentText: asset.contentText || "",
-            caption: asset.caption || "",
-            mimeType: asset.mimeType || ""
-          }))
-        }))
-      }))
-    };
-  };
-
-  const handleSaveGroup = async () => {
-    if (!newGroupInstruction.trim()) {
-      alert("❌ Vui lòng nhập instruction cho group!");
+  // AI QUIZ GENERATOR
+  const handleGenerateAIQuiz = async () => {
+    if (!aiPrompt.trim()) {
+      setErrorMessage("❌ Vui lòng nhập prompt cho AI!");
+      setShowErrorModal(true);
+      return;
+    }
+    if (aiSelectedGroupIndex === null) {
+      setErrorMessage("❌ Vui lòng chọn group để thêm câu hỏi!");
+      setShowErrorModal(true);
       return;
     }
 
     try {
-      setUploading(true);
-      const updatedGroups = [...groups];
+      setAiLoading(true);
+      const aiResponse = await generateAIQuiz(aiPrompt);
       
-      if (editingGroupIndex !== null) {
-        updatedGroups[editingGroupIndex].instruction = newGroupInstruction.trim();
-      } else {
-        const newGroup = {
-          groupOrder: groups.length + 1,
-          groupType: 1,
-          instruction: newGroupInstruction.trim(),
-          assets: [],
-          questions: []
-        };
-        updatedGroups.push(newGroup);
+      if (aiResponse.error) throw new Error(aiResponse.error);
+
+      const parsedQuiz = parseAIQuizResponse(aiResponse);
+      if (!parsedQuiz.questions?.length) {
+        throw new Error("AI không tạo được câu hỏi. Vui lòng thử prompt khác.");
       }
 
-      const importData = formatGroupsForAPI(updatedGroups);
-      console.log("📤 Sending to backend (Save Group):", JSON.stringify(importData, null, 2));
-
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-
-      setShowGroupModal(false);
-      setNewGroupInstruction("");
-      setEditingGroupIndex(null);
-      alert(editingGroupIndex !== null ? "✅ Đã cập nhật group!" : "✅ Đã thêm group mới!");
-    } catch (err) {
-      console.error("❌ Save group error:", err);
-      alert("❌ Lỗi: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleDeleteGroup = async (groupIndex) => {
-    if (!window.confirm(`Xóa group ${groupIndex + 1}? Tất cả câu hỏi và assets trong group này sẽ bị xóa!`)) {
-      return;
-    }
-
-    try {
-      setUploading(true);
-      const updatedGroups = groups.filter((_, idx) => idx !== groupIndex);
-      updatedGroups.forEach((g, idx) => { g.groupOrder = idx + 1; });
-
-      const importData = formatGroupsForAPI(updatedGroups);
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-      alert("✅ Đã xóa group!");
-    } catch (err) {
-      console.error("❌ Delete group error:", err);
-      alert("❌ Lỗi xóa group: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // ==================== ASSET MANAGEMENT ====================
-  const handleAssetUpload = async (e, assetType, groupIndex) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.size > 50 * 1024 * 1024) {
-      alert("❌ File quá lớn! Giới hạn 50MB");
-      return;
-    }
-
-    let typeString;
-    if (assetType === 1) typeString = "audio";
-    else if (assetType === 2) typeString = "image";
-    else if (assetType === 5) typeString = "video";
-    else {
-      alert("❌ Loại asset không hỗ trợ!");
-      return;
-    }
-
-    try {
-      setUploadingAsset(true);
-      const result = await uploadAsset(file, typeString, quizId, "exam");
-
-      const newAsset = {
-        assetType: assetType,
-        url: result.url,
-        caption: file.name,
-        mimeType: file.type,
-      };
-
+      const convertedQuestions = convertAIQuestionsToImportFormat(parsedQuiz.questions);
       const updatedGroups = [...groups];
-      if (!updatedGroups[groupIndex].assets) {
-        updatedGroups[groupIndex].assets = [];
-      }
-      updatedGroups[groupIndex].assets.push(newAsset);
+      const targetGroup = updatedGroups[aiSelectedGroupIndex];
+      const currentCount = targetGroup.questions?.length || 0;
 
-      const importData = formatGroupsForAPI(updatedGroups);
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-
-      alert("✅ Upload thành công!");
-    } catch (err) {
-      console.error("❌ Upload error:", err);
-      alert(`❌ Lỗi upload: ${err.response?.data?.message || err.message}`);
-    } finally {
-      setUploadingAsset(false);
-      e.target.value = "";
-    }
-  };
-
-  const handleAddTextAsset = async () => {
-    if (!textAssetContent.trim()) {
-      alert("❌ Vui lòng nhập nội dung text!");
-      return;
-    }
-
-    try {
-      setUploading(true);
-      const updatedGroups = [...groups];
-      const targetGroup = updatedGroups[textAssetGroupIndex];
-
-      if (isEditingAsset && editingAssetIndex !== null) {
-        targetGroup.assets[editingAssetIndex].contentText = textAssetContent.trim();
-      } else {
-        targetGroup.assets.push({
-          assetType: 3,
-          contentText: textAssetContent.trim()
-        });
-      }
-
-      const importData = formatGroupsForAPI(updatedGroups);
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-
-      setShowTextAssetModal(false);
-      setTextAssetContent("");
-      setTextAssetGroupIndex(null);
-      setIsEditingAsset(false);
-      setEditingAssetIndex(null);
-      alert(isEditingAsset ? "✅ Đã cập nhật text asset!" : "✅ Đã thêm text asset!");
-    } catch (err) {
-      console.error("❌ Text asset error:", err);
-      alert("❌ Lỗi: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleEditAsset = (groupIndex, assetIndex, asset) => {
-    if (asset.assetType === 3) {
-      setTextAssetContent(asset.contentText || "");
-      setTextAssetGroupIndex(groupIndex);
-      setEditingAssetIndex(assetIndex);
-      setIsEditingAsset(true);
-      setShowTextAssetModal(true);
-    } else {
-      alert("⚠️ Để sửa file (audio/image/video), vui lòng xóa và upload lại file mới.");
-    }
-  };
-
-  const removeAsset = async (groupIndex, assetIndex) => {
-    if (!window.confirm("Xóa asset này?")) return;
-
-    try {
-      setUploading(true);
-      const updatedGroups = [...groups];
-      updatedGroups[groupIndex].assets.splice(assetIndex, 1);
-
-      const importData = formatGroupsForAPI(updatedGroups);
-      await importQuizGroups(quizId, importData);
-      await fetchQuiz();
-      alert("✅ Đã xóa asset");
-    } catch (err) {
-      console.error("❌ Delete asset error:", err);
-      alert("❌ Lỗi xóa asset: " + (err.response?.data?.message || err.message));
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // ==================== QUESTION MANAGEMENT ====================
-  const addQuestion = () => {
-    setImportQuestions(prev => [...prev, {
-      content: "",
-      options: ["", ""],
-      correctIndex: 0,
-      scoreWeight: 1.00,
-    }]);
-  };
-
-  const removeQuestion = (index) => {
-    setImportQuestions(importQuestions.filter((_, i) => i !== index));
-  };
-
-  const updateQuestion = (index, field, value) => {
-    const updated = [...importQuestions];
-    updated[index][field] = value;
-    setImportQuestions(updated);
-  };
-
-  const updateOption = (qIndex, optIndex, value) => {
-    const updated = [...importQuestions];
-    updated[qIndex].options[optIndex] = value;
-    setImportQuestions(updated);
-  };
-
-  const addOption = (qIndex) => {
-    const updated = [...importQuestions];
-    updated[qIndex].options.push("");
-    setImportQuestions(updated);
-  };
-
-  const removeOption = (qIndex, optIndex) => {
-    const updated = [...importQuestions];
-    if (updated[qIndex].options.length > 2) {
-      updated[qIndex].options.splice(optIndex, 1);
-      if (updated[qIndex].correctIndex >= updated[qIndex].options.length) {
-        updated[qIndex].correctIndex = updated[qIndex].options.length - 1;
-      }
-      setImportQuestions(updated);
-    } else {
-      alert("Phải có ít nhất 2 đáp án!");
-    }
-  };
-
-  const setCorrectAnswer = (qIndex, optIndex) => {
-    const updated = [...importQuestions];
-    updated[qIndex].correctIndex = optIndex;
-    setImportQuestions(updated);
-  };
-
-  const handleImport = async () => {
-    for (let i = 0; i < importQuestions.length; i++) {
-      const q = importQuestions[i];
-      if (!q.content.trim()) {
-        setErrorMessage(`Câu hỏi ${i + 1} chưa có nội dung!`);
-        setShowErrorModal(true);
-        return;
-      }
-      if (q.options.some(opt => !opt.trim())) {
-        setErrorMessage(`Câu hỏi ${i + 1} có đáp án trống!`);
-        setShowErrorModal(true);
-        return;
-      }
-    }
-
-    try {
-      setUploading(true);
-      const updatedGroups = [...groups];
-      const targetGroup = updatedGroups[selectedGroupIndex];
-      
-      const currentQuestionCount = targetGroup.questions?.length || 0;
-
-      const newQuestions = importQuestions.map((q, index) => ({
-        questionOrder: currentQuestionCount + index + 1,
-        questionType: 1,
-        content: q.content.trim(),
+      const newQuestions = convertedQuestions.map((q, i) => ({
+        questionOrder: currentCount + i + 1,
+        questionType: q.questionType || 1,
+        content: q.content,
         scoreWeight: q.scoreWeight,
         metaJson: null,
-        options: q.options.map((opt, optIndex) => ({
-          content: opt.trim(),
-          isCorrect: optIndex === q.correctIndex,
+        options: q.options.map((opt, idx) => ({
+          content: opt,
+          isCorrect: idx === q.correctIndex,
         })),
         assets: [],
       }));
@@ -439,50 +161,328 @@ const ExamDetail = () => {
       await importQuizGroups(quizId, importData);
 
       const newAnswersMap = { ...correctAnswersMap };
-      newQuestions.forEach((q, idx) => {
-        const key = `${selectedGroupIndex}-${currentQuestionCount + idx}`;
-        newAnswersMap[key] = importQuestions[idx].correctIndex;
+      convertedQuestions.forEach((q, i) => {
+        newAnswersMap[`${aiSelectedGroupIndex}-${currentCount + i}`] = q.correctIndex;
       });
       setCorrectAnswersMap(newAnswersMap);
       localStorage.setItem(`admin_quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
 
       await fetchQuiz();
+      setShowAIModal(false);
+      setAiPrompt("");
+      setAiSelectedGroupIndex(null);
+      alert(`✅ AI đã tạo ${convertedQuestions.length} câu hỏi!`);
+    } catch (err) {
+      setErrorMessage("❌ " + err.message);
+      setShowErrorModal(true);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
+  const formatGroupsForAPI = (groupsData) => ({
+    groups: groupsData.map(g => ({
+      groupOrder: g.groupOrder || 1,
+      groupType: g.groupType || 1,
+      instruction: g.instruction || "",
+      assets: (g.assets || []).map(a => ({
+        assetType: a.assetType || 0,
+        url: a.url || "",
+        contentText: a.contentText || "",
+        caption: a.caption || "",
+        mimeType: a.mimeType || ""
+      })),
+      questions: (g.questions || []).map((q, i) => ({
+        content: q.content || "",
+        questionType: q.questionType || 1,
+        questionOrder: i + 1,
+        scoreWeight: q.scoreWeight || 1.00,
+        metaJson: q.metaJson || null,
+        options: (q.options || []).map(o => ({
+          content: o.content || o || "",
+          isCorrect: o.isCorrect || false
+        })),
+        assets: (q.assets || []).map(a => ({
+          assetType: a.assetType || 0,
+          url: a.url || "",
+          contentText: a.contentText || "",
+          caption: a.caption || "",
+          mimeType: a.mimeType || ""
+        }))
+      }))
+    }))
+  });
+
+  const handleSaveGroup = async () => {
+    if (!newGroupInstruction.trim()) {
+      alert("❌ Vui lòng nhập instruction!");
+      return;
+    }
+    try {
+      setUploading(true);
+      const updatedGroups = [...groups];
+      if (editingGroupIndex !== null) {
+        updatedGroups[editingGroupIndex].instruction = newGroupInstruction.trim();
+      } else {
+        updatedGroups.push({
+          groupOrder: groups.length + 1,
+          groupType: 1,
+          instruction: newGroupInstruction.trim(),
+          assets: [],
+          questions: []
+        });
+      }
+      await importQuizGroups(quizId, formatGroupsForAPI(updatedGroups));
+      await fetchQuiz();
+      setShowGroupModal(false);
+      setNewGroupInstruction("");
+      setEditingGroupIndex(null);
+      alert("✅ Đã lưu group!");
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || err.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteGroup = async (idx) => {
+    if (!window.confirm(`Xóa group ${idx + 1}?`)) return;
+    try {
+      setUploading(true);
+      const updated = groups.filter((_, i) => i !== idx);
+      updated.forEach((g, i) => { g.groupOrder = i + 1; });
+      await importQuizGroups(quizId, formatGroupsForAPI(updated));
+      await fetchQuiz();
+      alert("✅ Đã xóa!");
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || err.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAssetUpload = async (e, assetType, groupIndex) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      alert("❌ File quá lớn!");
+      return;
+    }
+
+    const typeMap = { 1: "audio", 2: "image", 5: "video" };
+    const typeString = typeMap[assetType];
+    if (!typeString) {
+      alert("❌ Loại không hỗ trợ!");
+      return;
+    }
+
+    try {
+      setUploadingAsset(true);
+      const result = await uploadAsset(file, typeString);
+      const updatedGroups = [...groups];
+      if (!updatedGroups[groupIndex].assets) updatedGroups[groupIndex].assets = [];
+      updatedGroups[groupIndex].assets.push({
+        assetType,
+        url: result.url,
+        caption: file.name,
+        mimeType: file.type,
+      });
+      await importQuizGroups(quizId, formatGroupsForAPI(updatedGroups));
+      await fetchQuiz();
+      alert("✅ Upload thành công!");
+    } catch (err) {
+      alert("❌ " + err.message);
+    } finally {
+      setUploadingAsset(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleAddTextAsset = async () => {
+    if (!textAssetContent.trim()) {
+      alert("❌ Nhập nội dung!");
+      return;
+    }
+    try {
+      setUploading(true);
+      const updatedGroups = [...groups];
+      const target = updatedGroups[textAssetGroupIndex];
+      if (isEditingAsset && editingAssetIndex !== null) {
+        target.assets[editingAssetIndex].contentText = textAssetContent.trim();
+      } else {
+        target.assets.push({
+          assetType: 3,
+          contentText: textAssetContent.trim()
+        });
+      }
+      await importQuizGroups(quizId, formatGroupsForAPI(updatedGroups));
+      await fetchQuiz();
+      setShowTextAssetModal(false);
+      setTextAssetContent("");
+      setTextAssetGroupIndex(null);
+      setIsEditingAsset(false);
+      setEditingAssetIndex(null);
+      alert("✅ Đã lưu!");
+    } catch (err) {
+      alert("❌ " + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEditAsset = (gIdx, aIdx, asset) => {
+    if (asset.assetType === 3) {
+      setTextAssetContent(asset.contentText || "");
+      setTextAssetGroupIndex(gIdx);
+      setEditingAssetIndex(aIdx);
+      setIsEditingAsset(true);
+      setShowTextAssetModal(true);
+    } else {
+      alert("⚠️ Để sửa file, vui lòng xóa và upload lại.");
+    }
+  };
+
+  const removeAsset = async (gIdx, aIdx) => {
+    if (!window.confirm("Xóa?")) return;
+    try {
+      setUploading(true);
+      const updated = [...groups];
+      updated[gIdx].assets.splice(aIdx, 1);
+      await importQuizGroups(quizId, formatGroupsForAPI(updated));
+      await fetchQuiz();
+      alert("✅ Đã xóa");
+    } catch (err) {
+      alert("❌ " + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const addQuestion = () => {
+    setImportQuestions(prev => [...prev, {
+      content: "", options: ["", ""], correctIndex: 0, scoreWeight: 1.00
+    }]);
+  };
+
+  const removeQuestion = (i) => {
+    setImportQuestions(importQuestions.filter((_, idx) => idx !== i));
+  };
+
+  const updateQuestion = (i, field, val) => {
+    const updated = [...importQuestions];
+    updated[i][field] = val;
+    setImportQuestions(updated);
+  };
+
+  const updateOption = (qIdx, oIdx, val) => {
+    const updated = [...importQuestions];
+    updated[qIdx].options[oIdx] = val;
+    setImportQuestions(updated);
+  };
+
+  const addOption = (qIdx) => {
+    const updated = [...importQuestions];
+    updated[qIdx].options.push("");
+    setImportQuestions(updated);
+  };
+
+  const removeOption = (qIdx, oIdx) => {
+    const updated = [...importQuestions];
+    if (updated[qIdx].options.length > 2) {
+      updated[qIdx].options.splice(oIdx, 1);
+      if (updated[qIdx].correctIndex >= updated[qIdx].options.length) {
+        updated[qIdx].correctIndex = updated[qIdx].options.length - 1;
+      }
+      setImportQuestions(updated);
+    } else {
+      alert("Phải có ít nhất 2 đáp án!");
+    }
+  };
+
+  const setCorrectAnswer = (qIdx, oIdx) => {
+    const updated = [...importQuestions];
+    updated[qIdx].correctIndex = oIdx;
+    setImportQuestions(updated);
+  };
+
+  const handleImport = async () => {
+    for (let i = 0; i < importQuestions.length; i++) {
+      const q = importQuestions[i];
+      if (!q.content.trim()) {
+        setErrorMessage(`Câu ${i + 1} chưa có nội dung!`);
+        setShowErrorModal(true);
+        return;
+      }
+      if (q.options.some(o => !o.trim())) {
+        setErrorMessage(`Câu ${i + 1} có đáp án trống!`);
+        setShowErrorModal(true);
+        return;
+      }
+    }
+
+    try {
+      setUploading(true);
+      const updated = [...groups];
+      const target = updated[selectedGroupIndex];
+      const currentCount = target.questions?.length || 0;
+
+      const newQs = importQuestions.map((q, i) => ({
+        questionOrder: currentCount + i + 1,
+        questionType: 1,
+        content: q.content.trim(),
+        scoreWeight: q.scoreWeight,
+        metaJson: null,
+        options: q.options.map((o, oIdx) => ({
+          content: o.trim(),
+          isCorrect: oIdx === q.correctIndex,
+        })),
+        assets: [],
+      }));
+
+      target.questions = [...(target.questions || []), ...newQs];
+      await importQuizGroups(quizId, formatGroupsForAPI(updated));
+
+      const newAnsMap = { ...correctAnswersMap };
+      newQs.forEach((_, i) => {
+        newAnsMap[`${selectedGroupIndex}-${currentCount + i}`] = importQuestions[i].correctIndex;
+      });
+      setCorrectAnswersMap(newAnsMap);
+      localStorage.setItem(`admin_quiz_${quizId}_answers`, JSON.stringify(newAnsMap));
+
+      await fetchQuiz();
       setShowImportModal(false);
       setImportQuestions([{ content: "", options: ["", ""], correctIndex: 0, scoreWeight: 1.00 }]);
       setSelectedGroupIndex(null);
-      alert("✅ Thêm câu hỏi thành công!");
+      alert("✅ Đã thêm!");
     } catch (err) {
-      console.error("❌ Import error:", err);
-      setErrorMessage("❌ Lỗi import quiz: " + (err.response?.data?.message || err.message));
+      setErrorMessage("❌ " + (err.response?.data?.message || err.message));
       setShowErrorModal(true);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleEditQuestion = (groupIndex, questionIndex, question) => {
-    const qOptions = question.options || question.choices || [];
-    const correctIndex = qOptions.findIndex(opt => opt.isCorrect || opt.correct);
-    
+  const handleEditQuestion = (gIdx, qIdx, q) => {
+    const opts = q.options || q.choices || [];
+    const cIdx = opts.findIndex(o => o.isCorrect || o.correct);
     setEditingQuestion({
-      content: question.content || question.questionText || "",
-      options: qOptions.map(opt => opt.content || opt.text || opt.optionText || ""),
-      correctIndex: correctIndex >= 0 ? correctIndex : 0,
-      scoreWeight: question.scoreWeight || question.score || 1.00,
+      content: q.content || q.questionText || "",
+      options: opts.map(o => o.content || o.text || o.optionText || ""),
+      correctIndex: cIdx >= 0 ? cIdx : 0,
+      scoreWeight: q.scoreWeight || q.score || 1.00,
     });
-    setEditingQuestionGroupIndex(groupIndex);
-    setEditingQuestionIndex(questionIndex);
+    setEditingQuestionGroupIndex(gIdx);
+    setEditingQuestionIndex(qIdx);
     setShowEditModal(true);
   };
 
   const handleSaveEdit = async () => {
     if (!editingQuestion.content.trim()) {
-      setErrorMessage("Câu hỏi chưa có nội dung!");
+      setErrorMessage("Câu hỏi trống!");
       setShowErrorModal(true);
       return;
     }
-    if (editingQuestion.options.some(opt => !opt.trim())) {
+    if (editingQuestion.options.some(o => !o.trim())) {
       setErrorMessage("Có đáp án trống!");
       setShowErrorModal(true);
       return;
@@ -490,38 +490,32 @@ const ExamDetail = () => {
 
     try {
       setUploading(true);
-      const updatedGroups = [...groups];
-      const targetGroup = updatedGroups[editingQuestionGroupIndex];
-
-      targetGroup.questions[editingQuestionIndex] = {
-        ...targetGroup.questions[editingQuestionIndex],
+      const updated = [...groups];
+      const target = updated[editingQuestionGroupIndex];
+      target.questions[editingQuestionIndex] = {
+        ...target.questions[editingQuestionIndex],
         content: editingQuestion.content,
         scoreWeight: editingQuestion.scoreWeight,
-        options: editingQuestion.options.map((opt, optIndex) => ({
-          content: opt,
-          isCorrect: optIndex === editingQuestion.correctIndex,
+        options: editingQuestion.options.map((o, i) => ({
+          content: o,
+          isCorrect: i === editingQuestion.correctIndex,
         })),
       };
+      await importQuizGroups(quizId, formatGroupsForAPI(updated));
 
-      const importData = formatGroupsForAPI(updatedGroups);
-      await importQuizGroups(quizId, importData);
-      
-      const newAnswersMap = { ...correctAnswersMap };
-      const key = `${editingQuestionGroupIndex}-${editingQuestionIndex}`;
-      newAnswersMap[key] = editingQuestion.correctIndex;
-      setCorrectAnswersMap(newAnswersMap);
-      localStorage.setItem(`admin_quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
-      
+      const newAnsMap = { ...correctAnswersMap };
+      newAnsMap[`${editingQuestionGroupIndex}-${editingQuestionIndex}`] = editingQuestion.correctIndex;
+      setCorrectAnswersMap(newAnsMap);
+      localStorage.setItem(`admin_quiz_${quizId}_answers`, JSON.stringify(newAnsMap));
+
       await fetchQuiz();
-
       setShowEditModal(false);
       setEditingQuestion(null);
       setEditingQuestionGroupIndex(null);
       setEditingQuestionIndex(null);
-      alert("✅ Cập nhật câu hỏi thành công!");
+      alert("✅ Đã cập nhật!");
     } catch (err) {
-      console.error("❌ Edit error:", err);
-      setErrorMessage("❌ Lỗi cập nhật: " + (err.response?.data?.message || err.message));
+      setErrorMessage("❌ " + (err.response?.data?.message || err.message));
       setShowErrorModal(true);
     } finally {
       setUploading(false);
@@ -532,80 +526,47 @@ const ExamDetail = () => {
     try {
       setUploading(true);
       const { groupIndex, questionIndex } = deleteTarget;
+      const updated = [...groups];
+      updated[groupIndex].questions.splice(questionIndex, 1);
+      updated[groupIndex].questions.forEach((q, i) => { q.questionOrder = i + 1; });
+      await importQuizGroups(quizId, formatGroupsForAPI(updated));
 
-      const updatedGroups = [...groups];
-      updatedGroups[groupIndex].questions.splice(questionIndex, 1);
-      updatedGroups[groupIndex].questions.forEach((q, idx) => {
-        q.questionOrder = idx + 1;
-      });
-
-      const importData = formatGroupsForAPI(updatedGroups);
-      await importQuizGroups(quizId, importData);
-      
-      const newAnswersMap = { ...correctAnswersMap };
-      delete newAnswersMap[`${groupIndex}-${questionIndex}`];
-      setCorrectAnswersMap(newAnswersMap);
-      localStorage.setItem(`admin_quiz_${quizId}_answers`, JSON.stringify(newAnswersMap));
+      const newAnsMap = { ...correctAnswersMap };
+      delete newAnsMap[`${groupIndex}-${questionIndex}`];
+      setCorrectAnswersMap(newAnsMap);
+      localStorage.setItem(`admin_quiz_${quizId}_answers`, JSON.stringify(newAnsMap));
 
       await fetchQuiz();
       setShowDeleteModal(false);
       setDeleteTarget(null);
-      alert("✅ Xóa câu hỏi thành công!");
+      alert(" Đã xóa!");
     } catch (err) {
-      console.error("❌ Delete error:", err);
-      setErrorMessage("❌ Lỗi xóa: " + (err.response?.data?.message || err.message));
+      setErrorMessage("❌ " + (err.response?.data?.message || err.message));
       setShowErrorModal(true);
     } finally {
       setUploading(false);
     }
   };
 
-  // ==================== RENDER HELPERS ====================
   const renderAsset = (asset, idx) => {
     if (!asset) return null;
-
     const style = { maxWidth: "100%", marginBottom: "10px" };
-
     switch (asset.assetType) {
-      case 1:
-        return (
-          <div key={idx}>
-            <audio controls src={asset.url} style={style} className="w-100" />
-          </div>
-        );
-      case 2:
-        return (
-          <div key={idx}>
-            <img src={asset.url} alt={asset.caption || "Image"} style={style} className="img-fluid" />
-          </div>
-        );
-      case 3:
-        return (
-          <div key={idx} className="p-3 bg-light rounded">
-            <p className="mb-0" style={{ whiteSpace: "pre-wrap" }}>{asset.contentText}</p>
-          </div>
-        );
-      case 5:
-        return (
-          <div key={idx}>
-            <video controls src={asset.url} style={style} className="w-100" />
-          </div>
-        );
-      default:
-        return null;
+      case 1: return <audio key={idx} controls src={asset.url} style={style} className="w-100" />;
+      case 2: return <img key={idx} src={asset.url} alt={asset.caption} style={style} className="img-fluid" />;
+      case 3: return <div key={idx} className="p-3 bg-light rounded"><p className="mb-0" style={{ whiteSpace: "pre-wrap" }}>{asset.contentText}</p></div>;
+      case 5: return <video key={idx} controls src={asset.url} style={style} className="w-100" />;
+      default: return null;
     }
   };
 
-  const getTotalQuestions = () => {
-    return groups.reduce((sum, g) => sum + (g.questions?.length || 0), 0);
-  };
+  const getTotalQuestions = () => groups.reduce((s, g) => s + (g.questions?.length || 0), 0);
 
-  // ==================== MAIN RENDER ====================
   if (loading) {
     return (
       <Container className="py-5 text-center">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-3 text-muted">Đang tải quiz...</p>
+        <p className="mt-3 text-muted">Đang tải...</p>
       </Container>
     );
   }
@@ -614,306 +575,150 @@ const ExamDetail = () => {
     return (
       <Container className="py-4">
         <Alert variant="danger">{error}</Alert>
-        <Button variant="link" onClick={() => navigate(-1)}>
-          ← Quay lại Quản lý Quiz
-        </Button>
+        <Button variant="link" onClick={() => navigate(-1)}>← Quay lại</Button>
       </Container>
     );
   }
 
   return (
     <Container className="py-4">
-      {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <Button
-            variant="link"
-            onClick={() => navigate("/admin/exam")}
-            className="p-0 mb-2"
-          >
-            ← Quay lại Quản lý Quiz
-          </Button>
+          <Button variant="link" onClick={() => navigate(-1)} className="p-0 mb-2">← Quay lại</Button>
           <h3 className="text-primary mb-0">{quiz?.title || "Quiz Detail"}</h3>
           {quiz?.description && <p className="text-muted mt-2">{quiz.description}</p>}
           <div className="mt-2">
             <Badge bg="info" className="me-2">{groups.length} groups</Badge>
-            <Badge bg="secondary">{getTotalQuestions()} câu hỏi</Badge>
+            <Badge bg="secondary">{getTotalQuestions()} câu</Badge>
           </div>
         </div>
-        <Button 
-          variant="success" 
-          onClick={() => {
-            setEditingGroupIndex(null);
-            setNewGroupInstruction("");
-            setShowGroupModal(true);
-          }}
-        >
-          <FolderPlus size={18} className="me-2" />
-          Thêm Group
-        </Button>
+        <div className="d-flex gap-2">
+          <Button variant="success" onClick={() => { setEditingGroupIndex(null); setNewGroupInstruction(""); setShowGroupModal(true); }}>
+            <FolderPlus size={18} className="me-2" />Thêm Group
+          </Button>
+          {/* AI BUTTON */}
+          <Button 
+            variant="gradient" 
+            style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              border: "none",
+              color: "white"
+            }}
+            onClick={() => {
+              if (groups.length === 0) {
+                alert("⚠️ Vui lòng tạo ít nhất 1 group trước khi dùng AI!");
+                return;
+              }
+              setAiSelectedGroupIndex(0);
+              setAiPrompt("");
+              setShowAIModal(true);
+            }}
+          >
+            Tạo đề bằng AI
+          </Button>
+        </div>
       </div>
 
-      {/* Groups List */}
       {groups.length > 0 ? (
         <Accordion defaultActiveKey="0">
-          {groups.map((group, groupIdx) => (
-            <Accordion.Item eventKey={groupIdx.toString()} key={groupIdx}>
+          {groups.map((group, gIdx) => (
+            <Accordion.Item eventKey={gIdx.toString()} key={gIdx}>
               <Accordion.Header>
                 <div className="d-flex justify-content-between align-items-center w-100 pe-3">
-                  <div>
-                    <strong>Group {groupIdx + 1}:</strong> {group.instruction}
-                  </div>
+                  <div><strong>Group {gIdx + 1}:</strong> {group.instruction}</div>
                   <div>
                     <Badge bg="info" className="me-2">{group.assets?.length || 0} assets</Badge>
-                    <Badge bg="secondary">{group.questions?.length || 0} câu hỏi</Badge>
+                    <Badge bg="secondary">{group.questions?.length || 0} câu</Badge>
                   </div>
                 </div>
               </Accordion.Header>
               <Accordion.Body>
-                {/* Group Actions */}
                 <div className="d-flex gap-2 mb-3">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => {
-                      setEditingGroupIndex(groupIdx);
-                      setNewGroupInstruction(group.instruction);
-                      setShowGroupModal(true);
-                    }}
-                  >
-                    <Edit2 size={14} className="me-1" />
-                    Sửa Instruction
+                  <Button variant="outline-primary" size="sm" onClick={() => { setEditingGroupIndex(gIdx); setNewGroupInstruction(group.instruction); setShowGroupModal(true); }}>
+                    <Edit2 size={14} className="me-1" />Sửa
                   </Button>
-                  <Button
-                    variant="outline-success"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedGroupIndex(groupIdx);
-                      setImportQuestions([{ content: "", options: ["", ""], correctIndex: 0, scoreWeight: 1.00 }]);
-                      setShowImportModal(true);
-                    }}
-                  >
-                    <Plus size={14} className="me-1" />
-                    Thêm câu hỏi
+                  <Button variant="outline-success" size="sm" onClick={() => { setSelectedGroupIndex(gIdx); setImportQuestions([{ content: "", options: ["", ""], correctIndex: 0, scoreWeight: 1.00 }]); setShowImportModal(true); }}>
+                    <Plus size={14} className="me-1" />Thêm câu hỏi
                   </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => handleDeleteGroup(groupIdx)}
-                  >
-                    <Trash2 size={14} className="me-1" />
-                    Xóa Group
+                  <Button variant="outline-info" size="sm" onClick={() => { setAiSelectedGroupIndex(gIdx); setAiPrompt(""); setShowAIModal(true); }}>
+                    <Sparkles size={14} className="me-1" />AI
+                  </Button>
+                  <Button variant="outline-danger" size="sm" onClick={() => handleDeleteGroup(gIdx)}>
+                    <Trash2 size={14} className="me-1" />Xóa
                   </Button>
                 </div>
 
-                {/* Assets Section */}
+                {/* Assets */}
                 <Card className="mb-3 border-primary">
-                  <Card.Header className="bg-light d-flex justify-content-between align-items-center">
-                    <strong>📎 Assets của Group này</strong>
+                  <Card.Header className="bg-light d-flex justify-content-between">
+                    <strong>📎 Assets</strong>
                     <div className="d-flex gap-2">
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        disabled={uploadingAsset}
-                        onClick={() => document.getElementById(`audio-${groupIdx}`).click()}
-                      >
-                        🎵 Audio
-                      </Button>
-                      <input
-                        id={`audio-${groupIdx}`}
-                        type="file"
-                        accept="audio/*"
-                        hidden
-                        onChange={(e) => handleAssetUpload(e, 1, groupIdx)}
-                      />
-
-                      <Button
-                        variant="outline-success"
-                        size="sm"
-                        disabled={uploadingAsset}
-                        onClick={() => document.getElementById(`image-${groupIdx}`).click()}
-                      >
-                        🖼️ Image
-                      </Button>
-                      <input
-                        id={`image-${groupIdx}`}
-                        type="file"
-                        accept="image/*"
-                        hidden
-                        onChange={(e) => handleAssetUpload(e, 2, groupIdx)}
-                      />
-
-                      <Button
-                        variant="outline-info"
-                        size="sm"
-                        disabled={uploadingAsset}
-                        onClick={() => document.getElementById(`video-${groupIdx}`).click()}
-                      >
-                        🎬 Video
-                      </Button>
-                      <input
-                        id={`video-${groupIdx}`}
-                        type="file"
-                        accept="video/*"
-                        hidden
-                        onChange={(e) => handleAssetUpload(e, 5, groupIdx)}
-                      />
-
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => {
-                          setTextAssetGroupIndex(groupIdx);
-                          setTextAssetContent("");
-                          setIsEditingAsset(false);
-                          setShowTextAssetModal(true);
-                        }}
-                      >
-                        📝 Text
-                      </Button>
+                      <Button variant="outline-primary" size="sm" disabled={uploadingAsset} onClick={() => document.getElementById(`audio-${gIdx}`).click()}>Audio</Button>
+                      <input id={`audio-${gIdx}`} type="file" accept="audio/*" hidden onChange={(e) => handleAssetUpload(e, 1, gIdx)} />
+                      <Button variant="outline-success" size="sm" disabled={uploadingAsset} onClick={() => document.getElementById(`image-${gIdx}`).click()}>Image</Button>
+                      <input id={`image-${gIdx}`} type="file" accept="image/*" hidden onChange={(e) => handleAssetUpload(e, 2, gIdx)} />
+                      <Button variant="outline-info" size="sm" disabled={uploadingAsset} onClick={() => document.getElementById(`video-${gIdx}`).click()}>Video</Button>
+                      <input id={`video-${gIdx}`} type="file" accept="video/*" hidden onChange={(e) => handleAssetUpload(e, 5, gIdx)} />
+                      <Button variant="outline-secondary" size="sm" onClick={() => { setTextAssetGroupIndex(gIdx); setTextAssetContent(""); setIsEditingAsset(false); setShowTextAssetModal(true); }}>Text</Button>
                     </div>
                   </Card.Header>
                   <Card.Body>
-                    {group.assets && group.assets.length > 0 ? (
-                      group.assets.map((asset, assetIdx) => (
-                        <Card key={assetIdx} className="mb-3">
-                          <Card.Body>
-                            <div className="d-flex justify-content-between align-items-start mb-3">
-                              <Badge bg="info" style={{ fontSize: "0.9rem" }}>
-                                {asset.assetType === 1 ? '🎵 Audio' : 
-                                 asset.assetType === 2 ? '🖼️ Image' : 
-                                 asset.assetType === 3 ? '📝 Text' : 
-                                 '🎬 Video'}
-                              </Badge>
-                              <div className="d-flex gap-2">
-                                <Button
-                                  variant="outline-primary"
-                                  size="sm"
-                                  onClick={() => handleEditAsset(groupIdx, assetIdx, asset)}
-                                >
-                                  <Edit2 size={14} className="me-1" />
-                                  Sửa
-                                </Button>
-                                <Button
-                                  variant="outline-danger"
-                                  size="sm"
-                                  onClick={() => removeAsset(groupIdx, assetIdx)}
-                                >
-                                  <Trash2 size={14} className="me-1" />
-                                  Xóa
-                                </Button>
-                              </div>
+                    {group.assets?.length > 0 ? group.assets.map((a, aIdx) => (
+                      <Card key={aIdx} className="mb-3">
+                        <Card.Body>
+                          <div className="d-flex justify-content-between mb-2">
+                            <Badge bg="info">{a.assetType === 1 ? 'audio' : a.assetType === 2 ? 'image' : a.assetType === 3 ? 'text' : 'video'}</Badge>
+                            <div className="d-flex gap-2">
+                              <Button variant="outline-primary" size="sm" onClick={() => handleEditAsset(gIdx, aIdx, a)}><Edit2 size={14} /></Button>
+                              <Button variant="outline-danger" size="sm" onClick={() => removeAsset(gIdx, aIdx)}><Trash2 size={14} /></Button>
                             </div>
-                            {renderAsset(asset, assetIdx)}
-                            {asset.caption && asset.assetType !== 3 && (
-                              <small className="text-muted d-block mt-2">📄 {asset.caption}</small>
-                            )}
-                          </Card.Body>
-                        </Card>
-                      ))
-                    ) : (
-                      <p className="text-muted text-center mb-0">Chưa có assets. Nhấn các nút bên trên để thêm.</p>
-                    )}
+                          </div>
+                          {renderAsset(a, aIdx)}
+                        </Card.Body>
+                      </Card>
+                    )) : <p className="text-muted text-center mb-0">Chưa có assets</p>}
                   </Card.Body>
                 </Card>
 
-                {/* Questions Section */}
-                <h6 className="mb-3">Câu hỏi trong Group này</h6>
-                {group.questions && group.questions.length > 0 ? (
-                  group.questions.map((question, qIdx) => {
-                    const qId = question.questionID || question.questionId || question.id;
-                    const qContent = question.content || question.questionText || "";
-                    const qOrder = question.questionOrder || question.order || qIdx + 1;
-                    const qWeight = question.scoreWeight || question.score || 1.00;
-                    const qOptions = question.options || question.choices || [];
-
-                    return (
-                      <Card key={qId || qIdx} className="mb-3 shadow-sm">
-                        <Card.Body>
-                          <div className="d-flex justify-content-end gap-2 mb-2">
-                            <Button
-                              variant="outline-primary"
-                              size="sm"
-                              onClick={() => handleEditQuestion(groupIdx, qIdx, question)}
-                            >
-                              <Edit2 size={14} className="me-1" />
-                              Sửa
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => {
-                                setDeleteTarget({ groupIndex: groupIdx, questionIndex: qIdx });
-                                setShowDeleteModal(true);
-                              }}
-                            >
-                              <Trash2 size={14} className="me-1" />
-                              Xóa
-                            </Button>
+                {/* Questions */}
+                <h6 className="mb-3">Câu hỏi</h6>
+                {group.questions?.length > 0 ? group.questions.map((q, qIdx) => {
+                  const opts = q.options || q.choices || [];
+                  return (
+                    <Card key={qIdx} className="mb-3 shadow-sm">
+                      <Card.Body>
+                        <div className="d-flex justify-content-end gap-2 mb-2">
+                          <Button variant="outline-primary" size="sm" onClick={() => handleEditQuestion(gIdx, qIdx, q)}><Edit2 size={14} className="me-1" />Sửa</Button>
+                          <Button variant="outline-danger" size="sm" onClick={() => { setDeleteTarget({ groupIndex: gIdx, questionIndex: qIdx }); setShowDeleteModal(true); }}><Trash2 size={14} className="me-1" />Xóa</Button>
+                        </div>
+                        <div className="d-flex justify-content-between mb-3">
+                          <h6 className="mb-1"><Badge bg="primary" className="me-2">Câu {qIdx + 1}</Badge>{q.content}</h6>
+                          <Badge bg="info">Điểm: {q.scoreWeight || 1}</Badge>
+                        </div>
+                        {opts.length > 0 && (
+                          <div>
+                            <p className="text-muted mb-2"><small>Đáp án:</small></p>
+                            <ListGroup>
+                              {opts.map((opt, oIdx) => {
+                                const isCorrectAPI = opt.isCorrect === true || opt.correct === true;
+                                const isCorrectLocal = correctAnswersMap[`${gIdx}-${qIdx}`] === oIdx;
+                                const isCorrect = isCorrectAPI || isCorrectLocal;
+                                return (
+                                  <ListGroup.Item key={oIdx} variant={isCorrect ? "success" : ""} className="d-flex align-items-center" style={isCorrect ? { backgroundColor: '#d1e7dd', borderColor: '#badbcc' } : {}}>
+                                    {isCorrect && <Check size={18} className="me-2 text-success fw-bold" />}
+                                    <span className="me-2 fw-bold">{String.fromCharCode(65 + oIdx)}.</span>
+                                    <span className={isCorrect ? "fw-bold text-success" : ""}>{opt.content || opt}</span>
+                                    {isCorrect && <Badge bg="success" className="ms-auto">✓ Đúng</Badge>}
+                                  </ListGroup.Item>
+                                );
+                              })}
+                            </ListGroup>
                           </div>
-
-                          <div className="d-flex justify-content-between align-items-start mb-3">
-                            <h6 className="mb-1">
-                              <Badge bg="primary" className="me-2">
-                                Câu {qOrder}
-                              </Badge>
-                              {qContent}
-                            </h6>
-                            <Badge bg="info">Điểm: {qWeight}</Badge>
-                          </div>
-
-                          {qOptions && qOptions.length > 0 && (
-                            <div>
-                              <p className="text-muted mb-2"><small>Các đáp án:</small></p>
-                              <ListGroup>
-                                {qOptions.map((opt, optIdx) => {
-                                  const optContent = opt.content || opt.text || opt.optionText || "";
-                                  const isCorrectFromAPI = opt.isCorrect === true || 
-                                                          opt.correct === true || 
-                                                          opt.isCorrect === 1 ||
-                                                          opt.correct === 1;
-                                  
-                                  const key = `${groupIdx}-${qIdx}`;
-                                  const isCorrectFromLocal = correctAnswersMap[key] === optIdx;
-                                  const isCorrect = isCorrectFromAPI || isCorrectFromLocal;
-                                  
-                                  return (
-                                    <ListGroup.Item
-                                      key={opt.optionID || opt.optionId || optIdx}
-                                      variant={isCorrect ? "success" : ""}
-                                      className="d-flex align-items-center"
-                                      style={isCorrect ? { 
-                                        backgroundColor: '#d1e7dd', 
-                                        borderColor: '#badbcc' 
-                                      } : {}}
-                                    >
-                                      {isCorrect && (
-                                        <Check size={18} className="me-2 text-success fw-bold" />
-                                      )}
-                                      <span className="me-2 fw-bold">
-                                        {String.fromCharCode(65 + optIdx)}.
-                                      </span>
-                                      <span className={isCorrect ? "fw-bold text-success" : ""}>
-                                        {optContent}
-                                      </span>
-                                      {isCorrect && (
-                                        <Badge bg="success" className="ms-auto">✓ Đáp án đúng</Badge>
-                                      )}
-                                    </ListGroup.Item>
-                                  );
-                                })}
-                              </ListGroup>
-                            </div>
-                          )}
-                        </Card.Body>
-                      </Card>
-                    );
-                  })
-                ) : (
-                  <Alert variant="info" className="text-center">
-                    <p className="mb-0">Group này chưa có câu hỏi. Nhấn nút "Thêm câu hỏi" bên trên để thêm.</p>
-                  </Alert>
-                )}
+                        )}
+                      </Card.Body>
+                    </Card>
+                  );
+                }) : <Alert variant="info" className="text-center"><p className="mb-0">Chưa có câu hỏi</p></Alert>}
               </Accordion.Body>
             </Accordion.Item>
           ))}
@@ -922,462 +727,230 @@ const ExamDetail = () => {
         <Card className="text-center py-5">
           <Card.Body>
             <Alert variant="info" className="mb-3">
-              <strong>ℹ️ Quiz chưa có group nào</strong>
-              <p className="mb-0 mt-2">
-                Bạn cần tạo ít nhất 1 group để thêm câu hỏi và assets vào quiz.
-              </p>
+              <strong>Quiz chưa có group</strong>
+              <p className="mb-0 mt-2">Tạo group để thêm câu hỏi và assets.</p>
             </Alert>
-            <Button 
-              variant="primary" 
-              onClick={() => {
-                setEditingGroupIndex(null);
-                setNewGroupInstruction("");
-                setShowGroupModal(true);
-              }}
-            >
-              <FolderPlus size={18} className="me-2" />
-              Tạo Group đầu tiên
+            <Button variant="primary" onClick={() => { setEditingGroupIndex(null); setNewGroupInstruction(""); setShowGroupModal(true); }}>
+              <FolderPlus size={18} className="me-2" />Tạo Group
             </Button>
           </Card.Body>
         </Card>
       )}
 
-      {/* ==================== MODALS ==================== */}
+      {/* MODALS */}
       
-      {/* Add/Edit Group Modal */}
+      {/* Group Modal */}
       <Modal show={showGroupModal} onHide={() => setShowGroupModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>
-            {editingGroupIndex !== null ? "✏️ Sửa Group" : "📁 Thêm Group Mới"}
-          </Modal.Title>
+          <Modal.Title>{editingGroupIndex !== null ? "Sửa Group" : "Thêm Group"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form.Group>
-            <Form.Label>Instruction (Hướng dẫn cho group)</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              placeholder="VD: Listen to the audio and answer the questions below"
-              value={newGroupInstruction}
-              onChange={(e) => setNewGroupInstruction(e.target.value)}
-            />
-            <Form.Text className="text-muted">
-              Instruction này sẽ hiển thị cho tất cả câu hỏi trong group
-            </Form.Text>
+            <Form.Label>Instruction</Form.Label>
+            <Form.Control as="textarea" rows={3} placeholder="VD: Listen to the audio and answer" value={newGroupInstruction} onChange={(e) => setNewGroupInstruction(e.target.value)} />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowGroupModal(false)} disabled={uploading}>
-            Hủy
-          </Button>
+          <Button variant="secondary" onClick={() => setShowGroupModal(false)} disabled={uploading}>Hủy</Button>
           <Button variant="primary" onClick={handleSaveGroup} disabled={uploading}>
-            {uploading ? (
-              <>
-                <Spinner as="span" animation="border" size="sm" className="me-2" />
-                Đang lưu...
-              </>
+            {uploading ? <><Spinner as="span" animation="border" size="sm" className="me-2" />Đang lưu...</> : (editingGroupIndex !== null ? "Lưu" : "Tạo")}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* AI Modal */}
+      <Modal show={showAIModal} onHide={() => setShowAIModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <Sparkles size={24} className="me-2" style={{ color: "#667eea" }} />
+            Tạo đề bằng AI
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Alert variant="info" className="mb-3">
+            <strong>💡 Hướng dẫn:</strong>
+            <ul className="mb-0 mt-2">
+              <li>Mô tả chi tiết nội dung bạn muốn tạo đề</li>
+              <li>Ví dụ: "Create 10 questions about Present Continuous Tense for intermediate level"</li>
+              <li>Ví dụ: "Tạo 5 câu hỏi về thì hiện tại hoàn thành, level trung bình"</li>
+            </ul>
+          </Alert>
+
+          {groups.length > 0 && (
+            <Form.Group className="mb-3">
+              <Form.Label>Chọn Group để thêm câu hỏi</Form.Label>
+              <Form.Select value={aiSelectedGroupIndex || 0} onChange={(e) => setAiSelectedGroupIndex(parseInt(e.target.value))}>
+                {groups.map((g, i) => (
+                  <option key={i} value={i}>Group {i + 1}: {g.instruction}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          )}
+
+          <Form.Group>
+            <Form.Label>Prompt cho AI</Form.Label>
+            <Form.Control 
+              as="textarea" 
+              rows={5} 
+              placeholder="Ví dụ: Create 10 multiple choice questions about English grammar, focusing on present perfect tense..."
+              value={aiPrompt} 
+              onChange={(e) => setAiPrompt(e.target.value)}
+              disabled={aiLoading}
+            />
+            <Form.Text className="text-muted">
+              Mô tả càng chi tiết, AI sẽ tạo đề càng chính xác
+            </Form.Text>
+          </Form.Group>
+
+          {aiLoading && (
+            <Alert variant="warning" className="mt-3 mb-0">
+              <div className="d-flex align-items-center">
+                <Spinner animation="border" size="sm" className="me-2" />
+                <span>AI đang tạo đề... Vui lòng đợi (có thể mất 30-60 giây)</span>
+              </div>
+            </Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAIModal(false)} disabled={aiLoading}>Hủy</Button>
+          <Button 
+            variant="primary" 
+            onClick={handleGenerateAIQuiz} 
+            disabled={!aiPrompt.trim() || aiLoading}
+            style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              border: "none"
+            }}
+          >
+            {aiLoading ? (
+              <><Spinner as="span" animation="border" size="sm" className="me-2" />Đang tạo...</>
             ) : (
-              editingGroupIndex !== null ? "Lưu thay đổi" : "Tạo Group"
+              <><Sparkles size={18} className="me-2" />Tạo bằng AI</>
             )}
           </Button>
         </Modal.Footer>
       </Modal>
 
       {/* Import Questions Modal */}
-      <Modal
-        show={showImportModal}
-        onHide={() => setShowImportModal(false)}
-        size="xl"
-        centered
-      >
+      <Modal show={showImportModal} onHide={() => setShowImportModal(false)} size="xl" centered>
         <Modal.Header closeButton>
-          <Modal.Title>
-            📝 Thêm câu hỏi vào Group {selectedGroupIndex !== null ? selectedGroupIndex + 1 : ""}
-          </Modal.Title>
+          <Modal.Title>Thêm câu hỏi vào Group {selectedGroupIndex !== null ? selectedGroupIndex + 1 : ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
           {selectedGroupIndex !== null && groups[selectedGroupIndex] && (
             <Alert variant="info" className="mb-4">
-              <strong>📁 Group Instruction:</strong> {groups[selectedGroupIndex].instruction}
+              <strong>📁 Group:</strong> {groups[selectedGroupIndex].instruction}
             </Alert>
           )}
-
-          <h6 className="mb-3">Câu hỏi</h6>
-          {importQuestions.map((q, qIndex) => (
-            <Card key={qIndex} className="mb-3">
-              <Card.Header className="d-flex justify-content-between align-items-center">
-                <strong>Câu {qIndex + 1}</strong>
-                {importQuestions.length > 1 && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="text-danger p-0"
-                    onClick={() => removeQuestion(qIndex)}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                )}
+          {importQuestions.map((q, qIdx) => (
+            <Card key={qIdx} className="mb-3">
+              <Card.Header className="d-flex justify-content-between">
+                <strong>Câu {qIdx + 1}</strong>
+                {importQuestions.length > 1 && <Button variant="link" size="sm" className="text-danger p-0" onClick={() => removeQuestion(qIdx)}><Trash2 size={16} /></Button>}
               </Card.Header>
               <Card.Body>
                 <Form.Group className="mb-3">
-                  <Form.Label>Nội dung câu hỏi</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={2}
-                    placeholder="Nhập câu hỏi..."
-                    value={q.content}
-                    onChange={(e) => updateQuestion(qIndex, "content", e.target.value)}
-                  />
+                  <Form.Label>Nội dung</Form.Label>
+                  <Form.Control as="textarea" rows={2} placeholder="Nhập câu hỏi..." value={q.content} onChange={(e) => updateQuestion(qIdx, "content", e.target.value)} />
                 </Form.Group>
-
                 <Form.Group className="mb-3">
-                  <Form.Label>Điểm số</Form.Label>
-                  <Form.Control
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    value={q.scoreWeight}
-                    onChange={(e) =>
-                      updateQuestion(qIndex, "scoreWeight", parseFloat(e.target.value) || 1)
-                    }
-                    style={{ width: "100px" }}
-                  />
+                  <Form.Label>Điểm</Form.Label>
+                  <Form.Control type="number" min="1" step="0.01" value={q.scoreWeight} onChange={(e) => updateQuestion(qIdx, "scoreWeight", parseFloat(e.target.value) || 1)} style={{ width: "100px" }} />
                 </Form.Group>
-
-                <Form.Label>Các đáp án</Form.Label>
-                {q.options.map((opt, optIndex) => (
-                  <Row key={optIndex} className="mb-2 align-items-center">
-                    <Col xs={1}>
-                      <Form.Check
-                        type="radio"
-                        name={`correct-${qIndex}`}
-                        checked={q.correctIndex === optIndex}
-                        onChange={() => setCorrectAnswer(qIndex, optIndex)}
-                        title="Đáp án đúng"
-                      />
-                    </Col>
-                    <Col xs={1} className="text-center">
-                      <strong>{String.fromCharCode(65 + optIndex)}.</strong>
-                    </Col>
-                    <Col xs={9}>
-                      <Form.Control
-                        type="text"
-                        placeholder={`Đáp án ${String.fromCharCode(65 + optIndex)}`}
-                        value={opt}
-                        onChange={(e) =>
-                          updateOption(qIndex, optIndex, e.target.value)
-                        }
-                      />
-                    </Col>
-                    <Col xs={1}>
-                      {q.options.length > 2 && (
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="text-danger p-0"
-                          onClick={() => removeOption(qIndex, optIndex)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      )}
-                    </Col>
+                <Form.Label>Đáp án</Form.Label>
+                {q.options.map((opt, oIdx) => (
+                  <Row key={oIdx} className="mb-2 align-items-center">
+                    <Col xs={1}><Form.Check type="radio" name={`correct-${qIdx}`} checked={q.correctIndex === oIdx} onChange={() => setCorrectAnswer(qIdx, oIdx)} /></Col>
+                    <Col xs={1} className="text-center"><strong>{String.fromCharCode(65 + oIdx)}.</strong></Col>
+                    <Col xs={9}><Form.Control type="text" placeholder={`Đáp án ${String.fromCharCode(65 + oIdx)}`} value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} /></Col>
+                    <Col xs={1}>{q.options.length > 2 && <Button variant="link" size="sm" className="text-danger p-0" onClick={() => removeOption(qIdx, oIdx)}><Trash2 size={16} /></Button>}</Col>
                   </Row>
                 ))}
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  onClick={() => addOption(qIndex)}
-                >
-                  <Plus size={16} className="me-1" />
-                  Thêm đáp án
-                </Button>
+                <Button variant="outline-secondary" size="sm" onClick={() => addOption(qIdx)}><Plus size={16} className="me-1" />Thêm đáp án</Button>
               </Card.Body>
             </Card>
           ))}
-
-          <Button variant="outline-primary" onClick={addQuestion} className="w-100">
-            <Plus size={18} className="me-2" />
-            Thêm câu hỏi
-          </Button>
+          <Button variant="outline-primary" onClick={addQuestion} className="w-100"><Plus size={18} className="me-2" />Thêm câu hỏi</Button>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowImportModal(false)}
-            disabled={uploading}
-          >
-            Hủy
-          </Button>
+          <Button variant="secondary" onClick={() => setShowImportModal(false)} disabled={uploading}>Hủy</Button>
           <Button variant="primary" onClick={handleImport} disabled={uploading}>
-            {uploading ? (
-              <>
-                <Spinner as="span" animation="border" size="sm" className="me-2" />
-                Đang lưu...
-              </>
-            ) : (
-              <>Lưu {importQuestions.length} câu hỏi</>
-            )}
+            {uploading ? <><Spinner as="span" animation="border" size="sm" className="me-2" />Đang lưu...</> : `Lưu ${importQuestions.length} câu`}
           </Button>
         </Modal.Footer>
       </Modal>
 
       {/* Edit Question Modal */}
-      <Modal
-        show={showEditModal}
-        onHide={() => setShowEditModal(false)}
-        size="lg"
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>✏️ Chỉnh sửa câu hỏi</Modal.Title>
-        </Modal.Header>
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg" centered>
+        <Modal.Header closeButton><Modal.Title>Sửa câu hỏi</Modal.Title></Modal.Header>
         <Modal.Body>
           {editingQuestion && (
             <div>
               <Form.Group className="mb-3">
-                <Form.Label>Nội dung câu hỏi</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={2}
-                  placeholder="Nhập câu hỏi..."
-                  value={editingQuestion.content}
-                  onChange={(e) =>
-                    setEditingQuestion({ ...editingQuestion, content: e.target.value })
-                  }
-                />
+                <Form.Label>Nội dung</Form.Label>
+                <Form.Control as="textarea" rows={2} value={editingQuestion.content} onChange={(e) => setEditingQuestion({ ...editingQuestion, content: e.target.value })} />
               </Form.Group>
-
               <Form.Group className="mb-3">
-                <Form.Label>Điểm số</Form.Label>
-                <Form.Control
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={editingQuestion.scoreWeight}
-                  onChange={(e) =>
-                    setEditingQuestion({
-                      ...editingQuestion,
-                      scoreWeight: parseFloat(e.target.value) || 1,
-                    })
-                  }
-                  style={{ width: "100px" }}
-                />
+                <Form.Label>Điểm</Form.Label>
+                <Form.Control type="number" min="1" step="0.01" value={editingQuestion.scoreWeight} onChange={(e) => setEditingQuestion({ ...editingQuestion, scoreWeight: parseFloat(e.target.value) || 1 })} style={{ width: "100px" }} />
               </Form.Group>
-
-              <Form.Label>Các đáp án</Form.Label>
-              {editingQuestion.options.map((opt, optIndex) => (
-                <Row key={optIndex} className="mb-2 align-items-center">
-                  <Col xs={1}>
-                    <Form.Check
-                      type="radio"
-                      name="correct-edit"
-                      checked={editingQuestion.correctIndex === optIndex}
-                      onChange={() =>
-                        setEditingQuestion({
-                          ...editingQuestion,
-                          correctIndex: optIndex,
-                        })
-                      }
-                      title="Đáp án đúng"
-                    />
-                  </Col>
-                  <Col xs={1} className="text-center">
-                    <strong>{String.fromCharCode(65 + optIndex)}.</strong>
-                  </Col>
-                  <Col xs={9}>
-                    <Form.Control
-                      type="text"
-                      placeholder={`Đáp án ${String.fromCharCode(65 + optIndex)}`}
-                      value={opt}
-                      onChange={(e) => {
-                        const newOptions = [...editingQuestion.options];
-                        newOptions[optIndex] = e.target.value;
-                        setEditingQuestion({
-                          ...editingQuestion,
-                          options: newOptions,
-                        });
-                      }}
-                    />
-                  </Col>
-                  <Col xs={1}>
-                    {editingQuestion.options.length > 2 && (
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="text-danger p-0"
-                        onClick={() => {
-                          if (editingQuestion.options.length > 2) {
-                            const newOptions = editingQuestion.options.filter(
-                              (_, i) => i !== optIndex
-                            );
-                            const newCorrectIndex =
-                              editingQuestion.correctIndex >= newOptions.length
-                                ? newOptions.length - 1
-                                : editingQuestion.correctIndex;
-                            setEditingQuestion({
-                              ...editingQuestion,
-                              options: newOptions,
-                              correctIndex: newCorrectIndex,
-                            });
-                          }
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    )}
-                  </Col>
+              <Form.Label>Đáp án</Form.Label>
+              {editingQuestion.options.map((opt, oIdx) => (
+                <Row key={oIdx} className="mb-2 align-items-center">
+                  <Col xs={1}><Form.Check type="radio" name="correct-edit" checked={editingQuestion.correctIndex === oIdx} onChange={() => setEditingQuestion({ ...editingQuestion, correctIndex: oIdx })} /></Col>
+                  <Col xs={1} className="text-center"><strong>{String.fromCharCode(65 + oIdx)}.</strong></Col>
+                  <Col xs={9}><Form.Control type="text" value={opt} onChange={(e) => { const newOpts = [...editingQuestion.options]; newOpts[oIdx] = e.target.value; setEditingQuestion({ ...editingQuestion, options: newOpts }); }} /></Col>
+                  <Col xs={1}>{editingQuestion.options.length > 2 && <Button variant="link" size="sm" className="text-danger p-0" onClick={() => { if (editingQuestion.options.length > 2) { const newOpts = editingQuestion.options.filter((_, i) => i !== oIdx); const newCIdx = editingQuestion.correctIndex >= newOpts.length ? newOpts.length - 1 : editingQuestion.correctIndex; setEditingQuestion({ ...editingQuestion, options: newOpts, correctIndex: newCIdx }); } }}><Trash2 size={16} /></Button>}</Col>
                 </Row>
               ))}
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() =>
-                  setEditingQuestion({
-                    ...editingQuestion,
-                    options: [...editingQuestion.options, ""],
-                  })
-                }
-              >
-                <Plus size={16} className="me-1" />
-                Thêm đáp án
-              </Button>
+              <Button variant="outline-secondary" size="sm" onClick={() => setEditingQuestion({ ...editingQuestion, options: [...editingQuestion.options, ""] })}><Plus size={16} className="me-1" />Thêm đáp án</Button>
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowEditModal(false)}
-            disabled={uploading}
-          >
-            Hủy
-          </Button>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)} disabled={uploading}>Hủy</Button>
           <Button variant="primary" onClick={handleSaveEdit} disabled={uploading}>
-            {uploading ? (
-              <>
-                <Spinner as="span" animation="border" size="sm" className="me-2" />
-                Đang lưu...
-              </>
-            ) : (
-              "Lưu thay đổi"
-            )}
+            {uploading ? <><Spinner as="span" animation="border" size="sm" className="me-2" />Đang lưu...</> : "Lưu"}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Delete Question Modal */}
+      {/* Delete Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>⚠️ Xác nhận xóa</Modal.Title>
-        </Modal.Header>
+        <Modal.Header closeButton><Modal.Title>⚠️ Xác nhận xóa</Modal.Title></Modal.Header>
         <Modal.Body>
-          <Alert variant="warning">
-            Bạn có chắc chắn muốn xóa câu hỏi này?
-            <br />
-            <strong>Hành động này không thể hoàn tác!</strong>
-          </Alert>
+          <Alert variant="warning">Bạn chắc chắn muốn xóa câu hỏi này?<br /><strong>Không thể hoàn tác!</strong></Alert>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowDeleteModal(false)}
-            disabled={uploading}
-          >
-            Hủy
-          </Button>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)} disabled={uploading}>Hủy</Button>
           <Button variant="danger" onClick={handleDeleteQuestion} disabled={uploading}>
-            {uploading ? (
-              <>
-                <Spinner as="span" animation="border" size="sm" className="me-2" />
-                Đang xóa...
-              </>
-            ) : (
-              "Xóa câu hỏi"
-            )}
+            {uploading ? <><Spinner as="span" animation="border" size="sm" className="me-2" />Đang xóa...</> : "Xóa"}
           </Button>
         </Modal.Footer>
       </Modal>
 
       {/* Text Asset Modal */}
-      <Modal 
-        show={showTextAssetModal} 
-        onHide={() => {
-          setShowTextAssetModal(false);
-          setTextAssetContent("");
-          setTextAssetGroupIndex(null);
-          setIsEditingAsset(false);
-          setEditingAssetIndex(null);
-        }} 
-        size="lg"
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {isEditingAsset ? "✏️ Sửa Text Asset" : "📝 Thêm Text Asset"}
-          </Modal.Title>
-        </Modal.Header>
+      <Modal show={showTextAssetModal} onHide={() => { setShowTextAssetModal(false); setTextAssetContent(""); setTextAssetGroupIndex(null); setIsEditingAsset(false); setEditingAssetIndex(null); }} size="lg" centered>
+        <Modal.Header closeButton><Modal.Title>{isEditingAsset ? "Sửa Text" : "Thêm Text"}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form.Group>
-            <Form.Label>Nội dung Text (ví dụ: đoạn văn cho bài đọc)</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={12}
-              placeholder="Nhập nội dung text tại đây..."
-              value={textAssetContent}
-              onChange={(e) => setTextAssetContent(e.target.value)}
-              style={{ fontSize: "14px" }}
-            />
-            <Form.Text className="text-muted">
-              Text này sẽ hiển thị cho tất cả câu hỏi trong group
-            </Form.Text>
+            <Form.Label>Nội dung Text</Form.Label>
+            <Form.Control as="textarea" rows={12} placeholder="Nhập nội dung..." value={textAssetContent} onChange={(e) => setTextAssetContent(e.target.value)} style={{ fontSize: "14px" }} />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button 
-            variant="secondary" 
-            onClick={() => {
-              setShowTextAssetModal(false);
-              setTextAssetContent("");
-              setTextAssetGroupIndex(null);
-              setIsEditingAsset(false);
-              setEditingAssetIndex(null);
-            }}
-            disabled={uploading}
-          >
-            Hủy
-          </Button>
-          <Button 
-            variant="primary" 
-            onClick={handleAddTextAsset}
-            disabled={!textAssetContent.trim() || uploading}
-          >
-            {uploading ? (
-              <>
-                <Spinner as="span" animation="border" size="sm" className="me-2" />
-                Đang lưu...
-              </>
-            ) : (
-              isEditingAsset ? "Cập nhật" : "Thêm Text Asset"
-            )}
+          <Button variant="secondary" onClick={() => { setShowTextAssetModal(false); setTextAssetContent(""); setTextAssetGroupIndex(null); setIsEditingAsset(false); setEditingAssetIndex(null); }} disabled={uploading}>Hủy</Button>
+          <Button variant="primary" onClick={handleAddTextAsset} disabled={!textAssetContent.trim() || uploading}>
+            {uploading ? <><Spinner as="span" animation="border" size="sm" className="me-2" />Đang lưu...</> : (isEditingAsset ? "Cập nhật" : "Thêm")}
           </Button>
         </Modal.Footer>
       </Modal>
 
       {/* Error Modal */}
       <Modal show={showErrorModal} onHide={() => setShowErrorModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>❌ Lỗi</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Alert variant="danger" className="mb-0">
-            {errorMessage}
-          </Alert>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowErrorModal(false)}>
-            Đóng
-          </Button>
-        </Modal.Footer>
+        <Modal.Header closeButton><Modal.Title>❌ Lỗi</Modal.Title></Modal.Header>
+        <Modal.Body><Alert variant="danger" className="mb-0">{errorMessage}</Alert></Modal.Body>
+        <Modal.Footer><Button variant="secondary" onClick={() => setShowErrorModal(false)}>Đóng</Button></Modal.Footer>
       </Modal>
     </Container>
   );

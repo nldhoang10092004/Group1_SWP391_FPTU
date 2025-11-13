@@ -1,3 +1,4 @@
+// middleware/uploadAPI.js
 import axios from "axios";
 
 const API_BASE = `${process.env.REACT_APP_API_URL}/api/upload/asset`;
@@ -6,7 +7,6 @@ const getAuthHeaders = () => {
   const token = localStorage.getItem("accessToken");
   return {
     Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "true",
   };
 };
@@ -14,10 +14,11 @@ const getAuthHeaders = () => {
 /**
  * ✅ Upload file lên server (Cloudflare R2)
  * @param {File} file - File cần upload (image, video, document)
- * @param {string} type - Loại file: "video", "image", "document", "avatar"
+ * @param {string} type - Loại file: "video", "image", "document", "avatar", "certificate"
+ * @param {Function} onProgress - Callback để theo dõi progress (optional)
  * @returns {Promise<{url: string, fileName: string, fileSize: number}>}
  */
-export const uploadAsset = async (file, type) => {
+export const uploadAsset = async (file, type, onProgress = null) => {
   // ✅ Validate input
   if (!file) {
     throw new Error("File không được để trống");
@@ -27,12 +28,36 @@ export const uploadAsset = async (file, type) => {
     throw new Error("Type không được để trống");
   }
 
-  // ✅ Validate file size (max 500MB for video, 10MB for others)
-  const maxSize = type === "video" ? 500 * 1024 * 1024 : 10 * 1024 * 1024;
+  // ✅ Validate file size based on type
+  const maxSizes = {
+    video: 500 * 1024 * 1024,      // 500MB
+    certificate: 10 * 1024 * 1024,  // 10MB
+    image: 10 * 1024 * 1024,        // 10MB
+    audio: 50 * 1024 * 1024,        // 50MB
+    avatar: 5 * 1024 * 1024         // 5MB
+  };
+
+  const maxSize = maxSizes[type] || 10 * 1024 * 1024;
+  
   if (file.size > maxSize) {
-    throw new Error(
-      `File quá lớn! Kích thước tối đa: ${type === "video" ? "500MB" : "10MB"}`
-    );
+    const maxSizeMB = (maxSize / 1024 / 1024).toFixed(0);
+    throw new Error(`File quá lớn! Kích thước tối đa: ${maxSizeMB}MB`);
+  }
+
+  // ✅ Validate file type
+  const allowedTypes = {
+    certificate: ['.jpg', '.jpeg', '.png', '.pdf'],
+    image: ['.jpg', '.jpeg', '.png', '.webp'],
+    video: ['.mp4', '.mov', '.avi', '.mkv'],
+    audio: ['.mp3', '.wav', '.m4a'],
+    avatar: ['.jpg', '.jpeg', '.png']
+  };
+
+  const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+  const allowed = allowedTypes[type] || [];
+  
+  if (allowed.length > 0 && !allowed.includes(fileExt)) {
+    throw new Error(`Định dạng file không hợp lệ! Cho phép: ${allowed.join(', ')}`);
   }
 
   const formData = new FormData();
@@ -52,13 +77,17 @@ export const uploadAsset = async (file, type) => {
         ...getAuthHeaders(),
         "Content-Type": "multipart/form-data",
       },
-      // ✅ Thêm timeout và progress tracking
-      timeout: 5 * 60 * 1000, // 5 minutes for large videos
+      timeout: 10 * 60 * 1000, // 10 minutes for large files
       onUploadProgress: (progressEvent) => {
         const percentCompleted = Math.round(
           (progressEvent.loaded * 100) / progressEvent.total
         );
         console.log(`📊 Upload progress: ${percentCompleted}%`);
+        
+        // Call progress callback if provided
+        if (onProgress && typeof onProgress === 'function') {
+          onProgress(percentCompleted);
+        }
       },
     });
 
@@ -74,6 +103,7 @@ export const uploadAsset = async (file, type) => {
       url: res.data.url || res.data.Url || res.data.URL || res.data.fileUrl,
       fileName: res.data.fileName || res.data.FileName || file.name,
       fileSize: res.data.fileSize || res.data.FileSize || file.size,
+      message: res.data.message || "Upload thành công"
     };
 
     if (!result.url) {
@@ -113,6 +143,15 @@ export const uploadAsset = async (file, type) => {
 
     throw error;
   }
+};
+
+/**
+ * ✅ Upload certificate cho teacher
+ * @param {File} file - Certificate file
+ * @param {Function} onProgress - Progress callback
+ */
+export const uploadCertificate = async (file, onProgress = null) => {
+  return await uploadAsset(file, "certificate", onProgress);
 };
 
 /**
