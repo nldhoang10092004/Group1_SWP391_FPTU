@@ -9,12 +9,6 @@ namespace EMT_API.DAOs.CourseDAO
         Task<Course?> GetCourseDetailAsync(int courseId);
         Task<bool> CourseExistsAsync(int courseId);
 
-        // -------- RATING & FEEDBACK --------
-        Task<(double AverageRating, int TotalFeedback)> GetCourseRatingAsync(int courseId);
-        Task<List<Feedback>> GetCourseFeedbacksAsync(int courseId);
-        Task<Feedback?> CreateFeedbackAsync(Feedback feedback);
-        Task<bool> HasFeedbackAsync(int courseId, int userId);
-
         // -------- TEACHER SIDE --------
         Task<List<Course>> GetCoursesByTeacherAsync(int teacherId);
         Task<Course?> CreateCourseAsync(Course course);
@@ -25,6 +19,8 @@ namespace EMT_API.DAOs.CourseDAO
         Task<bool> UpdateChapterAsync(CourseChapter chapter);
         Task<bool> DeleteChapterAsync(int chapterId);
 
+        //Video
+        Task<CourseVideo?> GetVideoAsync(int videoId);
         Task<CourseVideo?> AddVideoAsync(CourseVideo video);
         Task<bool> DeleteVideoAsync(int videoId);
     }
