@@ -1,6 +1,6 @@
 ﻿using EMT_API.DAOs;
-using EMT_API.DTOs.Quiz;
 using EMT_API.DTOs.TeacherQuiz;
+using EMT_API.DTOs.Quiz;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -23,13 +23,13 @@ namespace EMT_API.Controllers.TeacherSide
         private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         // =====================================================
-        // 🔹 1️⃣ Lấy danh sách quiz theo course
+        // QUIZ CRUD
         // =====================================================
+
         [HttpGet("course/{courseId:int}")]
         public async Task<IActionResult> GetQuizzesByCourse(int courseId)
         {
             var teacherId = GetUserId();
-
             if (!await _quizDao.TeacherOwnsCourseAsync(teacherId, courseId))
                 return Forbid();
 
@@ -37,31 +37,21 @@ namespace EMT_API.Controllers.TeacherSide
             return Ok(quizzes);
         }
 
-        // =====================================================
-        // 🔹 2️⃣ Lấy chi tiết quiz
-        // =====================================================
         [HttpGet("{quizId:int}")]
         public async Task<IActionResult> GetQuizDetail(int quizId)
         {
             var teacherId = GetUserId();
-
             if (!await _quizDao.TeacherOwnsQuizAsync(teacherId, quizId))
                 return Forbid();
 
             var quiz = await _quizDao.GetQuizDetailAsync(quizId);
-            if (quiz == null) return NotFound(new { message = "Quiz not found" });
-
-            return Ok(quiz);
+            return quiz != null ? Ok(quiz) : NotFound();
         }
 
-        // =====================================================
-        // 🔹 3️⃣ Tạo quiz mới trong course của giáo viên
-        // =====================================================
         [HttpPost]
         public async Task<IActionResult> CreateQuiz([FromBody] TeacherCreateQuizRequest req)
         {
             var teacherId = GetUserId();
-
             if (!await _quizDao.TeacherOwnsCourseAsync(teacherId, req.CourseID))
                 return Forbid();
 
@@ -69,29 +59,21 @@ namespace EMT_API.Controllers.TeacherSide
             return Ok(new { message = "Quiz created successfully", quizId });
         }
 
-        // =====================================================
-        // 🔹 4️⃣ Cập nhật quiz
-        // =====================================================
         [HttpPut("{quizId:int}")]
         public async Task<IActionResult> UpdateQuiz(int quizId, [FromBody] TeacherUpdateQuizRequest req)
         {
             var teacherId = GetUserId();
-
             if (!await _quizDao.TeacherOwnsQuizAsync(teacherId, quizId))
                 return Forbid();
 
             var ok = await _quizDao.UpdateQuizAsync(quizId, req.Title, req.Description, req.QuizType, req.IsActive);
-            return ok ? Ok(new { message = "Quiz updated successfully" }) : NotFound(new { message = "Quiz not found" });
+            return ok ? Ok(new { message = "Quiz updated successfully" }) : NotFound();
         }
 
-        // =====================================================
-        // 🔹 5️⃣ Xoá quiz
-        // =====================================================
         [HttpDelete("{quizId:int}")]
         public async Task<IActionResult> DeleteQuiz(int quizId)
         {
             var teacherId = GetUserId();
-
             if (!await _quizDao.TeacherOwnsQuizAsync(teacherId, quizId))
                 return Forbid();
 
@@ -99,21 +81,112 @@ namespace EMT_API.Controllers.TeacherSide
             return ok ? Ok(new { message = "Quiz deleted successfully" }) : NotFound();
         }
 
+
         // =====================================================
-        // 🔹 6️⃣ Import nội dung quiz
+        // GROUP CRUD
         // =====================================================
-        [HttpPost("{quizId:int}/import")]
-        public async Task<IActionResult> ImportQuiz(int quizId, [FromBody] ImportQuizRequest req)
+
+        [HttpPost("{quizId:int}/group")]
+        public async Task<IActionResult> CreateGroup(int quizId, [FromBody] CreateGroupRequest req)
         {
             var teacherId = GetUserId();
-
             if (!await _quizDao.TeacherOwnsQuizAsync(teacherId, quizId))
                 return Forbid();
 
-            var ok = await _quizDao.ImportQuizAsync(quizId, req);
-            return ok
-                ? Ok(new { message = "Quiz imported successfully" })
-                : StatusCode(500, new { message = "Import failed" });
+            var id = await _quizDao.CreateGroupAsync(quizId, req);
+            return Ok(new { message = "Group created", groupId = id });
+        }
+
+        [HttpPut("group/{groupId:int}")]
+        public async Task<IActionResult> UpdateGroup(int groupId, [FromBody] UpdateGroupRequest req)
+        {
+            var ok = await _quizDao.UpdateGroupAsync(groupId, req);
+            return ok ? Ok(new { message = "Group updated" }) : NotFound();
+        }
+
+        [HttpDelete("group/{groupId:int}")]
+        public async Task<IActionResult> DeleteGroup(int groupId)
+        {
+            var ok = await _quizDao.DeleteGroupAsync(groupId);
+            return ok ? Ok(new { message = "Group deleted" }) : NotFound();
+        }
+
+
+        // =====================================================
+        // QUESTION CRUD
+        // =====================================================
+
+        [HttpPost("group/{groupId:int}/question")]
+        public async Task<IActionResult> CreateQuestion(int groupId, [FromBody] CreateQuestionRequest req)
+        {
+            var id = await _quizDao.CreateQuestionAsync(groupId, req);
+            return Ok(new { message = "Question created", questionId = id });
+        }
+
+        [HttpPut("question/{questionId:int}")]
+        public async Task<IActionResult> UpdateQuestion(int questionId, [FromBody] UpdateQuestionRequest req)
+        {
+            var ok = await _quizDao.UpdateQuestionAsync(questionId, req);
+            return ok ? Ok(new { message = "Question updated" }) : NotFound();
+        }
+
+        [HttpDelete("question/{questionId:int}")]
+        public async Task<IActionResult> DeleteQuestion(int questionId)
+        {
+            var ok = await _quizDao.DeleteQuestionAsync(questionId);
+            return ok ? Ok(new { message = "Question deleted" }) : NotFound();
+        }
+
+
+        // =====================================================
+        // OPTION CRUD
+        // =====================================================
+
+        [HttpPost("question/{questionId:int}/option")]
+        public async Task<IActionResult> CreateOption(int questionId, [FromBody] CreateOptionRequest req)
+        {
+            var id = await _quizDao.CreateOptionAsync(questionId, req);
+            return Ok(new { message = "Option created", optionId = id });
+        }
+
+        [HttpPut("option/{optionId:int}")]
+        public async Task<IActionResult> UpdateOption(int optionId, [FromBody] UpdateOptionRequest req)
+        {
+            var ok = await _quizDao.UpdateOptionAsync(optionId, req);
+            return ok ? Ok(new { message = "Option updated" }) : NotFound();
+        }
+
+        [HttpDelete("option/{optionId:int}")]
+        public async Task<IActionResult> DeleteOption(int optionId)
+        {
+            var ok = await _quizDao.DeleteOptionAsync(optionId);
+            return ok ? Ok(new { message = "Option deleted" }) : NotFound();
+        }
+
+
+        // =====================================================
+        // ASSET CRUD
+        // =====================================================
+
+        [HttpPost("group/{groupId:int}/asset")]
+        public async Task<IActionResult> CreateAssetForGroup(int groupId, [FromBody] CreateAssetRequest req)
+        {
+            var id = await _quizDao.CreateAssetForGroupAsync(groupId, req);
+            return Ok(new { message = "Asset created", assetId = id });
+        }
+
+        [HttpPost("question/{questionId:int}/asset")]
+        public async Task<IActionResult> CreateAssetForQuestion(int questionId, [FromBody] CreateAssetRequest req)
+        {
+            var id = await _quizDao.CreateAssetForQuestionAsync(questionId, req);
+            return Ok(new { message = "Asset created", assetId = id });
+        }
+
+        [HttpDelete("asset/{assetId:int}")]
+        public async Task<IActionResult> DeleteAsset(int assetId)
+        {
+            var ok = await _quizDao.DeleteAssetAsync(assetId);
+            return ok ? Ok(new { message = "Asset deleted" }) : NotFound();
         }
     }
 }

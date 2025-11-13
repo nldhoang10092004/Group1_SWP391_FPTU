@@ -20,9 +20,13 @@ namespace EMT_API.DAOs.CourseDAO
                 .Include(c => c.Teacher)
                     .ThenInclude(t => t.TeacherNavigation)
                         .ThenInclude(u => u.UserDetail)
+                .Include(c => c.CourseChapters)
+                    .ThenInclude(ch => ch.CourseVideos)
+                .Include(c => c.CourseVideos) // để lấy luôn video lẻ không thuộc chapter
                 .OrderBy(c => c.CourseLevel)
                 .ToListAsync();
         }
+
 
         public async Task<Course?> GetCourseDetailAsync(int courseId)
         {

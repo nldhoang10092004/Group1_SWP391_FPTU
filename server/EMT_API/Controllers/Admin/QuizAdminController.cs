@@ -1,5 +1,6 @@
 ﻿using EMT_API.DAOs;
 using EMT_API.DTOs.Quiz;
+using EMT_API.DTOs.TeacherQuiz;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace EMT_API.Controllers.AdminSide
         }
 
         // =====================================================
-        // 🔹 1️⃣ Lấy tất cả quiz global (CourseID = null)
+        // 🔹 1️⃣ Lấy danh sách quiz global (CourseID = null)
         // =====================================================
         [HttpGet]
         public async Task<IActionResult> GetAllGlobalQuizzes()
@@ -52,31 +53,7 @@ namespace EMT_API.Controllers.AdminSide
         }
 
         // =====================================================
-        // 🔹 4️⃣ Xoá quiz global
-        // =====================================================
-        [HttpDelete("{quizId:int}")]
-        public async Task<IActionResult> DeleteGlobalQuiz(int quizId)
-        {
-            var ok = await _quizDao.DeleteGlobalQuizAsync(quizId);
-            return ok
-                ? Ok(new { message = "Global quiz deleted successfully" })
-                : NotFound(new { message = "Quiz not found" });
-        }
-
-        // =====================================================
-        // 🔹 5️⃣ Import nội dung quiz global
-        // =====================================================
-        [HttpPost("{quizId:int}/import")]
-        public async Task<IActionResult> ImportGlobalQuiz(int quizId, [FromBody] ImportQuizRequest req)
-        {
-            var ok = await _quizDao.ImportGlobalQuizAsync(quizId, req);
-            return ok
-                ? Ok(new { message = "Global quiz imported successfully" })
-                : StatusCode(500, new { message = "Import failed" });
-        }
-
-        // =====================================================
-        // 🔹 6️⃣ Cập nhật thông tin quiz global
+        // 🔹 4️⃣ Cập nhật quiz global
         // =====================================================
         [HttpPut("{quizId:int}")]
         public async Task<IActionResult> UpdateGlobalQuiz(int quizId, [FromBody] UpdateQuizRequest req)
@@ -84,6 +61,18 @@ namespace EMT_API.Controllers.AdminSide
             var ok = await _quizDao.UpdateGlobalQuizAsync(quizId, req);
             return ok
                 ? Ok(new { message = "Quiz updated successfully" })
+                : NotFound(new { message = "Quiz not found" });
+        }
+
+        // =====================================================
+        // 🔹 5️⃣ Xoá quiz global
+        // =====================================================
+        [HttpDelete("{quizId:int}")]
+        public async Task<IActionResult> DeleteGlobalQuiz(int quizId)
+        {
+            var ok = await _quizDao.DeleteGlobalQuizAsync(quizId);
+            return ok
+                ? Ok(new { message = "Global quiz deleted successfully" })
                 : NotFound(new { message = "Quiz not found" });
         }
     }
