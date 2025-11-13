@@ -1,6 +1,7 @@
 ﻿using EMT_API.DAOs;
 using EMT_API.DAOs.CourseDAO;
 using EMT_API.DAOs.FlashcardDAO;
+using EMT_API.DAOs.MembershipDAO;
 using EMT_API.DAOs.UserDAO;
 using EMT_API.Data;
 using EMT_API.DTOs.Public;

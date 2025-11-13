@@ -1,12 +1,12 @@
 ﻿using EMT_API.DAOs;
 using EMT_API.DAOs.CourseDAO;
-using EMT_API.DTOs.Feedback; 
+using EMT_API.DAOs.MembershipDAO;
 using EMT_API.DTOs.Public;
+using EMT_API.DTOs.Feedback;
 using EMT_API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using EMT_API.DAOs.MembershipDAO;
 
 namespace EMT_API.Controllers.Public
 {
@@ -18,7 +18,10 @@ namespace EMT_API.Controllers.Public
         private readonly IMembershipDAO _membershipDao;
         private readonly IFeedbackDAO _feedbackDao;
 
-        public CourseController(ICourseDAO courseDao, IMembershipDAO membershipDao, IFeedbackDAO feedbackDao)
+        public CourseController(
+            ICourseDAO courseDao,
+            IMembershipDAO membershipDao,
+            IFeedbackDAO feedbackDao)
         {
             _courseDao = courseDao;
             _membershipDao = membershipDao;
@@ -29,10 +32,115 @@ namespace EMT_API.Controllers.Public
         {
             var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                         ?? User.FindFirst("sub")?.Value;
+
             return int.Parse(idClaim);
         }
 
-        // --- Rating trung bình ---
+        // =========================================
+        // 1️⃣ GET ALL COURSES (public)
+        // =========================================
+        [HttpGet]
+        public async Task<IActionResult> GetCourses()
+        {
+            var courses = await _courseDao.GetAllCoursesAsync();
+
+            var result = courses.Select(course =>
+            {
+                // Lọc chapter có video preview
+                var chapters = course.CourseChapters
+                    .Select(ch => new ChapterDto
+                    {
+                        ChapterID = ch.ChapterID,
+                        ChapterName = ch.ChapterName,
+                        Videos = ch.CourseVideos
+                            .Where(v => v.IsPreview)               // chỉ preview
+                            .Select(v => new VideoDto
+                            {
+                                VideoID = v.VideoID,
+                                VideoName = v.VideoName,
+                                VideoURL = v.VideoURL,             // vì preview nên trả URL
+                                IsPreview = true
+                            })
+                            .ToList()
+                    })
+                    .Where(ch => ch.Videos.Count > 0)             // chỉ chapter có video preview
+                    .ToList();
+
+                return new CourseDto
+                {
+                    CourseID = course.CourseID,
+                    CourseName = course.CourseName,
+                    Description = course.Description ?? "",
+                    CourseLevel = course.CourseLevel,
+                    TeacherID = course.TeacherID,
+                    TeacherName = course.Teacher?.TeacherNavigation?.UserDetail?.FullName ?? "(Unknown)",
+                    Chapters = chapters
+                };
+            }).ToList();
+
+            return Ok(new { Courses = result });
+        }
+
+
+        // =========================================
+        // 2️⃣ GET COURSE DETAIL
+        // =========================================
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<CourseDto>> GetCourseDetail(int id)
+        {
+            var course = await _courseDao.GetCourseDetailAsync(id);
+            if (course == null)
+                return NotFound(new { Message = "Course not found" });
+
+            var dto = new CourseDto
+            {
+                CourseID = course.CourseID,
+                CourseName = course.CourseName,
+                Description = course.Description ?? "",
+                CourseLevel = course.CourseLevel,
+                TeacherID = course.TeacherID,
+                TeacherName = course.Teacher?.TeacherNavigation?.UserDetail?.FullName ?? "(Unknown)",
+                Chapters = course.CourseChapters.Select(ch => new ChapterDto
+                {
+                    ChapterID = ch.ChapterID,
+                    ChapterName = ch.ChapterName,
+                    Videos = ch.CourseVideos.Select(v => new VideoDto
+                    {
+                        VideoID = v.VideoID,
+                        VideoName = v.VideoName,
+                        VideoURL = v.IsPreview ? v.VideoURL : null,
+                        IsPreview = v.IsPreview
+                    }).ToList()
+                }).ToList()
+            };
+
+            // Thêm Video không thuộc chapter
+            var orphanVideos = course.CourseVideos
+                .Where(v => v.ChapterID == null)
+                .Select(v => new VideoDto
+                {
+                    VideoID = v.VideoID,
+                    VideoName = v.VideoName,
+                    VideoURL = v.IsPreview ? v.VideoURL : null,
+                    IsPreview = v.IsPreview
+                }).ToList();
+
+            if (orphanVideos.Any())
+            {
+                dto.Chapters.Add(new ChapterDto
+                {
+                    ChapterID = 0,
+                    ChapterName = "(Uncategorized Videos)",
+                    Videos = orphanVideos
+                });
+            }
+
+            return Ok(dto);
+        }
+
+        // =========================================
+        // 3️⃣ GET RATING
+        // =========================================
         [HttpGet("{courseId:int}/rating")]
         public async Task<IActionResult> GetCourseAverageRating(int courseId)
         {
@@ -40,10 +148,18 @@ namespace EMT_API.Controllers.Public
                 return NotFound(new { Message = "Course not found" });
 
             var (avg, total) = await _feedbackDao.GetCourseRatingAsync(courseId);
-            return Ok(new { CourseID = courseId, AverageRating = avg, TotalFeedback = total });
+
+            return Ok(new
+            {
+                CourseID = courseId,
+                AverageRating = avg,
+                TotalFeedback = total
+            });
         }
 
-        // --- Danh sách feedback ---
+        // =========================================
+        // 4️⃣ GET FEEDBACK LIST
+        // =========================================
         [HttpGet("{courseId:int}/feedback")]
         public async Task<IActionResult> GetCourseFeedbacks(int courseId)
         {
@@ -51,6 +167,7 @@ namespace EMT_API.Controllers.Public
                 return NotFound(new { Message = "Course not found" });
 
             var feedbacks = await _feedbackDao.GetCourseFeedbacksAsync(courseId);
+
             return Ok(new
             {
                 CourseID = courseId,
@@ -59,10 +176,12 @@ namespace EMT_API.Controllers.Public
             });
         }
 
-        // --- Gửi feedback ---
-        [HttpPost("feedback")]
+        // =========================================
+        // 5️⃣ USER SUBMIT FEEDBACK
+        // =========================================
         [Authorize(Roles = "STUDENT")]
-        public async Task<IActionResult> CreateFeedback([FromBody] DTOs.Feedback.FeedbackCreateRequest req)
+        [HttpPost("feedback")]
+        public async Task<IActionResult> CreateFeedback([FromBody] FeedbackCreateRequest req)
         {
             int userId = GetUserId();
 
@@ -90,6 +209,7 @@ namespace EMT_API.Controllers.Public
             };
 
             var created = await _feedbackDao.CreateFeedbackAsync(feedback);
+
             return Ok(new
             {
                 message = "Feedback submitted successfully.",
