@@ -1,4 +1,5 @@
 ﻿using EMT_API.DAOs;
+using EMT_API.DAOs.MembershipDAO;
 using EMT_API.DTOs.Quiz;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
