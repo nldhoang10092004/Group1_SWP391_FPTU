@@ -1,278 +1,323 @@
-// EditCourse.scss
+// front-end/src/components/Teacher/EditCourse.scss
+
+@import '../Admin/admin-dashboard-styles.scss';
+
 .edit-course-page {
-  .back-button {
-    color: #666;
+  padding: 1.5rem;
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    color: $ui-muted;
     text-decoration: none;
     font-weight: 500;
+    transition: color $ui-transition;
 
     &:hover {
-      color: #333;
-      text-decoration: none;
+      color: $ui-brand;
     }
   }
 
-  .card {
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+  .page-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid $ui-border-solid;
+    padding-bottom: 1.5rem;
+  }
 
-    .card-header {
-      background: white;
-      border-bottom: 1px solid #e9ecef;
-      padding: 1rem 1.5rem;
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: $ui-text;
+    line-height: 1.2;
+  }
 
-      h5 {
-        margin: 0;
-        font-weight: 600;
-      }
-    }
+  .page-description {
+    font-size: 1rem;
+    color: $ui-muted;
+    margin-top: 0.5rem;
+  }
 
-    .card-body {
-      padding: 1.5rem;
+  .edit-course-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+
+    @media (min-width: 1024px) {
+      grid-template-columns: 1fr 2fr; // Make the first column narrower
+      align-items: start;
     }
   }
 
-  .course-stats {
-    .stat-item {
+  .info-card {
+    @extend .management-card;
+    padding: 2.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .form-content-wrapper {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .card-header-title {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 2.5rem;
+      font-size: 1.75rem;
+      text-align: center;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .form-actions {
+      margin-top: 1.5rem;
+      padding-top: 0;
+      border-top: none;
+      width: 100%;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
+    }
+  }
+
+  .content-card {
+    @extend .management-card;
+    padding: 1.5rem;
+  }
+
+  .card-header-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $ui-text;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid $ui-border-solid;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+    &:last-child {
+      margin-bottom: 0;
+    }
+    label {
+      display: block;
+      font-weight: 500;
+      color: $ui-muted;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    
+    @media (min-width: 768px) {
+      grid-template-columns: 2fr 1fr; // Grid for horizontal layout
+    }
+  }
+
+  .form-actions {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid $ui-border-solid;
+  }
+
+  // Custom Accordion for Chapters
+  .chapter-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .chapter-item {
+    border: 1px solid $ui-border-solid;
+    border-radius: $ui-radius-medium;
+    overflow: hidden;
+    transition: all $ui-transition;
+
+    &.open {
+      box-shadow: $ui-shadow-medium;
+      border-color: transparent;
+    }
+  }
+
+  .chapter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    background-color: $ui-surface;
+    transition: background-color $ui-transition;
+
+    &:hover {
+      background-color: #f8f9fa;
+    }
+
+    .chapter-title-section {
+      display: flex;
       align-items: center;
-      padding: 0.5rem 0;
+      gap: 0.75rem;
+    }
+    
+    .chapter-title {
+      font-weight: 600;
+      color: $ui-text;
+    }
 
-      span {
-        color: #666;
-      }
+    .chapter-meta {
+      font-size: 0.875rem;
+      color: $ui-muted;
+    }
 
-      strong {
-        color: #333;
-        font-size: 1.1rem;
+    .chapter-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .chapter-toggle-icon {
+      transition: transform $ui-transition;
+      &.open {
+        transform: rotate(180deg);
       }
     }
   }
 
-  .accordion {
-    .accordion-item {
-      border: 1px solid #dee2e6;
-      border-radius: 8px !important;
-      margin-bottom: 1rem;
-      overflow: hidden;
+  .chapter-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    background-color: #fafbff;
 
-      &:last-child {
-        margin-bottom: 0;
-      }
+    &.open {
+      max-height: 2000px; // Large enough for content
+      transition: max-height 0.5s ease-in;
     }
-
-    .accordion-button {
-      background: white;
-      color: #333;
-      font-weight: 500;
-      padding: 1rem 1.5rem;
-
-      &:not(.collapsed) {
-        background: #f8f9fa;
-        color: #667eea;
-        box-shadow: none;
-      }
-
-      &:focus {
-        box-shadow: none;
-        border-color: transparent;
-      }
-
-      .chapter-header-content {
-        width: 100%;
-        margin-right: 1rem;
-
-        strong {
-          font-size: 1rem;
-        }
-
-        small {
-          font-size: 0.875rem;
-        }
-      }
-    }
-
-    .accordion-body {
-      padding: 1.5rem;
-      background: #fafbfc;
-    }
+  }
+  
+  .chapter-content-inner {
+    padding: 1.25rem;
+    border-top: 1px solid $ui-border-solid;
   }
 
   .video-list {
-    .video-item {
-      background: white;
-      padding: 1rem;
-      border-radius: 6px;
-      margin-bottom: 0.75rem;
-      border: 1px solid #e9ecef;
-      transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
 
-      &:hover {
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        border-color: #667eea;
-      }
+  .video-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-radius: $ui-radius-medium;
+    background-color: $ui-surface;
+    border: 1px solid $ui-border-solid;
+    transition: all $ui-transition;
 
-      &:last-child {
-        margin-bottom: 0;
-      }
+    &:hover {
+        border-color: rgba($ui-brand, 0.5);
+        box-shadow: $ui-shadow-soft;
+    }
 
-      .video-name {
-        font-weight: 500;
-        color: #333;
-        margin-bottom: 0.5rem;
-      }
+    .video-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
 
-      .video-meta {
+    .video-name {
+      font-weight: 500;
+      color: $ui-text;
+    }
+
+    .preview-badge {
+      background-color: $primary-color-light;
+      color: $primary-color-dark;
+      padding: 0.25rem 0.6rem;
+      border-radius: $ui-radius-round;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .no-url-badge {
+        font-size: 0.875rem;
+        color: $ui-muted;
+        font-style: italic;
+    }
+
+    .video-actions {
         display: flex;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-
-      .video-actions {
-        display: flex;
-        gap: 0.5rem;
-
-        button {
-          padding: 0.25rem 0.5rem;
-          font-size: 1rem;
-          text-decoration: none;
-
-          &:hover {
-            text-decoration: none;
-          }
-        }
-      }
+        gap: 0.25rem;
     }
   }
 
-  // Modal customization
-  .modal {
-    .modal-header {
-      border-bottom: 1px solid #e9ecef;
-
-      .modal-title {
-        font-weight: 600;
-        font-size: 1.25rem;
-      }
-    }
-
-    .modal-body {
-      padding: 1.5rem;
-    }
-
-    .modal-footer {
-      border-top: 1px solid #e9ecef;
-      padding: 1rem 1.5rem;
-    }
+  .add-video-button {
+    @extend .secondary-button;
+    width: 100%;
+    margin-top: 1rem;
   }
 
-  // Form styling
-  .form-label {
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 0.5rem;
-  }
-
-  .form-control, .form-select {
-    border-radius: 6px;
-    border: 1px solid #ced4da;
-
-    &:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  // File Upload Input
+  .file-upload-input {
+    label {
+      display: block;
+      font-weight: 600;
+      color: $ui-muted;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
     }
-  }
-
-  // Badge customization
-  .badge {
-    padding: 0.35rem 0.65rem;
-    font-weight: 500;
-    font-size: 0.75rem;
-  }
-
-  // Button customization
-  .btn {
-    border-radius: 6px;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-
-    &-primary {
-      background: #667eea;
-      border-color: #667eea;
+    .file-drop-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      border: 2px dashed $ui-border-solid;
+      border-radius: $ui-radius-medium;
+      background-color: $ui-bg;
+      text-align: center;
+      cursor: pointer;
+      transition: all $ui-transition;
 
       &:hover {
-        background: #5568d3;
-        border-color: #5568d3;
-      }
-    }
-
-    &-outline-primary {
-      color: #667eea;
-      border-color: #667eea;
-
-      &:hover {
-        background: #667eea;
-        border-color: #667eea;
-        color: white;
-      }
-    }
-
-    &-link {
-      color: #667eea;
-      text-decoration: none;
-
-      &:hover {
-        color: #5568d3;
+        border-color: $ui-brand;
+        background-color: lighten($ui-bg, 2%);
       }
 
-      &.text-danger {
-        color: #dc3545 !important;
+      .upload-icon {
+        color: $ui-brand;
+        margin-bottom: 0.75rem;
+      }
 
-        &:hover {
-          color: #c82333 !important;
+      .file-upload-text {
+        color: $ui-text;
+        font-weight: 500;
+        span {
+          color: $ui-brand;
+          font-weight: 600;
         }
       }
-    }
-  }
-
-  // Responsive
-  @media (max-width: 991px) {
-    .card {
-      margin-bottom: 1.5rem;
-    }
-
-    .accordion {
-      .accordion-button {
-        .chapter-header-content {
-          font-size: 0.9rem;
-        }
+      .file-upload-hint {
+        font-size: 0.8rem;
+        color: $ui-muted;
+        margin-top: 0.25rem;
       }
     }
-  }
-
-  @media (max-width: 576px) {
-    .card-body {
-      padding: 1rem;
-    }
-
-    .video-list {
-      .video-item {
-        padding: 0.75rem;
-
-        .video-name {
-          font-size: 0.9rem;
-        }
-
-        .video-actions {
-          flex-direction: column;
-
-          button {
-            width: 100%;
-          }
-        }
-      }
+    .file-preview {
+      margin-top: 1rem;
     }
   }
 }

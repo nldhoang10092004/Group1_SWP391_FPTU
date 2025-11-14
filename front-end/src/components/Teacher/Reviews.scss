@@ -1,0 +1,22 @@
+.section-label {
+  color: #eab308 !important; /* vàng đậm */
+  font-weight: 700;
+}
+
+.review-card button, .review-card .btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  transition: background 0.2s, color 0.2s;
+}
+.review-card button:hover, .review-card .btn:hover {
+  background: #ff9800;
+  color: #fff;
+}
+.review-card button:disabled, .review-card .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,4 +1,5 @@
 import React from "react";
+import "./Reviews.scss";
 import { Row, Col, Card } from "react-bootstrap";
 
 const Reviews = () => {
@@ -29,18 +30,22 @@ const Reviews = () => {
     <div className="tab-content">
       <Row className="mb-3">
         <Col>
-          <h5>Đánh giá từ học viên</h5>
+          <h5>
+            <span className="section-label">1</span> Đánh giá từ học viên
+          </h5>
         </Col>
       </Row>
 
       <Row>
-        {reviews.map((review) => (
+        {reviews.map((review, idx) => (
           <Col md={6} key={review.id} className="mb-3">
             <Card className="review-card">
               <Card.Body>
                 <div className="review-header mb-3">
                   <div className="reviewer-info">
-                    <h6 className="mb-1">{review.student}</h6>
+                    <h6 className="mb-1">
+                      <span className="section-label">{idx + 2}</span> {review.student}
+                    </h6>
                     <small className="text-muted">{review.course}</small>
                   </div>
                   <div className="review-rating">

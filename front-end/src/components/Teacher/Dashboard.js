@@ -410,24 +410,21 @@ const TeacherDashboard = () => {
                 <Plus size={18} /> Tạo khóa học mới
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            <div className="flashcard-grid">
               {courses.map((course) => (
-                <div key={course.courseID} className="teacher-item-card">
+                <div key={course.courseID} className="admin-stat-card flex flex-col">
                   <h5 className="font-bold text-lg">{course.courseName}</h5>
-                  <p className="text-sm text-gray-600 flex-grow">
+                  <p className="text-sm text-gray-600">
                     {course.description}
                   </p>
-                  <div className="flex justify-between items-center mt-4">
-                    <span className="flex items-center text-sm">
-                      <Star size={14} className="text-yellow-500 mr-1" />{" "}
-                      {course.rating || "N/A"}
-                    </span>
-                    <div className="flex gap-2">
+                  <div className="flex-grow"></div>
+                  <div className="flex items-center gap-2 mt-4">
                       <button
                         onClick={() =>
                           handleViewCourseDetail(course.courseID)
                         }
                         className="action-button"
+                        title="Xem chi tiết"
                       >
                         <Eye size={16} />
                       </button>
@@ -437,16 +434,17 @@ const TeacherDashboard = () => {
                           setShowEditModal(true);
                         }}
                         className="action-button"
+                        title="Chỉnh sửa"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => handleDeleteCourse(course.courseID)}
                         className="action-button delete-button"
+                        title="Xóa khóa học"
                       >
                         <Trash size={16} />
                       </button>
-                    </div>
                   </div>
                 </div>
               ))}
@@ -471,32 +469,33 @@ const TeacherDashboard = () => {
                 <Plus size={18} /> Tạo flashcard mới
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            <div className="flashcard-grid">
               {flashcards.map((set) => (
-                <div key={set.setID} className="teacher-item-card">
+                <div key={set.setID} className="admin-stat-card flex flex-col">
                   <h5 className="font-bold text-lg">{set.title}</h5>
                   <p className="text-sm text-gray-600">{set.description}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Khóa học: {set.courseName || "N/A"}
-                  </p>
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex-grow"></div>
+                  <div className="flex items-center gap-2 mt-4">
                     <button
                       onClick={() =>
                         navigate(`/teacher/flashcards/${set.setID}`)
                       }
                       className="action-button"
+                      title="Xem chi tiết"
                     >
                       <Eye size={16} />
                     </button>
                     <button
                       onClick={() => navigate(`/teacher/edit/${set.setID}`)}
                       className="action-button"
+                      title="Chỉnh sửa"
                     >
                       <Edit size={16} />
                     </button>
                     <button
                       onClick={() => handleDeleteFlashcard(set.setID)}
                       className="action-button delete-button"
+                      title="Xóa bộ"
                     >
                       <Trash size={16} />
                     </button>
@@ -525,38 +524,15 @@ const TeacherDashboard = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            <div className="flashcard-grid">
               {quizzes.map((quiz) => (
-                <div key={quiz.quizID} className="teacher-item-card">
+                <div key={quiz.quizID} className="admin-stat-card flex flex-col">
                   <h5 className="font-bold text-lg">{quiz.title}</h5>
-                  <p className="text-sm text-gray-600 flex-grow">
+                  <p className="text-sm text-gray-600">
                     {quiz.description || "Chưa có mô tả"}
                   </p>
-
-                  <p className="text-sm text-gray-600 mt-2">
-                    Loại: {getQuizTypeName(quiz.quizType)}
-                  </p>
-
-                  {/* Trạng thái */}
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="text-sm">
-                      <span
-                        className={`px-2 py-1 rounded text-white text-xs ${
-                          quiz.isActive ? "bg-green-600" : "bg-gray-500"
-                        }`}
-                      >
-                        {quiz.isActive ? "✓ Đang hoạt động" : "⊗ Đã tắt"}
-                      </span>
-                    </p>
-
-                    
-                  </div>
-
-                  <p className="text-xs text-gray-500 mt-1">
-                    Khóa học: {quiz.courseName || "N/A"}
-                  </p>
-
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex-grow"></div>
+                  <div className="flex items-center gap-2 mt-4">
                     <button
                       onClick={() =>
                         navigate(`/teacher/quizdetail/${quiz.quizID}`)
@@ -632,23 +608,6 @@ const TeacherDashboard = () => {
       </div>
 
       <div className="admin-main-content">
-        <div className="admin-main-header">
-          <div className="admin-main-header-wrapper">
-            <div>
-              <h2 className="admin-main-header-title">
-                {menuItems.find((item) => item.key === activeMenu)?.label ||
-                  "Dashboard"}
-              </h2>
-              <p className="admin-main-header-subtitle">
-                Quản lý khóa học và tài nguyên của bạn
-              </p>
-            </div>
-            <button onClick={() => navigate("/")} className="secondary-button">
-              <X size={16} />
-              <span>Về trang chủ</span>
-            </button>
-          </div>
-        </div>
         <div className="admin-content-area">{renderContent()}</div>
       </div>
 

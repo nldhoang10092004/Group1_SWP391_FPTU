@@ -23,30 +23,7 @@ function App() {
 // {showChatbot && (
 //   <AIChat isVisible={showChatbot} onClose={() => setShowChatbot(false)} />
 // )}
-if (!document.getElementById("emt-ai-chatbot-root")) {
-  const chatbotRoot = document.createElement("div");
-  chatbotRoot.id = "emt-ai-chatbot-root";
-  document.body.appendChild(chatbotRoot);
-
-  // Render chatbot vào root này
-  const root = ReactDOM.createRoot(chatbotRoot);
-  root.render(<AIChat isVisible={true} onClose={() => root.render(null)} />);
-}
- useEffect(() => {
-    const chatbotRoot = document.createElement("div");
-    chatbotRoot.id = "emt-ai-chatbot-root";
-    document.body.appendChild(chatbotRoot);
-
-    if (window.EMTChatbot) {
-      window.EMTChatbot.toggle();
-      window.EMTChatbot.toggle();
-    }
-
-    return () => {
-      const oldBot = document.getElementById("emt-ai-chatbot-root");
-      if (oldBot) oldBot.remove();
-    };
-  }, []);
+// Chatbot is only available for User, and only opens when button is clicked (see commented code below)
   const outletWithProps = React.cloneElement(<Outlet />, {
     onShowAuthModal: handleShowAuthModal
   });
