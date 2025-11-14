@@ -30,6 +30,8 @@ import CoursesDetail from './components/Teacher/CourseDetail';
 import QuizDetail from './components/Teacher/QuizDetail';
 import ExamDetail from './components/Admin/ExamDetail';
 import QuizPublish from "./components/User/QuizPublish";
+import TeacherInfo from './components/User/TeacherInfo';
+import CourseFeedback from './components/User/CourseFeedback';
 
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -79,6 +81,8 @@ root.render(
         <Route path="/teacher/quizdetail/:quizId" element={<QuizDetail />} />
         <Route path="/admin/examdetail/:quizId" element={<ExamDetail />} />
         <Route path="/quiz/publish" element={<QuizPublish />} />
+        <Route path="/course/:id/feedback" element={<CourseFeedback />} />
+        <Route path="/teacherinfo/:teacherId" element={<TeacherInfo />} />
         <Route path="profile" element={
           <ProtectedRoute>
             <Profile />

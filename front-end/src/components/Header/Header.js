@@ -1,23 +1,40 @@
+// src/components/Header/Header.jsx
+
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
-import { Modal, Button, Form, Dropdown, Toast, ToastContainer } from "react-bootstrap";
+import {
+  Modal,
+  Button,
+  Form,
+  Dropdown,
+  Toast,
+  ToastContainer,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { loginApi, registerApi, sendOtpApi } from "../../middleware/auth";
-import api from "../../middleware/axiosInstance";
-import "./Header.scss"; 
+import {
+  loginApi,
+  registerApi,
+  sendOtpApi,
+  loginGoogle,
+} from "../../middleware/auth";
+import "./Header.scss";
 
-// 🔑 Hàm decode JWT để lấy thông tin user
+// ✅ BASE URL chuẩn cho các API chung (profile, avatar, ...)
+const API_BASE = `${process.env.REACT_APP_API_URL}/api`;
+
+// 🔑 Hàm decode JWT (dùng được cho token backend + token Google)
 const decodeJWT = (token) => {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const jsonPayload = decodeURIComponent(
       atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
@@ -71,97 +88,106 @@ const Header = () => {
   const GOOGLE_CLIENT_ID =
     process.env.REACT_APP_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
-  // ✅ Hàm lấy thông tin user profile (bao gồm avatar)
+  // ✅ Hàm hiển thị toast
+  const showToastNotification = (message, type = "danger") => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
+
+  // ✅ Lấy profile + avatar từ backend
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
 
-      const response = await api.get("/api/account/profile", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Gọi DETAIL + AVATAR đồng thời
+      const [detailRes, avatarRes] = await Promise.all([
+        axios.get(`${API_BASE}/user/profile/detail`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_BASE}/user/profile/avatar`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      const profile = response.data;
-      
-      // ✅ Lấy avatar URL từ backend
-      if (profile.avatarUrl || profile.AvatarUrl) {
-        const avatar = profile.avatarUrl || profile.AvatarUrl;
+      const profile = detailRes.data;
+      const avatar =
+        avatarRes.data?.avatarUrl ||
+        avatarRes.data?.AvatarUrl ||
+        avatarRes.data?.url;
+
+      if (avatar) {
+        console.log("✅ Header nhận avatarUrl từ BE:", avatar);
         setAvatarUrl(avatar);
         localStorage.setItem("avatarUrl", avatar);
       }
 
-      // ✅ Lấy username
-      if (profile.username || profile.Username) {
-        const name = profile.username || profile.Username;
-        setUsername(name);
-        localStorage.setItem("userName", name);
-      }
+      const name =
+        profile.fullName ||
+        profile.username ||
+        profile.Username ||
+        profile.email?.split("@")[0] ||
+        localStorage.getItem("userName") ||
+        "";
 
-      console.log("✅ User profile loaded:", profile);
+      setUsername(name);
+      localStorage.setItem("userName", name);
+
+      console.log("✅ Header loaded profile:", { name, avatar });
     } catch (error) {
-      console.error("❌ Lỗi tải profile:", error);
-      // Nếu API trả về 401/403, có thể token đã hết hạn
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        handleLogout();
-      }
+      console.error("❌ Lỗi tải profile trong Header:", error);
     }
   };
 
-  // ✅ Load user data khi component mount
+  // ✅ Load user & avatar khi header mount
   useEffect(() => {
     const loadUserData = async () => {
       const savedUser = localStorage.getItem("user");
-      const savedAvatar = localStorage.getItem("avatarUrl");
-      const savedUserName = localStorage.getItem("userName");
 
       if (savedUser && savedUser !== "undefined" && savedUser !== "null") {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
 
-        // Lấy username từ localStorage hoặc token
-        const nameToUse = savedUserName || parsedUser.username || parsedUser.email?.split("@")[0] || "";
-        setUsername(nameToUse);
+        const savedUserName = localStorage.getItem("userName");
+        const savedAvatar = localStorage.getItem("avatarUrl");
 
-        // Lấy avatar từ localStorage hoặc fetch từ API
-        if (savedAvatar && savedAvatar !== "/default-avatar.png") {
-          setAvatarUrl(savedAvatar);
-        } else {
-          // ✅ Fetch avatar từ backend nếu chưa có
-          await fetchUserProfile();
+        if (savedUserName) {
+          setUsername(savedUserName);
+        } else if (parsedUser.username || parsedUser.email) {
+          const name =
+            parsedUser.username ||
+            parsedUser.email?.split("@")[0] ||
+            "";
+          setUsername(name);
         }
+
+        if (savedAvatar) {
+          setAvatarUrl(savedAvatar);
+        }
+
+        // 🔄 Dù có hay không, vẫn sync lại từ server cho chắc
+        await fetchUserProfile();
       }
     };
 
     loadUserData();
   }, []);
 
-  // ✅ Listen cho sự kiện cập nhật avatar từ component khác (Profile page)
+  // ✅ Lắng nghe thay đổi localStorage (khi Profile thay avatar)
   useEffect(() => {
-    const handleAvatarUpdate = () => {
-      const savedAvatar = localStorage.getItem("avatarUrl");
-      if (savedAvatar) {
-        setAvatarUrl(savedAvatar);
-      }
-    };
-
     const handleStorageChange = () => {
       const savedAvatar = localStorage.getItem("avatarUrl");
       const savedUserName = localStorage.getItem("userName");
-      
       if (savedAvatar) setAvatarUrl(savedAvatar);
       if (savedUserName) setUsername(savedUserName);
     };
 
     window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("avatarUpdated", handleAvatarUpdate);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("avatarUpdated", handleAvatarUpdate);
-    };
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // nạp script GIS 1 lần
+  // ✅ Nạp script Google Identity Services
   useEffect(() => {
     if (window.google && window.google.accounts && window.google.accounts.id) {
       setGisReady(true);
@@ -179,6 +205,7 @@ const Header = () => {
     document.body.appendChild(script);
   }, []);
 
+  // ✅ Callback khi Google trả credential
   const onGoogleCredential = async (response) => {
     try {
       const idToken = response?.credential;
@@ -187,22 +214,40 @@ const Header = () => {
         return;
       }
 
-      const res = await api.post("/api/auth/login/google", { idToken });
-      const { accountID, accessToken, expiresIn, role, redirectUrl } = res.data || {};
+      // Decode ID token của Google để lấy email
+      const googlePayload = decodeJWT(idToken);
+      const email = googlePayload?.email;
+
+      if (!email) {
+        showToastNotification(
+          "Không lấy được email từ tài khoản Google.",
+          "danger"
+        );
+        return;
+      }
+
+      // Gọi BE qua hàm loginGoogle từ auth.js (POST /login/google { email })
+      const res = await loginGoogle(email);
+      const { accountID, accessToken, expiresIn, role, redirectUrl } =
+        res.data || {};
 
       const decodedToken = decodeJWT(accessToken);
       const usernameFromToken =
-        decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+        decodedToken?.[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+        ];
       const roleFromToken =
-        decodedToken?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        decodedToken?.[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ];
 
       const loggedUser = {
         accountID,
         accessToken,
         expiresIn,
         role: role || roleFromToken,
-        username: usernameFromToken || "google_user",
-        email: decodedToken?.email || "",
+        username: usernameFromToken || email.split("@")[0],
+        email,
       };
 
       localStorage.setItem("user", JSON.stringify(loggedUser));
@@ -212,7 +257,7 @@ const Header = () => {
       setUser(loggedUser);
       setUsername(loggedUser.username);
 
-      // ✅ Fetch avatar sau khi login
+      // 🔄 Lấy avatar & name mới từ server
       await fetchUserProfile();
 
       showToastNotification("🎉 Đăng nhập Google thành công!", "success");
@@ -234,13 +279,20 @@ const Header = () => {
     }
   };
 
+  // ✅ Khi bấm nút "Đăng nhập với Google"
   const handleGoogleLoginClick = () => {
     if (!gisReady) {
-      showToastNotification("Google chưa sẵn sàng. Vui lòng thử lại sau.", "warning");
+      showToastNotification(
+        "Google chưa sẵn sàng. Vui lòng thử lại sau.",
+        "warning"
+      );
       return;
     }
     if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID") {
-      showToastNotification("Thiếu GOOGLE_CLIENT_ID. Hãy cấu hình REACT_APP_GOOGLE_CLIENT_ID.", "warning");
+      showToastNotification(
+        "Thiếu GOOGLE_CLIENT_ID. Hãy cấu hình REACT_APP_GOOGLE_CLIENT_ID.",
+        "warning"
+      );
       return;
     }
     try {
@@ -266,12 +318,6 @@ const Header = () => {
     }
   };
 
-  const showToastNotification = (message, type = "danger") => {
-    setToastMessage(message);
-    setToastType(type);
-    setShowToast(true);
-  };
-
   const resetLoginForm = () => {
     setEmailOrUsername("");
     setPassword("");
@@ -291,41 +337,55 @@ const Header = () => {
     setOtpError("");
   };
 
+  // ✅ Đăng nhập thường
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    
+
     setLoginMessage("");
     setLoginErrorMessage("");
-    
+
     try {
       const response = await loginApi(emailOrUsername, password);
-      const { accountID, accessToken, expiresIn, role, redirectUrl } = response.data;
+      const { accountID, accessToken, expiresIn, role, redirectUrl } =
+        response.data;
 
       const decodedToken = decodeJWT(accessToken);
-      const usernameFromToken = decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
-      const roleFromToken = decodedToken?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      const usernameFromToken =
+        decodedToken?.[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+        ];
+      const roleFromToken =
+        decodedToken?.[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ];
 
-      const loggedUser = { 
-        accountID, 
-        accessToken, 
+      const loggedUser = {
+        accountID,
+        accessToken,
         expiresIn,
         role: role || roleFromToken,
         username: usernameFromToken || emailOrUsername,
-        email: emailOrUsername.includes("@") ? emailOrUsername : ""
+        email: emailOrUsername.includes("@") ? emailOrUsername : "",
       };
-      
+
       localStorage.setItem("user", JSON.stringify(loggedUser));
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("userName", usernameFromToken || emailOrUsername);
+      localStorage.setItem(
+        "userName",
+        usernameFromToken || emailOrUsername
+      );
 
       setUser(loggedUser);
       setUsername(usernameFromToken || emailOrUsername);
 
-      // ✅ Fetch avatar sau khi login
+      // 🔄 Đồng bộ avatar từ BE
       await fetchUserProfile();
 
       setLoginMessage("Đăng nhập thành công!");
-      showToastNotification("🎉 Đăng nhập thành công! Chào mừng bạn quay lại.", "success");
+      showToastNotification(
+        "🎉 Đăng nhập thành công! Chào mừng bạn quay lại.",
+        "success"
+      );
 
       setTimeout(() => {
         setShowAuthModal(false);
@@ -334,17 +394,18 @@ const Header = () => {
         navigate(targetUrl);
         window.location.href = targetUrl;
       }, 1000);
-
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 
-                      err.response?.data?.error ||
-                      err.message ||
-                      "Đăng nhập thất bại! Vui lòng kiểm tra lại thông tin.";
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Đăng nhập thất bại! Vui lòng kiểm tra lại thông tin.";
       setLoginErrorMessage(errorMsg);
       showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
+  // ✅ Đăng ký
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
 
@@ -361,7 +422,7 @@ const Header = () => {
       showToastNotification(msg, "warning");
       return;
     }
-    
+
     setRegisterMessage("");
     setRegisterErrorMessage("");
 
@@ -377,16 +438,19 @@ const Header = () => {
       const { accountID, accessToken, expiresIn } = response.data;
 
       const decodedToken = decodeJWT(accessToken);
-      const usernameFromToken = decodedToken?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+      const usernameFromToken =
+        decodedToken?.[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+        ];
 
-      const newUser = { 
-        accountID, 
-        accessToken, 
-        expiresIn, 
+      const newUser = {
+        accountID,
+        accessToken,
+        expiresIn,
         email: registerEmail,
-        username: usernameFromToken || registerName
+        username: usernameFromToken || registerName,
       };
-      
+
       localStorage.setItem("user", JSON.stringify(newUser));
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("userName", usernameFromToken || registerName);
@@ -394,11 +458,14 @@ const Header = () => {
       setUser(newUser);
       setUsername(usernameFromToken || registerName);
 
-      // ✅ Fetch avatar sau khi register
+      // 🔄 Lấy avatar sau đăng ký (nếu BE có default)
       await fetchUserProfile();
 
       setRegisterMessage("Đăng ký thành công!");
-      showToastNotification("🎉 Đăng ký thành công! Chào mừng bạn đến với EnglishMaster.", "success");
+      showToastNotification(
+        "🎉 Đăng ký thành công! Chào mừng bạn đến với EnglishMaster.",
+        "success"
+      );
 
       setTimeout(() => {
         setShowAuthModal(false);
@@ -407,15 +474,17 @@ const Header = () => {
         window.location.reload();
       }, 1000);
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 
-                      err.response?.data?.error ||
-                      err.message ||
-                      "Đăng ký thất bại!";
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Đăng ký thất bại!";
       setRegisterErrorMessage(errorMsg);
       showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
+  // ✅ Gửi OTP
   const handleSendOtp = async () => {
     if (!registerEmail) {
       const msg = "Vui lòng nhập email trước khi gửi OTP!";
@@ -432,15 +501,17 @@ const Header = () => {
       setOtpMessage(successMsg);
       showToastNotification(successMsg, "success");
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 
-                      err.response?.data?.error ||
-                      "Gửi OTP thất bại!";
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Gửi OTP thất bại!";
       setOtpError(errorMsg);
       setOtpMessage("");
       showToastNotification(`❌ ${errorMsg}`, "danger");
     }
   };
 
+  // ✅ Đăng xuất
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
@@ -459,22 +530,36 @@ const Header = () => {
   return (
     <>
       {/* 🔔 Toast Notification */}
-      <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
-        <Toast 
-          show={showToast} 
-          onClose={() => setShowToast(false)} 
-          delay={4000} 
+      <ToastContainer
+        position="top-end"
+        className="p-3"
+        style={{ zIndex: 9999 }}
+      >
+        <Toast
+          show={showToast}
+          onClose={() => setShowToast(false)}
+          delay={4000}
           autohide
           bg={toastType}
         >
           <Toast.Header>
             <strong className="me-auto">
-              {toastType === "success" ? "Thành công" : 
-               toastType === "danger" ? "Lỗi" : 
-               toastType === "warning" ? "Cảnh báo" : "Thông báo"}
+              {toastType === "success"
+                ? "Thành công"
+                : toastType === "danger"
+                ? "Lỗi"
+                : toastType === "warning"
+                ? "Cảnh báo"
+                : "Thông báo"}
             </strong>
           </Toast.Header>
-          <Toast.Body className={toastType === "danger" || toastType === "success" ? "text-white" : ""}>
+          <Toast.Body
+            className={
+              toastType === "danger" || toastType === "success"
+                ? "text-white"
+                : ""
+            }
+          >
             {toastMessage}
           </Toast.Body>
         </Toast>
@@ -489,12 +574,15 @@ const Header = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <div className="search-bar ms-auto">
-              <input type="text" placeholder="Tìm kiếm giảng viên, khóa ..." />
+              <input
+                type="text"
+                placeholder="Tìm kiếm giảng viên, khóa ..."
+              />
             </div>
 
             <Nav className="header-actions">
               {!user ? (
-                <div className="auth-buttons"> 
+                <div className="auth-buttons">
                   <Button
                     className="login-btn"
                     onClick={() => {
@@ -505,9 +593,9 @@ const Header = () => {
                   >
                     Đăng nhập
                   </Button>
-                  
+
                   <Button
-                    className="register-btn" 
+                    className="register-btn"
                     onClick={() => {
                       setShowAuthModal(true);
                       setActiveTab("register");
@@ -529,14 +617,16 @@ const Header = () => {
                       alt="avatar"
                       className="user-avatar"
                       onError={(e) => {
-                        console.log("❌ Avatar load failed, using default");
+                        console.log(
+                          "❌ Avatar load failed, using default (Header)"
+                        );
                         e.target.src = "/default-avatar.png";
                       }}
                       style={{
                         width: "40px",
                         height: "40px",
                         borderRadius: "50%",
-                        objectFit: "cover"
+                        objectFit: "cover",
                       }}
                     />
                     <span className="user-name ms-2">
@@ -552,7 +642,10 @@ const Header = () => {
                       Cài đặt
                     </Dropdown.Item>
                     <Dropdown.Divider />
-                    <Dropdown.Item className="text-danger" onClick={handleLogout}>
+                    <Dropdown.Item
+                      className="text-danger"
+                      onClick={handleLogout}
+                    >
                       Đăng xuất
                     </Dropdown.Item>
                   </Dropdown.Menu>
@@ -585,7 +678,9 @@ const Header = () => {
 
           <div className="auth-tabs-nav mb-3">
             <button
-              className={`tab-nav-btn ${activeTab === "login" ? "active" : ""}`}
+              className={`tab-nav-btn ${
+                activeTab === "login" ? "active" : ""
+              }`}
               onClick={() => {
                 setActiveTab("login");
                 resetRegisterForm();
@@ -594,7 +689,9 @@ const Header = () => {
               Đăng nhập
             </button>
             <button
-              className={`tab-nav-btn ${activeTab === "register" ? "active" : ""}`}
+              className={`tab-nav-btn ${
+                activeTab === "register" ? "active" : ""
+              }`}
               onClick={() => {
                 setActiveTab("register");
                 resetLoginForm();
@@ -641,25 +738,47 @@ const Header = () => {
                 variant="outline-secondary"
                 onClick={handleGoogleLoginClick}
               >
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
                   <svg width="18" height="18" viewBox="0 0 48 48">
-                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303C33.602,32.91,29.197,36,24,36c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.949,3.051l5.657-5.657C34.676,6.053,29.63,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.297,16.702,18.834,14,24,14c3.059,0,5.842,1.154,7.949,3.051l5.657-5.657 C34.676,6.053,29.63,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                    <path fill="#4CAF50" d="M24,44c5.138,0,9.801-1.969,13.305-5.181l-6.147-5.195C29.127,35.091,26.715,36,24,36 c-5.176,0-9.573-3.072-11.292-7.435l-6.53,5.034C9.488,39.556,16.227,44,24,44z"/>
-                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-1.33,3.08-3.879,5.456-7.003,6.541 c0.001-0.001,0.002-0.001,0.003-0.002l6.147,5.195C33.985,40.184,44,36,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                    <path
+                      fill="#FFC107"
+                      d="M43.611,20.083H42V20H24v8h11.303C33.602,32.91,29.197,36,24,36c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.949,3.051l5.657-5.657C34.676,6.053,29.63,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
+                    />
+                    <path
+                      fill="#FF3D00"
+                      d="M6.306,14.691l6.571,4.819C14.297,16.702,18.834,14,24,14c3.059,0,5.842,1.154,7.949,3.051l5.657-5.657 C34.676,6.053,29.63,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
+                    />
+                    <path
+                      fill="#4CAF50"
+                      d="M24,44c5.138,0,9.801-1.969,13.305-5.181l-6.147-5.195C29.127,35.091,26.715,36,24,36 c-5.176,0-9.573-3.072-11.292-7.435l-6.53,5.034C9.488,39.556,16.227,44,24,44z"
+                    />
+                    <path
+                      fill="#1976D2"
+                      d="M43.611,20.083H42V20H24v8h11.303c-1.33,3.08-3.879,5.456-7.003,6.541 c0.001-0.001,0.002-0.001,0.003-0.002l6.147,5.195C33.985,40.184,44,36,44,24C44,22.659,43.862,21.35,43.611,20.083z"
+                    />
                   </svg>
                   Đăng nhập với Google
                 </span>
               </Button>
 
-              <div id="google-btn-fallback-wrap" style={{ display: "none" }} className="d-grid">
+              <div
+                id="google-btn-fallback-wrap"
+                style={{ display: "none" }}
+                className="d-grid"
+              >
                 <div id="google-btn-fallback" className="w-100" />
               </div>
 
               <div className="text-center mt-2">
-                <Button 
-                  variant="link" 
-                  size="sm" 
+                <Button
+                  variant="link"
+                  size="sm"
                   onClick={() => {
                     setShowAuthModal(false);
                     navigate("/forgotpassword");
@@ -669,23 +788,31 @@ const Header = () => {
                 </Button>
               </div>
 
-              {loginMessage && <div className="alert alert-success mt-2 mb-0 py-2">{loginMessage}</div>}
-              {loginErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{loginErrorMessage}</div>}
+              {loginMessage && (
+                <div className="alert alert-success mt-2 mb-0 py-2">
+                  {loginMessage}
+                </div>
+              )}
+              {loginErrorMessage && (
+                <div className="alert alert-danger mt-2 mb-0 py-2">
+                  {loginErrorMessage}
+                </div>
+              )}
             </Form>
           ) : (
             <Form onSubmit={handleRegisterSubmit}>
               <Form.Group className="mb-2">
                 <Form.Label>Email</Form.Label>
-                <Form.Control 
+                <Form.Control
                   type="email"
                   placeholder="Nhập email"
-                  value={registerEmail} 
-                  onChange={(e) => setRegisterEmail(e.target.value)} 
-                  required 
-                  size="sm" 
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  required
+                  size="sm"
                 />
               </Form.Group>
-              
+
               <Form.Group className="mb-2">
                 <Form.Label>Mã Xác Nhận (OTP)</Form.Label>
                 <div className="d-flex gap-2">
@@ -697,8 +824,8 @@ const Header = () => {
                     required
                     size="sm"
                   />
-                  <Button 
-                    variant="outline-dark" 
+                  <Button
+                    variant="outline-dark"
                     onClick={handleSendOtp}
                     size="sm"
                     style={{ whiteSpace: "nowrap" }}
@@ -706,19 +833,23 @@ const Header = () => {
                     Gửi OTP
                   </Button>
                 </div>
-                {otpMessage && <div className="text-success small mt-1">{otpMessage}</div>}
-                {otpError && <div className="text-danger small mt-1">{otpError}</div>}
+                {otpMessage && (
+                  <div className="text-success small mt-1">{otpMessage}</div>
+                )}
+                {otpError && (
+                  <div className="text-danger small mt-1">{otpError}</div>
+                )}
               </Form.Group>
 
               <Form.Group className="mb-2">
                 <Form.Label>Username</Form.Label>
-                <Form.Control 
+                <Form.Control
                   type="text"
                   placeholder="Nhập username"
-                  value={registerName} 
-                  onChange={(e) => setRegisterName(e.target.value)} 
-                  required 
-                  size="sm" 
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
+                  required
+                  size="sm"
                 />
               </Form.Group>
 
@@ -726,7 +857,7 @@ const Header = () => {
                 <Form.Label>Mật khẩu</Form.Label>
                 <div className="d-flex gap-2">
                   <Form.Control
-                    type="password" 
+                    type="password"
                     placeholder="Nhập mật khẩu"
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
@@ -739,13 +870,15 @@ const Header = () => {
               <Form.Group className="mb-3">
                 <Form.Label>Xác nhận mật khẩu</Form.Label>
                 <div className="d-flex gap-2">
-                  <Form.Control 
+                  <Form.Control
                     type="password"
                     placeholder="Nhập lại mật khẩu"
-                    value={registerConfirmPassword} 
-                    onChange={(e) => setRegisterConfirmPassword(e.target.value)} 
-                    required 
-                    size="sm" 
+                    value={registerConfirmPassword}
+                    onChange={(e) =>
+                      setRegisterConfirmPassword(e.target.value)
+                    }
+                    required
+                    size="sm"
                   />
                 </div>
               </Form.Group>
@@ -754,8 +887,16 @@ const Header = () => {
                 Đăng ký
               </Button>
 
-              {registerMessage && <div className="alert alert-success mt-2 mb-0 py-2">{registerMessage}</div>}
-              {registerErrorMessage && <div className="alert alert-danger mt-2 mb-0 py-2">{registerErrorMessage}</div>}
+              {registerMessage && (
+                <div className="alert alert-success mt-2 mb-0 py-2">
+                  {registerMessage}
+                </div>
+              )}
+              {registerErrorMessage && (
+                <div className="alert alert-danger mt-2 mb-0 py-2">
+                  {registerErrorMessage}
+                </div>
+              )}
             </Form>
           )}
         </Modal.Body>

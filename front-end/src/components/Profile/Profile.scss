@@ -74,7 +74,7 @@ $border-radius-md: 0.75rem; // rounded-xl
           display: inline-block;
           border-radius: 50%;
           overflow: hidden;
-          transition: all $transition-duration ease;
+          background: none !important;
 
           &:hover {
             transform: scale(1.05);
@@ -89,8 +89,7 @@ $border-radius-md: 0.75rem; // rounded-xl
             height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            border: 3px solid $glass-morphism-border;
-            transition: all $transition-duration ease;
+            background: none !important;
           }
 
           .avatar-overlay {
@@ -99,15 +98,12 @@ $border-radius-md: 0.75rem; // rounded-xl
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             color: $bg-white;
             font-size: 1.5rem;
             opacity: 0;
-            transition: all $transition-duration ease;
-            border-radius: 50%;
           }
         }
       }

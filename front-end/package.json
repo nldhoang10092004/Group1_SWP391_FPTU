@@ -51,6 +51,7 @@
       "react-app/jest"
     ]
   },
+  "proxy": "https://api.englishmaster.codes",
   "browserslist": {
     "production": [
       ">0.2%",

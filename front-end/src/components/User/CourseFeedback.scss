@@ -1,0 +1,174 @@
+.course-feedback-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding-top: 2rem;
+
+    .card {
+        border: none;
+        border-radius: 12px;
+        
+        .card-body {
+            h2 {
+                color: #2d3748;
+                font-weight: 700;
+            }
+        }
+    }
+
+    .star-rating {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        
+        .star {
+            color: #e2e8f0;
+            transition: all 0.2s ease;
+            
+            &.active {
+                color: #fbbf24;
+                transform: scale(1.1);
+            }
+            
+            &:hover {
+                transform: scale(1.15);
+            }
+        }
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: transform 0.2s ease;
+
+        &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    }
+
+    .btn-outline-secondary {
+        border-color: #cbd5e0;
+        color: #4a5568;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+            background-color: #f7fafc;
+            border-color: #a0aec0;
+            color: #2d3748;
+        }
+    }
+
+    .btn-link {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 500;
+        
+        &:hover {
+            color: #f7fafc;
+            text-decoration: underline;
+        }
+    }
+
+    textarea.form-control {
+        border-radius: 8px;
+        border: 2px solid #e2e8f0;
+        padding: 1rem;
+        font-size: 1rem;
+        resize: vertical;
+        
+        &:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+    }
+
+    .alert {
+        border-radius: 8px;
+        border: none;
+        
+        &.alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        &.alert-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    }
+
+    // Existing feedbacks styling
+    h4 {
+        color: #fff;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .feedback-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            
+            strong {
+                color: #2d3748;
+                font-size: 1rem;
+            }
+            
+            small {
+                color: #718096;
+            }
+        }
+        
+        .feedback-stars {
+            margin-bottom: 0.5rem;
+            
+            .fa-star {
+                margin-right: 2px;
+            }
+        }
+        
+        p {
+            color: #4a5568;
+            margin: 0;
+            line-height: 1.6;
+        }
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .course-feedback-page {
+        padding-top: 1rem;
+        
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .star-rating .star {
+            font-size: 32px !important;
+        }
+        
+        .btn-primary,
+        .btn-outline-secondary {
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+        }
+    }
+}

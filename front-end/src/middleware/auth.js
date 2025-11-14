@@ -34,6 +34,11 @@ export const loginApi = (emailOrUsername, password) => {
   });
 };
 
+export const loginGoogle = (email) => {
+  return api.post("/login/google", { email });
+};
+
+
 export const sendOtpApi = (email) => {
   return api.post("/send-otp", { email });
 };
