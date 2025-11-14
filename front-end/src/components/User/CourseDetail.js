@@ -6,7 +6,7 @@ import { getQuizzesByCourse } from "../../middleware/QuizAPI";
 import { checkMembership } from "../../middleware/membershipAPI";
 import { getFlashcardSetsByCourseId } from "../../middleware/flashcardAPI";
 import { updateVideoHistory, getVideoProgress } from '../../redux/videoWatchHelper';
-import { FaPlayCircle, FaBook, FaQuestionCircle, FaLock, FaArrowLeft, FaCheckCircle, FaStar, FaComment } from "react-icons/fa";
+import { FaPlayCircle, FaBook, FaQuestionCircle, FaLock, FaArrowLeft, FaCheckCircle, FaStar } from "react-icons/fa";
 import "./CourseDetail.scss";
 
 const CourseDetail = () => {
@@ -577,7 +577,7 @@ const CourseDetail = () => {
                                                 size="sm"
                                                 onClick={handleNavigateToFeedback}
                                             >
-                                                <FaComment className="me-2" />
+                                                {/* <FaComment className="me-2" /> */}
                                                 Đánh giá khóa học
                                             </Button>
                                         </div>
@@ -624,7 +624,6 @@ const CourseDetail = () => {
                                                                 <FaQuestionCircle className="resource-icon" />
                                                                 <div className="resource-info">
                                                                     <strong>{quiz.title}</strong>
-                                                                    <span>{quiz.description}</span>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -644,7 +643,6 @@ const CourseDetail = () => {
                                                                 <FaBook className="resource-icon" />
                                                                 <div className="resource-info">
                                                                     <strong>{set.title}</strong>
-                                                                    <span>{set.description}</span>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -718,7 +716,6 @@ const CourseDetail = () => {
                                     <Accordion.Item eventKey={chapter.chapterID.toString()} key={chapter.chapterID}>
                                         <Accordion.Header>
                                             <div className="chapter-header">
-                                                <span>Chương {index + 1}</span>
                                                 <strong>{chapter.chapterName}</strong>
                                             </div>
                                         </Accordion.Header>

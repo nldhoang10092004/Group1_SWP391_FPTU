@@ -77,10 +77,17 @@
   align-items: center;
   margin-bottom: 2.5rem;
 
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
   h2 {
     font-size: 2.25rem;
     font-weight: 800;
     color: var(--text-primary);
+    margin: 0;
   }
 
   .section-tag {
@@ -96,6 +103,23 @@
     &.premium {
       background-color: #fef3c7;
       color: #92400e;
+    }
+  }
+
+  .view-all-button {
+    background: none;
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: var(--radius-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: var(--bg-accent);
+      color: var(--text-white);
+      border-color: var(--bg-accent);
     }
   }
 }
@@ -376,27 +400,60 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 1.5rem;
+  overflow: hidden;
+  cursor: pointer;
+
+  .course-card-header {
+    background-color: #38bdf8 !important; // Solid Blue
+    color: #fff !important;
+    padding: 1.5rem !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    h4 {
+      font-size: 1.5rem !important;
+      font-weight: 700 !important;
+      margin: 0 !important;
+      color: #fff !important;
+    }
+
+    .level-tag {
+      background-color: rgba(255,255,255,0.2) !important;
+      color: #fff !important;
+      border: 1px solid rgba(255,255,255,0.5) !important;
+    }
+  }
 
   .card-content {
-    position: relative;
-    padding-bottom: 1rem;
-    .level-tag {
-      position: static;
-      display: inline-block;
-      margin-bottom: 1rem;
+    background: #fff !important;
+    padding: 1.5rem !important;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+
+    p {
+      font-size: 1rem !important;
+      color: var(--text-secondary) !important;
+      margin: 0 0 1rem !important;
+      flex-grow: 1;
     }
+  }
+
+  .card-footer {
+    background: #fff !important;
+    padding: 0 1.5rem 1.5rem !important;
   }
 
   .unlock-button {
     width: 100%;
-    background-color: var(--bg-accent-light);
-    color: var(--text-accent);
-    border: none;
-    padding: 0.75rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border-radius: var(--radius-medium);
+    background-color: #f97316 !important; // Orange
+    color: #fff !important;
+    border: 1px solid #f97316 !important;
+    padding: 0.75rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-medium) !important;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -405,8 +462,8 @@
     transition: all 0.3s ease;
 
     &:hover {
-      background-color: var(--bg-accent);
-      color: var(--text-white);
+      background-color: #fff !important;
+      color: #f97316 !important;
     }
   }
 }

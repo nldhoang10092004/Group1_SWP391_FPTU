@@ -454,17 +454,15 @@ useEffect(() => {
 
             {/* Stats (quick cards) */}
             <Row className="stats-row">
-              <Col md={4} className="mb-4">
-                <Card className="stat-card">
-                  <Card.Body>
-                    <div className="stat-icon-wrapper" style={{ backgroundColor: "rgba(255, 193, 7, 0.1)" }}>
-                      <FontAwesomeIcon icon={faFire} className="stat-icon" style={{ color: "#ffc107" }} />
-                    </div>
-                    <h3 className="stat-value">{streakDays}</h3>
-                    <p className="stat-label">Chuỗi ngày học</p>
-                  </Card.Body>
-                </Card>
-              </Col>
+              <Card className="stat-card">
+                <Card.Body>
+                  <div className="stat-icon-wrapper" style={{ backgroundColor: "rgba(255, 193, 7, 0.1)" }}>
+                    <FontAwesomeIcon icon={faFire} className="stat-icon" style={{ color: "#ffc107" }} />
+                  </div>
+                  <h3 className="stat-value">{streakDays}</h3>
+                  <p className="stat-label">Chuỗi ngày học</p>
+                </Card.Body>
+              </Card>
             </Row>
 
             {/* Tabs */}
@@ -747,13 +745,14 @@ useEffect(() => {
                     {courses.map((course) => (
                       <Col md={6} lg={4} key={course.courseID} className="mb-4">
                         <Card className="h-100 shadow-sm border-0" style={{ overflow: "hidden" }}>
-                          {/* Course Header với gradient */}
+                          {/* Course Header: solid blue, no gradient */}
                           <div
                             style={{
                               height: "120px",
-                              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                              background: "#3b82f6",
                               position: "relative",
-                              padding: "20px"
+                              padding: "20px",
+                              borderBottom: '5px solid #ff9800'
                             }}
                           >
                             <div className="d-flex justify-content-between align-items-start">
@@ -761,9 +760,9 @@ useEffect(() => {
                                 {course.courseName}
                               </h5>
                               <Badge
-                                bg="light"
-                                text="dark"
-                                style={{ fontSize: "12px", padding: "6px 12px" }}
+                                bg="white"
+                                text="primary"
+                                style={{ fontSize: "12px", padding: "6px 12px", color: '#3b82f6', border: 'none', background: '#fff' }}
                               >
                                 Level {course.courseLevel}
                               </Badge>
@@ -781,7 +780,7 @@ useEffect(() => {
                                 className="teacher-info-section mb-3 p-3 rounded"
                                 style={{
                                   backgroundColor: "#f8f9fa",
-                                  border: "1px solid #e9ecef",
+                                  border: "1px solid #e3eafc",
                                   cursor: "pointer",
                                   transition: "all 0.3s ease"
                                 }}
@@ -790,7 +789,7 @@ useEffect(() => {
                                   navigate(`/teacherinfo/${course.teacherID}`);
                                 }}
                                 onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = "#e9ecef";
+                                  e.currentTarget.style.backgroundColor = "#e3eafc";
                                   e.currentTarget.style.transform = "translateY(-2px)";
                                 }}
                                 onMouseLeave={(e) => {
@@ -804,7 +803,7 @@ useEffect(() => {
                                       width: "48px",
                                       height: "48px",
                                       borderRadius: "50%",
-                                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                                      background: "#3b82f6",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
@@ -819,16 +818,16 @@ useEffect(() => {
                                     <div className="d-flex align-items-center gap-2 mb-1">
                                       <FontAwesomeIcon
                                         icon={faGraduationCap}
-                                        style={{ color: "#667eea", fontSize: "14px" }}
+                                        style={{ color: "#ff9800", fontSize: "14px" }}
                                       />
-                                      <span style={{ fontSize: "13px", color: "#6c757d", fontWeight: 500 }}>
+                                      <span style={{ fontSize: "13px", color: "#ff9800", fontWeight: 500 }}>
                                         Giảng viên
                                       </span>
                                     </div>
                                   </div>
                                   <FontAwesomeIcon
                                     icon={faPlay}
-                                    style={{ color: "#667eea", fontSize: "12px" }}
+                                    style={{ color: "#3b82f6", fontSize: "12px" }}
                                   />
                                 </div>
                               </div>
@@ -837,13 +836,14 @@ useEffect(() => {
                             {/* Action Button */}
                             <Button
                               variant="primary"
-                              className="w-100"
+                              className="w-100 course-btn-blue-orange"
                               onClick={() => navigate(`/course/${course.courseID}`)}
                               style={{
-                                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                                background: "#3b82f6",
                                 border: "none",
                                 padding: "10px",
-                                fontWeight: 500
+                                fontWeight: 500,
+                                transition: 'background 0.2s, color 0.2s'
                               }}
                             >
                               <FontAwesomeIcon icon={faBookOpen} className="me-2" />

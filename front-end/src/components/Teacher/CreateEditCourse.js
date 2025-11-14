@@ -1,38 +1,118 @@
-import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Form, Button, Alert, Badge, Modal, Accordion } from "react-bootstrap";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
- getTeacherCourseDetail as getCourseById,
+  getTeacherCourseDetail as getCourseById,
   createTeacherCourse as createCourse,
   updateTeacherCourse as updateCourse,
   createChapter,
   updateChapter,
   deleteChapter,
   createVideo,
+  updateVideo,
   deleteVideo,
 } from "../../middleware/teacher/courseTeacherAPI";
-import { uploadAsset } from "../../middleware/teacher/uploadAPI"; // ✅ Import upload API
-// Thêm vào courseTeacherAPI.js
-import { updateVideo } from "../../middleware/teacher/courseTeacherAPI";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { uploadAsset } from "../../middleware/teacher/uploadAPI";
+import { ChevronLeft, Edit, Trash2, Plus, ChevronDown, X, UploadCloud, Film } from 'lucide-react';
 import "./EditCourse.scss";
+
+// Reusable Modal Component
+const CustomModal = ({ show, onClose, title, children, footer }) => {
+  if (!show) return null;
+  return (
+    <div className="management-modal-overlay">
+      <div className="management-modal-content">
+        <div className="modal-header">
+          <h4 className="modal-title">{title}</h4>
+          <button onClick={onClose} className="action-button close-button">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="modal-body">{children}</div>
+        <div className="modal-footer">{footer}</div>
+      </div>
+    </div>
+  );
+};
+
+// Custom Accordion for Chapters
+const ChapterAccordionItem = ({ chapter, onEditChapter, onDeleteChapter, onAddVideo, onEditVideo, onDeleteVideo, loadCourseData }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className={`chapter-item ${isOpen ? 'open' : ''}`}>
+      <div className="chapter-header" onClick={() => setIsOpen(!isOpen)}>
+        <div className="chapter-title-section">
+            <ChevronDown size={20} className={`chapter-toggle-icon ${isOpen ? 'open' : ''}`} />
+            <span className="chapter-title">{chapter.chapterName}</span>
+            <span className="chapter-meta">({chapter.videos?.length || 0} video)</span>
+        </div>
+        <div className="chapter-actions" onClick={(e) => e.stopPropagation()}>
+          <button className="action-button" title="Sửa chương" onClick={() => onEditChapter(chapter)}>
+            <Edit size={16} />
+          </button>
+          <button className="action-button delete-button" title="Xóa chương" onClick={() => onDeleteChapter(chapter.chapterID)}>
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+      <div className={`chapter-content ${isOpen ? 'open' : ''}`}>
+        <div className="chapter-content-inner">
+          <button className="add-video-button" onClick={() => onAddVideo(chapter.chapterID)}>
+            <Plus size={16} /> Thêm video mới
+          </button>
+          <div className="video-list">
+            {chapter.videos?.length > 0 ? (
+              chapter.videos.map((video) => (
+                <div key={video.videoID} className="video-item">
+                  <div className="video-info">
+                    <Film size={18} className="text-muted" />
+                    <div>
+                        <p className="video-name">{video.videoName}</p>
+                        {video.videoURL ? (
+                             <a href={video.videoURL} target="_blank" rel="noreferrer" className="video-link">Xem video</a>
+                        ) : (
+                            <span className="no-url-badge">Chưa có video</span>
+                        )}
+                    </div>
+                    {video.isPreview && <span className="preview-badge">Xem trước</span>}
+                  </div>
+                  <div className="video-actions">
+                    <button className="action-button" title="Sửa video" onClick={() => onEditVideo(video, chapter.chapterID)}>
+                      <Edit size={16} />
+                    </button>
+                    <button className="action-button delete-button" title="Xóa video" onClick={() => onDeleteVideo(video.videoID)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-muted mt-3">Chưa có video nào trong chương này.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const CreateEditCourse = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const isEditMode = !!id;
+
   const [course, setCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // form state
+  // Form state
   const [courseName, setCourseName] = useState("");
   const [description, setDescription] = useState("");
   const [courseLevel, setCourseLevel] = useState(1);
 
-  // modal states
+  // Modal states
   const [showChapterModal, setShowChapterModal] = useState(false);
   const [editingChapter, setEditingChapter] = useState(null);
   const [chapterName, setChapterName] = useState("");
@@ -41,20 +121,22 @@ const CreateEditCourse = () => {
   const [editingVideo, setEditingVideo] = useState(null);
   const [selectedChapterId, setSelectedChapterId] = useState(null);
   const [videoName, setVideoName] = useState("");
-  const [videoURL, setVideoURL] = useState("");
-  const [videoFile, setVideoFile] = useState(null); // ✅ State cho file video
+  const [videoFile, setVideoFile] = useState(null);
   const [isPreview, setIsPreview] = useState(false);
-  const [isUploading, setIsUploading] = useState(false); // ✅ State loading upload
+  const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    if (isEditMode) {
-      loadCourseData();
-    } else {
-      setCourse({ chapters: [] });
-    }
-  }, [id]);
+  const showSuccessToast = (message) => {
+    setSuccess(message);
+    setTimeout(() => setSuccess(null), 3000);
+  };
 
-  const loadCourseData = async () => {
+  const showErrorToast = (message) => {
+    setError(message);
+    setTimeout(() => setError(null), 5000);
+  };
+
+  const loadCourseData = useCallback(async () => {
+    if (!id) return;
     try {
       setIsLoading(true);
       const data = await getCourseById(id);
@@ -64,421 +146,308 @@ const CreateEditCourse = () => {
       setCourseLevel(data.courseLevel);
     } catch (err) {
       console.error("❌ Lỗi tải khóa học:", err);
-      setError("Không thể tải thông tin khóa học");
+      showErrorToast("Không thể tải thông tin khóa học. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      loadCourseData();
+    } else {
+      setCourse({ chapters: [] }); // Initialize for create mode
+    }
+  }, [isEditMode, loadCourseData]);
 
   const handleSaveCourse = async () => {
+    if (!courseName.trim()) {
+      showErrorToast("Tên khóa học không được để trống.");
+      return;
+    }
+    const payload = { courseName, description, courseLevel: parseInt(courseLevel) };
     try {
-      setError(null);
-      setSuccess(null);
-      if (!courseName.trim()) {
-        setError("Tên khóa học không được để trống");
-        return;
-      }
-
-      const payload = {
-        courseName,
-        description,
-        courseLevel: parseInt(courseLevel),
-      };
-
-      let savedCourse = null;
       if (isEditMode) {
-        savedCourse = await updateCourse(id, payload);
-        setSuccess("✅ Cập nhật khóa học thành công!");
+        await updateCourse(id, payload);
+        showSuccessToast("Cập nhật khóa học thành công!");
       } else {
-        savedCourse = await createCourse(payload);
-        setSuccess("✅ Tạo khóa học mới thành công!");
-        navigate(`/teacher/courses/edit/${savedCourse.courseID}`);
+        const newCourse = await createCourse(payload);
+        showSuccessToast("Tạo khóa học mới thành công!");
+        navigate(`/teacher/editcourse/${newCourse.courseID}`);
       }
-
-      setCourse(savedCourse);
-      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("❌ Lỗi khi lưu khóa học:", err);
-      setError("Không thể lưu khóa học");
+      showErrorToast("Không thể lưu khóa học.");
     }
+  };
+
+  // Chapter Handlers
+  const handleAddChapterClick = () => {
+    setEditingChapter(null);
+    setChapterName("");
+    setShowChapterModal(true);
+  };
+
+  const handleEditChapterClick = (chapter) => {
+    setEditingChapter(chapter);
+    setChapterName(chapter.chapterName);
+    setShowChapterModal(true);
   };
 
   const handleSaveChapter = async () => {
-    try {
-      if (!chapterName.trim()) {
-        alert("Vui lòng nhập tên chương");
-        return;
-      }
-
-      if (editingChapter) {
-        await updateChapter(editingChapter.chapterID, { chapterName });
-        setSuccess("Cập nhật chương thành công!");
-      } else {
-        await createChapter(course.courseID, { chapterName });
-        setSuccess("Tạo chương mới thành công!");
-      }
-
-      setShowChapterModal(false);
-      setChapterName("");
-      setEditingChapter(null);
-      await loadCourseData();
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error("❌ Lỗi khi lưu chương:", err);
-      setError("Không thể lưu chương");
-    }
-
-    
-};
-
-  const handleDeleteChapter = async (chapterId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa chương này?")) return;
-    try {
-      await deleteChapter(chapterId);
-      setSuccess("Xóa chương thành công!");
-      await loadCourseData();
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error("❌ Lỗi khi xóa chương:", err);
-      setError("Không thể xóa chương");
-    }
-  };
-
-  // ✅ Cập nhật hàm lưu video với upload
-  // ✅ Sửa hàm handleSaveVideo trong CreateEditCourse.js
-const handleSaveVideo = async () => {
-  try {
-    if (!videoName.trim()) {
-      alert("Vui lòng nhập tên video");
+    if (!chapterName.trim()) {
+      showErrorToast("Tên chương không được để trống.");
       return;
     }
-
-    setIsUploading(true);
-    let uploadedVideoURL = videoURL;
-
-    // ✅ Upload file nếu có
-    if (videoFile) {
-      try {
-        const uploadResult = await uploadAsset(videoFile, "video");
-        uploadedVideoURL = uploadResult.url;
-      } catch (uploadError) {
-        console.error("❌ Lỗi upload video:", uploadError);
-        setError("Không thể upload video. Vui lòng thử lại.");
-        setIsUploading(false);
-        return;
-      }
-    }
-
-    const payload = {
-      videoName,
-      videoURL: uploadedVideoURL || null,
-      isPreview,
-    };
-
-    // ✅ SỬA LẠI LOGIC NÀY
-    if (editingVideo) {
-      // ❌ KHÔNG GỌI createVideo với videoID
-      // await createVideo(editingVideo.videoID, payload); 
-      
-      // ✅ GỌI updateVideo thay vì createVideo
-      await updateVideo(editingVideo.videoID, payload);
-      setSuccess("Cập nhật video thành công!");
-    } else {
-      // ✅ Tạo mới video - GỌI với chapterId
-      await createVideo(selectedChapterId, payload);
-      setSuccess("Tạo video mới thành công!");
-    }
-
-    setShowVideoModal(false);
-    resetVideoForm();
-    await loadCourseData();
-    setTimeout(() => setSuccess(null), 3000);
-  } catch (err) {
-    console.error("❌ Lỗi khi lưu video:", err);
-    
-    // ✅ Hiển thị lỗi chi tiết hơn
-    if (err.response?.status === 403) {
-      setError("Không có quyền thực hiện. Vui lòng đăng nhập lại.");
-    } else if (err.response?.status === 401) {
-      setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
-      // Tùy chọn: Redirect về trang login
-      // navigate('/login');
-    } else {
-      setError(err.message || "Không thể lưu video");
-    }
-  } finally {
-    setIsUploading(false);
-  }
-
-   
-};
-
-  const handleDeleteVideo = async (chapterId, videoId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa video này?")) return;
     try {
-      await deleteVideo(videoId);
-      setSuccess("Xóa video thành công!");
-      await loadCourseData();
-      setTimeout(() => setSuccess(null), 3000);
+      if (editingChapter) {
+        await updateChapter(editingChapter.chapterID, { chapterName });
+        showSuccessToast("Cập nhật chương thành công!");
+      } else {
+        await createChapter(id, { chapterName });
+        showSuccessToast("Tạo chương mới thành công!");
+      }
+      setShowChapterModal(false);
+      loadCourseData();
     } catch (err) {
-      console.error("❌ Lỗi khi xóa video:", err);
-      setError("Không thể xóa video");
+      console.error("❌ Lỗi khi lưu chương:", err);
+      showErrorToast("Không thể lưu chương.");
     }
   };
 
+  const handleDeleteChapter = async (chapterId) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa chương này? Tất cả video bên trong cũng sẽ bị xóa.")) {
+      try {
+        await deleteChapter(chapterId);
+        showSuccessToast("Xóa chương thành công!");
+        loadCourseData();
+      } catch (err) {
+        console.error("❌ Lỗi khi xóa chương:", err);
+        showErrorToast("Không thể xóa chương.");
+      }
+    }
+  };
+
+  // Video Handlers
   const resetVideoForm = () => {
     setVideoName("");
-    setVideoURL("");
-    setVideoFile(null); // ✅ Reset file
+    setVideoFile(null);
     setIsPreview(false);
     setEditingVideo(null);
     setSelectedChapterId(null);
   };
 
-  if (isLoading) {
+  const handleAddVideoClick = (chapterId) => {
+    resetVideoForm();
+    setSelectedChapterId(chapterId);
+    setShowVideoModal(true);
+  };
+
+  const handleEditVideoClick = (video, chapterId) => {
+    resetVideoForm();
+    setEditingVideo(video);
+    setSelectedChapterId(chapterId);
+    setVideoName(video.videoName);
+    setIsPreview(video.isPreview);
+    setShowVideoModal(true);
+  };
+
+  const handleSaveVideo = async () => {
+    if (!videoName.trim()) {
+      showErrorToast("Tên video không được để trống.");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      let uploadedVideoURL = editingVideo?.videoURL;
+      if (videoFile) {
+        const uploadResult = await uploadAsset(videoFile, "video");
+        uploadedVideoURL = uploadResult.url;
+      }
+      const payload = { videoName, videoURL: uploadedVideoURL || null, isPreview };
+      if (editingVideo) {
+        await updateVideo(editingVideo.videoID, payload);
+        showSuccessToast("Cập nhật video thành công!");
+      } else {
+        await createVideo(selectedChapterId, payload);
+        showSuccessToast("Tạo video mới thành công!");
+      }
+      setShowVideoModal(false);
+      loadCourseData();
+    } catch (err) {
+      console.error("❌ Lỗi khi lưu video:", err);
+      showErrorToast("Không thể lưu video.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteVideo = async (videoId) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa video này?")) {
+      try {
+        await deleteVideo(videoId);
+        showSuccessToast("Xóa video thành công!");
+        loadCourseData();
+      } catch (err) {
+        console.error("❌ Lỗi khi xóa video:", err);
+        showErrorToast("Không thể xóa video.");
+      }
+    }
+  };
+
+  if (isLoading && isEditMode) {
     return (
-      <Container className="py-5 text-center">
-        <div className="spinner-border text-primary" role="status" />
-        <p className="mt-3">Đang tải dữ liệu khóa học...</p>
-      </Container>
+      <div className="admin-loading-spinner">
+        <div className="admin-spinner"></div>
+        <p>Đang tải dữ liệu khóa học...</p>
+      </div>
     );
   }
 
   return (
-    <Container className="py-4 edit-course-page">
-      <Row className="mb-4">
-        <Col>
-          <Button variant="link" onClick={() => navigate("/teacher/dashboard")} className="p-0 mb-3">
-            ← Quay lại Dashboard
-          </Button>
-          <h2>{isEditMode ? "Chỉnh sửa khóa học" : "Tạo khóa học mới"}</h2>
-          <p className="text-muted">{isEditMode ? "Cập nhật nội dung khóa học" : "Điền thông tin khóa học mới"}</p>
-        </Col>
-      </Row>
+    <div className="edit-course-page">
+      {success && <div className="toast-notification success">{success}</div>}
+      {error && <div className="toast-notification error">{error}</div>}
 
-      {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
-      {success && <Alert variant="success" dismissible onClose={() => setSuccess(null)}>{success}</Alert>}
+      <a href="#" onClick={(e) => { e.preventDefault(); navigate("/teacher/dashboard"); }} className="back-link">
+        <ChevronLeft size={18} />
+        Quay lại Dashboard
+      </a>
 
-      <Row>
-        <Col lg={4}>
-          <Card className="mb-4">
-            <Card.Header><h5>Thông tin khóa học</h5></Card.Header>
-            <Card.Body>
-              <Form>
-                <Form.Group className="mb-3">
-                  <Form.Label>Tên khóa học</Form.Label>
-                  <Form.Control value={courseName} onChange={(e) => setCourseName(e.target.value)} />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Mô tả</Form.Label>
-                  <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Cấp độ</Form.Label>
-                  <Form.Select value={courseLevel} onChange={(e) => setCourseLevel(e.target.value)}>
-                    {[1,2,3,4,5].map(lv => (
-                      <option key={lv} value={lv}>Level {lv}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Button variant="primary" className="w-100" onClick={handleSaveCourse}>
-                  {isEditMode ? "Lưu thay đổi" : "Tạo khóa học"}
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
+      <header className="page-header">
+        <h1 className="page-title">{isEditMode ? "Chỉnh sửa khóa học" : "Tạo khóa học mới"}</h1>
+        <p className="page-description">{isEditMode ? "Cập nhật thông tin, chương và video cho khóa học của bạn." : "Điền thông tin cơ bản để tạo khóa học mới."}</p>
+      </header>
 
-        {isEditMode && (
-          <Col lg={8}>
-            <Card>
-              <Card.Header className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Nội dung khóa học</h5>
-                <Button size="sm" onClick={() => setShowChapterModal(true)}>+ Thêm chương</Button>
-              </Card.Header>
-              <Card.Body>
-                {course?.chapters?.length > 0 ? (
-                  <Accordion>
-                    {course.chapters.map((chapter, i) => (
-                      <Accordion.Item eventKey={i.toString()} key={chapter.chapterID}>
-                        <Accordion.Header>
-                          <div className="w-100 d-flex justify-content-between align-items-center">
-                            <div>
-                              <strong>{chapter.chapterName}</strong>
-                              <small className="text-muted ms-2">
-                                ({chapter.videos?.length || 0} video)
-                              </small>
-                            </div>
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <Button variant="link" size="sm" onClick={() => {
-                                setEditingChapter(chapter);
-                                setChapterName(chapter.chapterName);
-                                setShowChapterModal(true);
-                              }}>✏️</Button>
-                              <Button variant="link" size="sm" className="text-danger" onClick={() => handleDeleteChapter(chapter.chapterID)}>🗑️</Button>
-                            </div>
-                          </div>
-                        </Accordion.Header>
-                        <Accordion.Body>
-                          <Button
-                            variant="outline-primary"
-                            size="sm"
-                            className="mb-3"
-                            onClick={() => {
-                              setSelectedChapterId(chapter.chapterID);
-                              setShowVideoModal(true);
-                            }}
-                          >
-                            + Thêm video
-                          </Button>
-                          {chapter.videos?.length ? (
-                            chapter.videos.map((video) => (
-                              <div key={video.videoID} className="d-flex justify-content-between align-items-center mb-2">
-                                <div>
-                                  <div>{video.videoName}</div>
-                                  <div>
-                                    {video.isPreview && <Badge bg="info" className="me-2">Miễn phí</Badge>}
-                                    {video.videoURL ? (
-                                      <a href={video.videoURL} target="_blank" rel="noreferrer">Xem video</a>
-                                    ) : (
-                                      <Badge bg="secondary">Chưa có URL</Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                <div>
-                                  <Button variant="link" size="sm" onClick={() => {
-                                    setEditingVideo(video);
-                                    setSelectedChapterId(chapter.chapterID);
-                                    setVideoName(video.videoName);
-                                    setVideoURL(video.videoURL);
-                                    setIsPreview(video.isPreview);
-                                    setShowVideoModal(true);
-                                  }}>✏️</Button>
-                                  <Button variant="link" size="sm" className="text-danger" onClick={() => handleDeleteVideo(chapter.chapterID, video.videoID)}>🗑️</Button>
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-muted">Chưa có video nào</div>
-                          )}
-                        </Accordion.Body>
-                      </Accordion.Item>
-                    ))}
-                  </Accordion>
-                ) : (
-                  <div className="text-center text-muted py-4">
-                    Chưa có chương nào
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
+      <div className="edit-course-grid">
+        {/* Course Information Form */}
+        <div className="info-card">
+          <h3 className="card-header-title">Thông tin khóa học</h3>
+          <div className="form-content-wrapper">
+            <div className="form-group">
+              <label htmlFor="courseName">Tên khóa học</label>
+              <input id="courseName" type="text" className="form-input" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="description">Mô tả</label>
+              <textarea id="description" className="form-textarea" rows="4" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="courseLevel">Cấp độ</label>
+              <select id="courseLevel" className="form-select" value={courseLevel} onChange={(e) => setCourseLevel(e.target.value)}>
+                {[1, 2, 3, 4, 5].map(lv => <option key={lv} value={lv}>Level {lv}</option>)}
+              </select>
+            </div>
+            <div className="form-actions">
+              <button className="primary-button" onClick={handleSaveCourse}>
+                {isEditMode ? "Lưu thay đổi" : "Tạo khóa học & Tiếp tục"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Course Content Management */}
+        {isEditMode && course && (
+          <div className="content-card">
+            <div className="card-header-title">
+              <h3>Nội dung khóa học</h3>
+              <button className="primary-button" onClick={handleAddChapterClick}>
+                <Plus size={16} /> Thêm chương
+              </button>
+            </div>
+            <div className="chapter-accordion">
+              {course.chapters?.length > 0 ? (
+                course.chapters.map((chapter) => (
+                  <ChapterAccordionItem
+                    key={chapter.chapterID}
+                    chapter={chapter}
+                    onEditChapter={handleEditChapterClick}
+                    onDeleteChapter={handleDeleteChapter}
+                    onAddVideo={handleAddVideoClick}
+                    onEditVideo={handleEditVideoClick}
+                    onDeleteVideo={handleDeleteVideo}
+                  />
+                ))
+              ) : (
+                <p className="text-center text-muted py-5">Khóa học này chưa có chương nào. Hãy thêm một chương để bắt đầu!</p>
+              )}
+            </div>
+          </div>
         )}
-      </Row>
+      </div>
 
       {/* Chapter Modal */}
-      <Modal show={showChapterModal} onHide={() => setShowChapterModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{editingChapter ? "Chỉnh sửa chương" : "Thêm chương mới"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group>
-              <Form.Label>Tên chương</Form.Label>
-              <Form.Control
-                type="text"
-                value={chapterName}
-                onChange={(e) => setChapterName(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowChapterModal(false)}>Hủy</Button>
-          <Button variant="primary" onClick={handleSaveChapter}>
-            {editingChapter ? "Cập nhật" : "Tạo mới"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <CustomModal
+        show={showChapterModal}
+        onClose={() => setShowChapterModal(false)}
+        title={editingChapter ? "Chỉnh sửa chương" : "Thêm chương mới"}
+        footer={
+          <>
+            <button className="secondary-button" onClick={() => setShowChapterModal(false)}>Hủy</button>
+            <button className="primary-button" onClick={handleSaveChapter}>
+              {editingChapter ? "Cập nhật" : "Tạo mới"}
+            </button>
+          </>
+        }
+      >
+        <div className="form-group">
+          <label htmlFor="chapterName">Tên chương</label>
+          <input id="chapterName" type="text" className="form-input" value={chapterName} onChange={(e) => setChapterName(e.target.value)} />
+        </div>
+      </CustomModal>
 
-      {/* ✅ Video Modal - Đã chỉnh sửa để upload file */}
-      <Modal show={showVideoModal} onHide={() => setShowVideoModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{editingVideo ? "Chỉnh sửa video" : "Thêm video mới"}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Tên video</Form.Label>
-              <Form.Control
-                type="text"
-                value={videoName}
-                onChange={(e) => setVideoName(e.target.value)}
-                placeholder="Nhập tên video"
-              />
-            </Form.Group>
-            
-            {/* ✅ Thay input URL bằng input file */}
-            <Form.Group className="mb-3">
-              <Form.Label>Upload video</Form.Label>
-              <Form.Control
-                type="file"
-                accept="video/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    setVideoFile(file);
-                    // Auto-fill tên video nếu chưa có
-                    if (!videoName) {
-                      setVideoName(file.name.replace(/\.[^/.]+$/, ""));
-                    }
-                  }
-                }}
-              />
-              <Form.Text className="text-muted">
-                Hỗ trợ các định dạng: MP4, AVI, MOV, WMV, FLV...
-              </Form.Text>
-              {videoFile && (
-                <Alert variant="success" className="mt-2 mb-0">
-                  <small>✅ Đã chọn: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB)</small>
-                </Alert>
-              )}
-            </Form.Group>
-
-            {/* ✅ Hiển thị thông tin video hiện tại khi edit */}
-            {editingVideo && videoURL && !videoFile && (
-              <Alert variant="info" className="mb-3">
-                <small><strong>Video hiện tại:</strong></small><br />
-                <small><a href={videoURL} target="_blank" rel="noreferrer">Xem video</a></small><br />
-                <small className="text-muted">Chọn file mới để thay thế</small>
-              </Alert>
+      {/* Video Modal */}
+      <CustomModal
+        show={showVideoModal}
+        onClose={() => setShowVideoModal(false)}
+        title={editingVideo ? "Chỉnh sửa video" : "Thêm video mới"}
+        footer={
+          <>
+            <button className="secondary-button" onClick={() => setShowVideoModal(false)} disabled={isUploading}>Hủy</button>
+            <button className="primary-button" onClick={handleSaveVideo} disabled={isUploading}>
+              {isUploading ? "Đang xử lý..." : (editingVideo ? "Cập nhật" : "Thêm video")}
+            </button>
+          </>
+        }
+      >
+        <div className="form-group">
+          <label htmlFor="videoName">Tên video</label>
+          <input id="videoName" type="text" className="form-input" value={videoName} onChange={(e) => setVideoName(e.target.value)} />
+        </div>
+        <div className="form-group file-upload-input">
+            <label>Upload video</label>
+            <div className="file-drop-zone" onClick={() => document.getElementById('video-file-input').click()}>
+                <input 
+                    type="file" 
+                    id="video-file-input"
+                    accept="video/*" 
+                    style={{ display: 'none' }}
+                    onChange={(e) => setVideoFile(e.target.files[0])}
+                />
+                <UploadCloud size={40} className="upload-icon" />
+                {videoFile ? (
+                    <p className="file-upload-text">{videoFile.name}</p>
+                ) : (
+                    <>
+                        <p className="file-upload-text"><span>Nhấn để chọn</span> hoặc kéo thả file vào đây</p>
+                        <p className="file-upload-hint">Hỗ trợ MP4, AVI, MOV...</p>
+                    </>
+                )}
+            </div>
+            {editingVideo && editingVideo.videoURL && !videoFile && (
+                <div className="file-preview">
+                    <p className="text-muted">Video hiện tại: <a href={editingVideo.videoURL} target="_blank" rel="noreferrer">{editingVideo.videoURL.split('/').pop()}</a></p>
+                </div>
             )}
-
-            <Form.Check
-              type="checkbox"
-              label="Cho phép xem trước miễn phí"
-              checked={isPreview}
-              onChange={(e) => setIsPreview(e.target.checked)}
-            />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowVideoModal(false)} disabled={isUploading}>
-            Hủy
-          </Button>
-          <Button variant="primary" onClick={handleSaveVideo} disabled={isUploading}>
-            {isUploading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" />
-                Đang upload...
-              </>
-            ) : (
-              editingVideo ? "Cập nhật" : "Thêm video"
-            )}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
+        </div>
+        <div className="form-group">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" className="form-checkbox" checked={isPreview} onChange={(e) => setIsPreview(e.target.checked)} />
+            Cho phép xem trước miễn phí
+          </label>
+        </div>
+      </CustomModal>
+    </div>
   );
 };
 

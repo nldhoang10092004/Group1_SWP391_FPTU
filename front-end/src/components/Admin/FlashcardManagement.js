@@ -9,8 +9,9 @@ import {
   updateFlashcardItem,
   deleteFlashcardItem,
 } from "../../middleware/admin/adminFlashcardAPI";
-import { Modal, Button, Form, Spinner } from "react-bootstrap";
+import { Plus, Edit, Trash, Eye, X, ArrowLeft } from "lucide-react";
 import Swal from "sweetalert2";
+import "./management-styles.scss";
 
 export function FlashcardManagement() {
   const [sets, setSets] = useState([]);
@@ -28,14 +29,13 @@ export function FlashcardManagement() {
     setID: null,
   });
 
-  // 🟢 Load danh sách set
   const loadSets = async () => {
     try {
       setLoading(true);
       const data = await getPublicSets();
       if (data) setSets(data);
     } catch (err) {
-      Swal.fire("Lỗi tải dữ liệu", `${err?.message || err}`, "error");
+      handleApiError(err);
     } finally {
       setLoading(false);
     }
@@ -45,24 +45,21 @@ export function FlashcardManagement() {
     loadSets();
   }, []);
 
-  // 🟡 Chọn 1 set để xem chi tiết
   const handleSelectSet = async (setId) => {
     try {
       const detail = await getFlashcardSet(setId);
       setSelectedSet(detail);
     } catch (err) {
-      Swal.fire("Không thể tải chi tiết", err?.message || err, "error");
+      handleApiError(err);
     }
   };
 
-  // ➕ Mở modal tạo hoặc sửa Set
   const handleOpenSetModal = (set = null) => {
     if (set) setSetForm({ ...set });
     else setSetForm({ title: "", description: "" });
     setShowSetModal(true);
   };
 
-  // 💾 Lưu Set (thêm hoặc sửa)
   const handleSaveSet = async () => {
     if (!setForm.title) {
       Swal.fire("Thiếu dữ liệu", "Vui lòng nhập tiêu đề Flashcard Set", "warning");
@@ -81,7 +78,6 @@ export function FlashcardManagement() {
     }
   };
 
-  // 🗑️ Xóa Set
   const handleDeleteSet = (setId) => {
     Swal.fire({
       title: "Xác nhận xóa?",
@@ -104,15 +100,13 @@ export function FlashcardManagement() {
     });
   };
 
-  // ➕ Mở modal thêm/sửa Item
   const handleOpenItemModal = (item = null, setID = null) => {
     if (item)
-      // backend trả frontText/backText/example/itemID
       setItemForm({
         frontText: item.frontText ?? "",
         backText: item.backText ?? "",
         example: item.example ?? "",
-        itemID: item.itemID, // nếu sửa
+        itemID: item.itemID,
         setID,
       });
     else
@@ -126,7 +120,6 @@ export function FlashcardManagement() {
     setShowItemModal(true);
   };
 
-  // 💾 Lưu Item
   const handleSaveItem = async () => {
     if (!itemForm.frontText || !itemForm.backText) {
       Swal.fire("Thiếu dữ liệu", "Vui lòng nhập Thuật ngữ và Nghĩa của nó", "warning");
@@ -134,7 +127,6 @@ export function FlashcardManagement() {
     }
 
     try {
-      // payload gửi đúng keys mà backend mong đợi
       const payload = {
         setID: itemForm.setID,
         frontText: itemForm.frontText,
@@ -143,7 +135,6 @@ export function FlashcardManagement() {
       };
 
       if (itemForm.itemID) {
-        // update: một số API cập nhật require body giống create; nếu backend cần khác bạn điều chỉnh
         await updateFlashcardItem(itemForm.itemID, payload);
       } else {
         await createFlashcardItem(payload);
@@ -158,7 +149,6 @@ export function FlashcardManagement() {
     }
   };
 
-  // 🗑️ Xóa Item
   const handleDeleteItem = (itemId, setID) => {
     Swal.fire({
       title: "Xác nhận xóa?",
@@ -180,214 +170,223 @@ export function FlashcardManagement() {
     });
   };
 
-  // 🚨 Xử lý lỗi API (403, 404, 500...)
   const handleApiError = (err) => {
-    if (!err?.response) {
-      Swal.fire("Lỗi kết nối", err?.message || "Unknown error", "error");
-      return;
-    }
-
-    const { status, data } = err.response;
-    let msg = data?.message || "Đã xảy ra lỗi không xác định.";
-
-    if (status === 403) msg = "Bạn không có quyền truy cập tài nguyên này (403).";
-    else if (status === 404) msg = "Không tìm thấy tài nguyên (404).";
-    else if (status === 500) msg = "Lỗi máy chủ (500).";
-
-    Swal.fire(`Lỗi ${status}`, msg, "error");
+    const msg = err?.response?.data?.message || err?.message || "Đã xảy ra lỗi không xác định.";
+    Swal.fire(`Lỗi ${err?.response?.status || ''}`, msg, "error");
   };
 
-  return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <Button onClick={() => handleOpenSetModal()}>+ Thêm Flashcard Set</Button>
+  const renderSetList = () => (
+    <>
+      <div className="management-card-header flex justify-between items-center">
+        <div>
+          <h2 className="card-title">Quản lý Flashcard</h2>
+          <p className="card-description">Tạo và quản lý các bộ flashcard công khai.</p>
+        </div>
+        <button onClick={() => handleOpenSetModal()} className="primary-button">
+          <Plus size={18} />
+          <span>Thêm bộ mới</span>
+        </button>
       </div>
 
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-5">
-          <Spinner animation="border" variant="primary" />
+      {loading ? (
+        <div className="admin-loading-spinner">
+          <div className="admin-spinner"></div>
+          <p>Đang tải dữ liệu...</p>
         </div>
-      )}
-
-      {/* Danh sách Set */}
-      {!loading && (
-        <div className="row">
+      ) : (
+        <div className="flashcard-grid">
           {sets.length > 0 ? (
             sets.map((set) => (
-              <div key={set.setID} className="col-md-4 mb-3">
-                <div className="card shadow-sm p-3 h-100">
-                  <h5>{set.title}</h5>
-                  <p>{set.description}</p>
-                  <div className="d-flex gap-2 mt-auto">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => handleSelectSet(set.setID)}
-                    >
-                      Xem
-                    </Button>
-                    <Button size="sm" onClick={() => handleOpenSetModal(set)}>
-                      Sửa
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => handleDeleteSet(set.setID)}
-                    >
-                      Xóa
-                    </Button>
-                  </div>
+              <div key={set.setID} className="management-card p-4 flex flex-col">
+                <h5 className="font-bold text-lg">{set.title}</h5>
+                <p className="text-gray-600 text-sm flex-grow">{set.description}</p>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    className="action-button"
+                    title="Xem chi tiết"
+                    onClick={() => handleSelectSet(set.setID)}
+                  >
+                    <Eye size={16} />
+                  </button>
+                  <button
+                    className="action-button"
+                    title="Chỉnh sửa"
+                    onClick={() => handleOpenSetModal(set)}
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button
+                    className="action-button delete-button"
+                    title="Xóa"
+                    onClick={() => handleDeleteSet(set.setID)}
+                  >
+                    <Trash size={16} />
+                  </button>
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center text-muted py-5">
+            <div className="col-span-full text-center text-gray-500 py-12">
               Không có Flashcard Set nào.
             </div>
           )}
         </div>
       )}
+    </>
+  );
 
-      {/* Chi tiết Set */}
-      {selectedSet && (
-        <div className="mt-4">
-          <h4>📗 {selectedSet.title}</h4>
-          <p>{selectedSet.description}</p>
-          <Button onClick={() => handleOpenItemModal(null, selectedSet.setID)}>
-            + Thêm Item
-          </Button>
-
-          <ul className="list-group mt-3">
-            {selectedSet.items?.map((item) => (
-              <li
-                key={item.itemID}
-                className="list-group-item d-flex justify-content-between align-items-start"
-              >
-                <div>
-                  <div>
-                    <strong style={{ fontSize: 16 }}>{item.frontText}</strong> —{" "}
-                    <span style={{ fontSize: 15 }}>{item.backText}</span>
-                  </div>
-                  {item.example ? (
-                    <div style={{ fontSize: 13, color: "#666", marginTop: 6 }}>
-                      Ví dụ: {item.example}
-                    </div>
-                  ) : null}
-                </div>
-
-                <div>
-                  <Button
-                    size="sm"
-                    className="me-2"
-                    onClick={() => handleOpenItemModal(item, selectedSet.setID)}
-                  >
-                    Sửa
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={() =>
-                      handleDeleteItem(item.itemID, selectedSet.setID)
-                    }
-                  >
-                    Xóa
-                  </Button>
-                </div>
-              </li>
-            ))}
-            {selectedSet.items?.length === 0 && (
-              <li className="list-group-item text-muted">Chưa có Item nào.</li>
+  const renderSetDetails = () => (
+    <>
+      <div className="w-full flex justify-between items-center mb-4">
+        <button onClick={() => setSelectedSet(null)} className="secondary-button">
+            <ArrowLeft size={18} />
+            <span>Quay lại</span>
+        </button>
+        <button onClick={() => handleOpenItemModal(null, selectedSet.setID)} className="primary-button">
+            <Plus size={18} />
+            <span>Thêm thẻ</span>
+        </button>
+      </div>
+      <div className="management-card-header">
+        <h3 className="card-title">Chi tiết bộ: {selectedSet.title}</h3>
+        <p className="card-description">{selectedSet.description}</p>
+      </div>
+      <div className="management-table-wrapper mt-4">
+        <table className="management-table">
+          <thead>
+            <tr>
+              <th>Thuật ngữ (Front)</th>
+              <th>Định nghĩa (Back)</th>
+              <th>Ví dụ</th>
+              <th className="text-right">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedSet.items?.length > 0 ? (
+              selectedSet.items.map((item) => (
+                <tr key={item.itemID}>
+                  <td className="font-semibold">{item.frontText}</td>
+                  <td>{item.backText}</td>
+                  <td className="text-gray-500 italic">{item.example || "N/A"}</td>
+                  <td className="management-table-actions">
+                    <button
+                      className="action-button"
+                      onClick={() => handleOpenItemModal(item, selectedSet.setID)}
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      className="action-button delete-button"
+                      onClick={() => handleDeleteItem(item.itemID, selectedSet.setID)}
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="text-center text-gray-500 py-8">
+                  Chưa có thẻ nào trong bộ này.
+                </td>
+              </tr>
             )}
-          </ul>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="management-card">
+      {selectedSet ? renderSetDetails() : renderSetList()}
+
+      {/* Modal Set */}
+      {showSetModal && (
+        <div className="management-modal-overlay" onClick={() => setShowSetModal(false)}>
+          <div className="management-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center pb-4 border-b">
+              <h3 className="text-xl font-bold">
+                {setForm.setID ? "Sửa Flashcard Set" : "Thêm Flashcard Set"}
+              </h3>
+              <button className="action-button" onClick={() => setShowSetModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="my-6">
+              <label className="form-label">Tiêu đề</label>
+              <input
+                type="text"
+                className="form-input"
+                value={setForm.title}
+                onChange={(e) => setSetForm({ ...setForm, title: e.target.value })}
+              />
+              <label className="form-label mt-4">Mô tả</label>
+              <textarea
+                className="form-input"
+                rows="3"
+                value={setForm.description}
+                onChange={(e) => setSetForm({ ...setForm, description: e.target.value })}
+              ></textarea>
+            </div>
+            <div className="flex justify-end gap-4 pt-4 border-t">
+              <button className="secondary-button" onClick={() => setShowSetModal(false)}>
+                Hủy
+              </button>
+              <button className="primary-button" onClick={handleSaveSet}>
+                Lưu
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Modal Set */}
-      <Modal show={showSetModal} onHide={() => setShowSetModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {setForm.setID ? "Sửa Flashcard Set" : "Thêm Flashcard Set"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Tiêu đề</Form.Label>
-              <Form.Control
-                value={setForm.title}
-                onChange={(e) =>
-                  setSetForm({ ...setForm, title: e.target.value })
-                }
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Mô tả</Form.Label>
-              <Form.Control
-                value={setForm.description}
-                onChange={(e) =>
-                  setSetForm({ ...setForm, description: e.target.value })
-                }
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowSetModal(false)}>
-            Hủy
-          </Button>
-          <Button onClick={handleSaveSet}>Lưu</Button>
-        </Modal.Footer>
-      </Modal>
-
       {/* Modal Item */}
-      <Modal show={showItemModal} onHide={() => setShowItemModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {itemForm.itemID ? "Sửa Flashcard Item" : "Thêm Flashcard Item"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Thuật ngữ (Front Text)</Form.Label>
-              <Form.Control
+      {showItemModal && (
+        <div className="management-modal-overlay" onClick={() => setShowItemModal(false)}>
+          <div className="management-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center pb-4 border-b">
+              <h3 className="text-xl font-bold">
+                {itemForm.itemID ? "Sửa Flashcard Item" : "Thêm Flashcard Item"}
+              </h3>
+              <button className="action-button" onClick={() => setShowItemModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="my-6">
+              <label className="form-label">Thuật ngữ (Front Text)</label>
+              <input
+                type="text"
+                className="form-input"
                 value={itemForm.frontText}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, frontText: e.target.value })
-                }
+                onChange={(e) => setItemForm({ ...itemForm, frontText: e.target.value })}
               />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Định nghĩa (Back Text)</Form.Label>
-              <Form.Control
+              <label className="form-label mt-4">Định nghĩa (Back Text)</label>
+              <input
+                type="text"
+                className="form-input"
                 value={itemForm.backText}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, backText: e.target.value })
-                }
+                onChange={(e) => setItemForm({ ...itemForm, backText: e.target.value })}
               />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.Label>Ví dụ (Example)</Form.Label>
-              <Form.Control
+              <label className="form-label mt-4">Ví dụ (Tùy chọn)</label>
+              <textarea
+                className="form-input"
+                rows="2"
                 value={itemForm.example}
-                onChange={(e) =>
-                  setItemForm({ ...itemForm, example: e.target.value })
-                }
-                placeholder="(tùy chọn) Ví dụ minh họa"
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowItemModal(false)}>
-            Hủy
-          </Button>
-          <Button onClick={handleSaveItem}>Lưu</Button>
-        </Modal.Footer>
-      </Modal>
+                onChange={(e) => setItemForm({ ...itemForm, example: e.target.value })}
+              ></textarea>
+            </div>
+            <div className="flex justify-end gap-4 pt-4 border-t">
+              <button className="secondary-button" onClick={() => setShowItemModal(false)}>
+                Hủy
+              </button>
+              <button className="primary-button" onClick={handleSaveItem}>
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

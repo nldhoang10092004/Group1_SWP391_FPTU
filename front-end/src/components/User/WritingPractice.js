@@ -87,7 +87,7 @@ const WritingPractice = () => {
     <div className="writing-page">
       <div className="writing-header">
         <div className="header-left">
-          <h1>🧠 Luyện Writing</h1>
+          <h1>Luyện Writing</h1>
           <p>
             {selected
               ? `${selected.title} (${selected.minWords}-${selected.maxWords} từ)`
@@ -96,10 +96,10 @@ const WritingPractice = () => {
         </div>
         <div className="header-right">
           <button className="btn-primary" onClick={handleGenerate} disabled={loading}>
-            {loading ? "Đang tạo..." : "✨ Tạo đề AI"}
+            {loading ? "Đang tạo..." : "Tạo đề AI"}
           </button>
-          <button className="close-btn" onClick={handleClose}>
-            ✕
+          <button className="close-btn" onClick={handleClose} aria-label="Đóng">
+            Đóng
           </button>
         </div>
       </div>
@@ -131,7 +131,7 @@ const WritingPractice = () => {
             </div>
           ) : (
             <div className="info-box placeholder">
-              <h3>📝 Hãy nhấn "Tạo đề AI" để nhận một chủ đề luyện viết</h3>
+              <h3>Hãy nhấn "Tạo đề AI" để nhận một chủ đề luyện viết</h3>
             </div>
           )}
         </div>
@@ -154,20 +154,20 @@ const WritingPractice = () => {
               />
               <div className="writing-actions">
                 <button className="btn-outline" onClick={() => setSelected(null)}>
-                  ← Chọn đề mới
+                  Chọn đề mới
                 </button>
                 <button
-                  className="btn-primary"
+                  className="btn-primary submit-btn"
                   onClick={handleSubmit}
                   disabled={wordCount < selected.minWords || loading}
                 >
-                  📤 Nộp bài
+                  Nộp bài
                 </button>
               </div>
             </div>
           ) : (
             <div className="writing-placeholder">
-              <p>🖋 Hãy nhấn “Tạo đề AI” để bắt đầu bài viết.</p>
+              <p>Hãy nhấn “Tạo đề AI” để bắt đầu bài viết.</p>
             </div>
           )}
         </div>
@@ -176,7 +176,7 @@ const WritingPractice = () => {
         <div className="right-section">
           {feedback ? (
             <div className="feedback-box">
-              <h3>📊 Kết quả chấm điểm</h3>
+              <h3>Kết quả chấm điểm</h3>
               <ul>
                 <li><strong>Tổng điểm:</strong> {feedback.score}</li>
                 <li><strong>Task Response:</strong> {feedback.taskResponse}</li>
@@ -184,7 +184,7 @@ const WritingPractice = () => {
                 <li><strong>Lexical Resource:</strong> {feedback.lexicalResource}</li>
                 <li><strong>Grammar:</strong> {feedback.grammar}</li>
               </ul>
-              <p className="feedback-text">💬 {feedback.feedback}</p>
+              <p className="feedback-text">{feedback.feedback}</p>
             </div>
           ) : (
             <div className="criteria-box">

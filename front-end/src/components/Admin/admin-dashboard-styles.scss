@@ -197,47 +197,6 @@ $ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
   min-width: 0; // Fix for flexbox overflow
 }
 
-.admin-main-header {
-  @include ui-glass(
-    rgba(255, 255, 255, 0.4),
-    rgba(255, 255, 255, 0.6)
-  );
-  position: sticky;
-  top: 1rem;
-  z-index: 10;
-  margin: 1rem 1rem 0 1rem;
-  border-radius: $ui-radius-large;
-  padding: 1rem 1.5rem;
-  transition: $ui-transition;
-
-  @supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
-    background-color: white;
-    margin: 0;
-    border-radius: 0;
-    border-bottom: 1px solid $border-color;
-    box-shadow: $ui-shadow-soft;
-  }
-}
-
-.admin-main-header-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.admin-main-header-title {
-  font-size: 1.75rem; // text-3xl
-  font-weight: 700;
-  color: $text-color;
-  letter-spacing: -0.5px;
-}
-
-.admin-main-header-subtitle {
-  color: $text-light-color;
-  font-size: 1rem; // text-base
-  margin-top: 0.25rem; // mt-1
-}
-
 .admin-close-button {
   display: flex;
   align-items: center;
@@ -267,6 +226,13 @@ $ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
   padding: 0; // Removed padding, handled by content-area
 }
 
+.teacher-feedback-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 .admin-stats-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
@@ -276,7 +242,7 @@ $ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
   @media (min-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  @media (min-width: 1280px) { // xl
+  @media (min-width: 1024px) { // lg
     grid-template-columns: repeat(4, 1fr);
   }
 }
@@ -352,8 +318,8 @@ $ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
   gap: 1.5rem; // gap-6
   margin-bottom: 1.5rem;
 
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(5, 1fr); // 3/5 and 2/5 layout
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -365,16 +331,17 @@ $ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
   border-radius: $ui-radius-large;
   padding: 1.5rem;
   transition: $ui-transition;
+  display: flex;
+  flex-direction: column;
+
+  .flex-grow {
+    flex-grow: 1;
+    min-height: 250px; // Set a minimum height for chart containers
+  }
 
   &:hover {
     transform: translateY(-4px);
     box-shadow: $ui-shadow-deep;
-  }
-
-  // Spanning columns
-  @media (min-width: 1024px) {
-    &:nth-child(1) { grid-column: span 3 / span 3; }
-    &:nth-child(2) { grid-column: span 2 / span 2; }
   }
 }
 
@@ -477,10 +444,13 @@ $ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
   color: $ui-text-secondary;
   padding: 0.4rem;
   border-radius: $ui-radius-round;
+  box-shadow: none;
 
   &:hover {
     background: $ui-surface-3;
     color: $ui-text-primary;
+    transform: translateY(-1px);
+    box-shadow: none;
   }
 
   &.delete-button:hover {
@@ -494,17 +464,23 @@ $ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: $ui-radius-medium;
-  background-color: $ui-surface-2;
-  border: 1px solid $ui-border-color;
+  background-color: $ui-surface; // Changed from $ui-surface-2
+  border: 1px solid $ui-border-solid; // Changed from $ui-border-color
   color: $ui-text-primary;
   font-size: 0.95rem;
   transition: border-color 0.2s, box-shadow 0.2s;
+  // margin-bottom: 1rem; // Removed margin from here, will be handled by .form-group
 
   &:focus {
     outline: none;
     border-color: $ui-brand;
     box-shadow: 0 0 0 3px rgba($ui-brand, 0.2);
   }
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 .management-modal-overlay {
@@ -526,4 +502,213 @@ $ui-shadow-inset: inset 0 1px 2px rgba(255, 255, 255, 0.1);
   width: 90%;
   max-width: 600px;
   padding: 2rem;
+  border-radius: $ui-radius-large;
+  box-shadow: $ui-shadow-large;
+}
+
+.management-card {
+  @include ui-glass(
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.6)
+  );
+  border-radius: $ui-radius-large;
+  padding: 1.5rem;
+  transition: $ui-transition;
+  width: 100%;
+}
+
+.management-card-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid $ui-border;
+  margin-bottom: 1.5rem;
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $ui-text;
+  }
+  .card-description {
+    font-size: 0.9rem;
+    color: $ui-muted;
+    margin-top: 0.25rem;
+  }
+}
+
+.management-table-wrapper {
+  overflow-x: auto;
+}
+
+.management-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid $ui-border;
+    vertical-align: middle;
+  }
+
+  th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: $ui-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  td {
+    font-size: 0.9rem;
+    color: $ui-text;
+  }
+
+  tbody tr {
+    transition: background-color 0.15s ease-in-out;
+    &:hover {
+      background-color: rgba($ui-brand, 0.04);
+    }
+  }
+}
+
+.management-table-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: $ui-surface;
+  border: 1px solid $ui-border-solid;
+  border-radius: $ui-radius-medium;
+  padding: 0.25rem 0.5rem 0.25rem 1rem;
+  width: 100%;
+  max-width: 320px;
+  transition: $ui-transition;
+
+  &:focus-within {
+    @include ui-focus;
+    border-color: transparent;
+  }
+
+  .search-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 0.9rem;
+    color: $ui-text;
+  }
+
+  .search-button {
+    padding: 0.5rem;
+    border-radius: $ui-radius-small;
+    background-color: $ui-brand;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: $primary-color-dark;
+    }
+  }
+}
+
+.status-badge {
+  border-radius: $ui-radius-round;
+  padding: 0.25rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  &.active {
+    background-color: rgba($ui-success, 0.1);
+    color: darken($ui-success, 10%);
+  }
+
+  &.inactive {
+    background-color: rgba($ui-muted, 0.1);
+    color: $ui-muted;
+  }
+}
+
+// Flashcard Grid Layout
+.flashcard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+
+  .management-card {
+    width: auto; // Override the default 100% width to fit the grid
+  }
+
+  // Responsive adjustments
+  @media (max-width: 1280px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Rating Distribution Chart Styles */
+.rating-distribution-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* 8px */
+}
+
+.rating-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* 12px */
+  font-size: 0.875rem; /* 14px */
+}
+
+.rating-label {
+  color: #6b7280; /* gray-500 */
+  width: 3rem; /* 48px */
+  flex-shrink: 0;
+}
+
+.rating-bar-container {
+  flex-grow: 1;
+  background-color: #e5e7eb; /* gray-200 */
+  border-radius: 9999px;
+  height: 0.625rem; /* 10px */
+  overflow: hidden;
+}
+
+.rating-bar-fill {
+  background-color: #facc15; /* yellow-400 */
+  height: 100%;
+  border-radius: 9999px;
+}
+
+.rating-count {
+  font-weight: 500;
+  color: #374151; /* gray-700 */
+  width: 2rem; /* 32px */
+  text-align: right;
+  flex-shrink: 0;
 }

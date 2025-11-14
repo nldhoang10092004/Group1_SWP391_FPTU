@@ -213,26 +213,35 @@ const HomePage = ({ onShowAuthModal }) => {
         </section>
 
         {/* Premium Content Section */}
-        <section className="content-section">
+        <section className="content-section" id="courses">
           <div className="section-header">
-            <h2>Nội dung premium</h2>
-            <span className="section-tag premium">Membership required</span>
+            <div className="section-title">
+              <h2>Khóa học Premium</h2>
+              <span className="section-tag premium">Membership</span>
+            </div>
+            <button className="view-all-button" onClick={() => navigate('/courses')}>
+              Xem tất cả &rarr;
+            </button>
           </div>
-          <div className="card-grid">
+          <div className="card-grid course-card-grid">
             {premiumCourses.map(course => (
-              <div key={course.id} className="course-card-new">
-                <div className="card-content">
+              <div key={course.id} className="course-card-new" onClick={() => navigate(`/course-detail/${course.id}`)}>
+                <div className="course-card-header">
                   <h4>{course.title}</h4>
+                  <span className={`level-tag ${course.level.toLowerCase().replace(' ', '-')}`}>{course.level}</span>
+                </div>
+                <div className="card-content">
                   <p>{course.description}</p>
                   <div className="card-meta">
                     <span><BookOpen size={14} /> {course.lessons} bài học</span>
                     <span><Users size={14} /> {course.students} học viên</span>
                   </div>
-                  <span className={`level-tag ${course.level.toLowerCase().replace(' ', '-')}`}>{course.level}</span>
                 </div>
-                <button className="unlock-button" onClick={() => handleAuthAction('register')}>
-                  <Lock size={16} /> Mở khóa với membership
-                </button>
+                <div className="card-footer">
+                  <button className="unlock-button" onClick={(e) => { e.stopPropagation(); handleAuthAction('register'); }}>
+                    <Lock size={16} /> Mở khóa ngay
+                  </button>
+                </div>
               </div>
             ))}
           </div>
