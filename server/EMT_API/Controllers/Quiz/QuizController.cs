@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using EMT_API.DAOs.MembershipDAO;
 
 namespace EMT_API.Controllers.Quiz
 {
