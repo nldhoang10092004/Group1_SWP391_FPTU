@@ -21,68 +21,82 @@ namespace EMT_API.Services
 
         public async Task<string> GenerateQuizAsync(string teacherPrompt)
         {
-            var prompt = $@"
-You are an IELTS quiz generator for English learning.
-Generate ONE quiz as a **valid JSON** object strictly in this format:
-{{
-  ""Title"": ""<title>"",
-  ""Description"": ""<short description>"",
-  ""Questions"": [
-    {{
-      ""QuestionType"": 1,
-      ""Content"": ""<question text>"",
-      ""Options"": [
-        {{""Content"": ""<choice 1>"", ""IsCorrect"": true/false}},
-        {{""Content"": ""<choice 2>"", ""IsCorrect"": true/false}},
-        {{""Content"": ""<choice 3>"", ""IsCorrect"": true/false}},
-        {{""Content"": ""<choice 4>"", ""IsCorrect"": true/false}}
-      ]
-    }},
-    ...
-  ]
-}}
-
-Rules:
-- Always output only one JSON object (no explanation).
-- The content must be academic and IELTS-style.
-Teacher request: {teacherPrompt}
-";
-
-            var jsonResponse = await CallOpenAIAsync(prompt);
-            var pureJson = ExtractJsonString(jsonResponse);
-            return pureJson;
-        }
-
-        private async Task<string> CallOpenAIAsync(string prompt)
-        {
             var payload = new
             {
                 model = "gpt-4o-mini",
-                messages = new[] { new { role = "user", content = prompt } },
-                temperature = 0.8
+                messages = new[]
+                {
+                    new { role = "user", content = $"Generate an IELTS quiz.\nTeacher request: {teacherPrompt}" }
+                },
+                temperature = 0.7,
+
+                // ========================================
+                // 🔥 BẮT BUỘC AI TRẢ JSON CHUẨN THEO SCHEMA
+                // ========================================
+                response_format = new
+                {
+                    type = "json_schema",
+                    json_schema = new
+                    {
+                        name = "quiz_schema",
+                        schema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                Title = new { type = "string" },
+                                Description = new { type = "string" },
+
+                                Questions = new
+                                {
+                                    type = "array",
+                                    items = new
+                                    {
+                                        type = "object",
+                                        properties = new
+                                        {
+                                            QuestionType = new { type = "integer" },
+                                            Content = new { type = "string" },
+                                            Options = new
+                                            {
+                                                type = "array",
+                                                items = new
+                                                {
+                                                    type = "object",
+                                                    properties = new
+                                                    {
+                                                        Content = new { type = "string" },
+                                                        IsCorrect = new { type = "boolean" }
+                                                    },
+                                                    required = new[] { "Content", "IsCorrect" }
+                                                }
+                                            }
+                                        },
+                                        required = new[] { "QuestionType", "Content", "Options" }
+                                    }
+                                }
+                            },
+                            required = new[] { "Title", "Description", "Questions" }
+                        }
+                    }
+                }
             };
 
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             _http.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
 
-            var res = await _http.PostAsync("https://api.openai.com/v1/chat/completions", content);
-            var json = await res.Content.ReadAsStringAsync();
+            var response = await _http.PostAsync("https://api.openai.com/v1/chat/completions", content);
+            var raw = await response.Content.ReadAsStringAsync();
 
-            using var doc = JsonDocument.Parse(json);
-            var message = doc.RootElement
+            using var doc = JsonDocument.Parse(raw);
+            var result = doc.RootElement
                 .GetProperty("choices")[0]
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString();
 
-            return message ?? "{}";
-        }
-
-        private static string ExtractJsonString(string raw)
-        {
-            var match = System.Text.RegularExpressions.Regex.Match(raw, @"\{[\s\S]*\}");
-            return match.Success ? match.Value : "{}";
+            return result ?? "{}";
         }
     }
 }
