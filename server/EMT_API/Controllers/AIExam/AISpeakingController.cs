@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using EMT_API.Data;
 using EMT_API.Utils;
 using System.Security.Claims;
+using EMT_API.DAOs.MembershipDAO;
 
 namespace EMT_API.Controllers.AI
 {
@@ -14,10 +15,10 @@ namespace EMT_API.Controllers.AI
     public class AISpeakingController : ControllerBase
     {
         private readonly AISpeakingService _ai;
-        private readonly EMTDbContext _db;
+        private readonly IMembershipDAO _db;
         private readonly ILogger<AISpeakingController> _logger;
 
-        public AISpeakingController(AISpeakingService ai, EMTDbContext db, ILogger<AISpeakingController> logger)
+        public AISpeakingController(AISpeakingService ai, IMembershipDAO db, ILogger<AISpeakingController> logger)
         {
             _ai = ai;
             _db = db;
@@ -32,7 +33,8 @@ namespace EMT_API.Controllers.AI
         private async Task<bool> CheckMembershipAsync()
         {
             var userId = GetUserId();
-            return await MembershipUtil.HasActiveMembershipAsync(_db, userId);
+            return await _db.HasActiveMembershipAsync(GetUserId());
+
         }
 
         private IActionResult MembershipError()
