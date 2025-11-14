@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using EMT_API.Utils;
+using EMT_API.DAOs.MembershipDAO;
 namespace EMT_API.Controllers.AI
 {
     [ApiController]
@@ -14,10 +15,10 @@ namespace EMT_API.Controllers.AI
     [Authorize(Roles = "STUDENT")]
     public class AIWritingController : ControllerBase
     {
-        private readonly EMTDbContext _db;
+        private readonly IMembershipDAO _db;
         private readonly AIWritingService _ai;
 
-        public AIWritingController(EMTDbContext db, AIWritingService ai)
+        public AIWritingController(IMembershipDAO db, AIWritingService ai)
         {
             _db = db;
             _ai = ai;
@@ -29,7 +30,7 @@ namespace EMT_API.Controllers.AI
         [HttpPost("generate")]
         public async Task<ActionResult<AIWritingPromptResponse>> GeneratePrompt()
         {
-            bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, GetUserId());
+            bool hasMembership = await _db.HasActiveMembershipAsync(GetUserId());
             if (!hasMembership)
                 return StatusCode(403, new { message = "Membership required or expired." });
             var (title, content) = await _ai.GenerateWritingPromptAsync();
@@ -43,7 +44,8 @@ namespace EMT_API.Controllers.AI
         [HttpPost("submit")]
         public async Task<ActionResult<AIWritingFeedbackResponse>> Submit([FromBody] AIWritingSubmitRequest req)
         {
-            bool hasMembership = await MembershipUtil.HasActiveMembershipAsync(_db, GetUserId());
+            bool hasMembership = await _db.HasActiveMembershipAsync(GetUserId());
+
             if (!hasMembership)
                 return StatusCode(403, new { message = "Membership required or expired." });
             if (req == null || string.IsNullOrWhiteSpace(req.AnswerText))
@@ -55,17 +57,6 @@ namespace EMT_API.Controllers.AI
             var (overall, task, coherence, lexical, grammar, feedback) =
                 await _ai.GradeWritingAsync(req.AnswerText);
 
-            // ✅ Lưu prompt vào MetaJson (nếu có DB)
-            // var answer = new Answer
-            // {
-            //     AttemptID = attempt.AttemptID,
-            //     QuestionID = AI_WRITING_QUESTION_ID,
-            //     AnswerText = req.AnswerText,
-            //     GradedScore = overall,
-            //     Feedback = feedback,
-            //     MetaJson = JsonSerializer.Serialize(new { prompt = req.PromptContent })
-            // };
-
             return Ok(new AIWritingFeedbackResponse
             {
                 Score = overall,
@@ -75,12 +66,6 @@ namespace EMT_API.Controllers.AI
                 Grammar = grammar,
                 Feedback = feedback
             });
-        }
-
-        private async Task<bool> CheckMembership()
-        {
-            var userId = GetUserId();
-            return await MembershipUtil.HasActiveMembershipAsync(_db, userId);
         }
 
 
