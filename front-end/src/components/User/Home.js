@@ -28,30 +28,23 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const Home = () => {
-    // AI Chat widget state
-    const [showAIChat, setShowAIChat] = useState(false);
+
   // ===== State =====
+  const [showAIChat, setShowAIChat] = useState(false);
   const [user, setUser] = useState(null);
-  const [statsData, setStatsData] = useState(null);
-  const [courses, setCourses] = useState([]);
+  const [showAttemptModal, setShowAttemptModal] = useState(false);
   const [lessonHistory, setLessonHistory] = useState([]);
+  const [streakDays, setStreakDays] = useState(0);
+  const [statsData, setStatsData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasMembership, setHasMembership] = useState(false);
   const [membershipInfo, setMembershipInfo] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingCourses, setLoadingCourses] = useState(true);
-
-  const [activeTab, setActiveTab] = useState("baihoc"); // "baihoc" = Lịch sử xem
   const [selectedLevel, setSelectedLevel] = useState("all");
-
-  // Attempts (quiz)
+  const [activeTab, setActiveTab] = useState("baihoc");
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [courses, setCourses] = useState([]);
   const [attempts, setAttempts] = useState([]);
-  const [showAttemptModal, setShowAttemptModal] = useState(false);
-
-  const [streakDays, setStreakDays] = useState(0);
-
   const navigate = useNavigate();
-
-  // ===== Constants =====
   const emptyData = {
     user: {
       name: "Student",
@@ -107,12 +100,9 @@ const Home = () => {
   };
 
   const formatDuration = (minutes) => {
-    // Handle invalid inputs
     if (minutes === null || minutes === undefined || isNaN(minutes)) {
       return "0 phút";
     }
-
-    // Convert to number and ensure positive
     const totalMinutes = Math.max(0, Math.round(Number(minutes)));
     if (totalMinutes === 0) {
       return "0 phút";
@@ -127,68 +117,42 @@ const Home = () => {
     }
     return `${mins} phút`;
   };
-  const formatSecondsToMinutes = (seconds) => {
-    if (seconds === null || seconds === undefined || isNaN(seconds)) {
-      return "0 phút";
+
+  const toHM = (minutes) => {
+    if (minutes === null || minutes === undefined || isNaN(minutes)) return "0 phút";
+    const totalMinutes = Math.max(0, Math.round(Number(minutes)));
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hours > 0) {
+      if (mins > 0) return `${hours} giờ ${mins} phút`;
+      return `${hours} giờ`;
     }
-
-    const totalSeconds = Math.max(0, Math.round(Number(seconds)));
-    const minutes = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-
-    if (minutes === 0) {
-      return `${secs} giây`;
-    }
-
-    if (secs === 0) {
-      return `${minutes} phút`;
-    }
-
-    return `${minutes} phút ${secs} giây`;
+    return `${mins} phút`;
   };
 
   const cleanVideoHistoryData = () => {
     try {
       const historyStr = localStorage.getItem("videoWatchHistory");
       if (!historyStr) return;
-
       const history = JSON.parse(historyStr);
       if (!Array.isArray(history)) return;
-
-      // Clean and validate each entry
       const cleanedHistory = history.map(entry => {
-        // Ensure duration is a valid number
         const duration = Number(entry.duration) || 0;
         const watchedMinutes = Number(entry.watchedMinutes) || 0;
         const progress = Number(entry.progress) || 0;
-
-        // Fix: If progress >= 95%, mark as 100% complete
         const finalProgress = progress >= 95 ? 100 : Math.min(progress, 100);
-
         return {
           ...entry,
-          duration: Math.round(duration), // Ensure integer
-          watchedMinutes: Math.round(Math.min(watchedMinutes, duration)), // Can't exceed duration
-          progress: finalProgress, // 0-100
+          duration: Math.round(duration),
+          watchedMinutes: Math.round(Math.min(watchedMinutes, duration)),
+          progress: finalProgress,
         };
       });
-
-      // Save cleaned data
       localStorage.setItem("videoWatchHistory", JSON.stringify(cleanedHistory));
-      console.log("✅ Cleaned video history data");
-
       return cleanedHistory;
     } catch (error) {
-      console.error("❌ Error cleaning video history:", error);
-      return null;
+      return undefined;
     }
-  };
-  // Chuẩn hoá phút -> "Xh Ym"
-  const toHM = (mins) => {
-    const total = Math.max(0, Math.round(mins || 0)); // làm tròn & tránh NaN/âm
-    const h = Math.floor(total / 60);
-    const m = total % 60;
-    return `${h}h ${m}m`;
   };
 
   const openAttemptModal = () => setShowAttemptModal(true);
@@ -412,9 +376,9 @@ useEffect(() => {
   const handleLevelChange = (level) => setSelectedLevel(level);
 
   const tabs = [
-    { id: "baihoc", label: "Lịch sử xem" },
-    { id: "khoahoc", label: "Khóa học" },
     { id: "luyentap", label: "Luyện tập" },
+    { id: "khoahoc", label: "Khóa học" },
+    { id: "baihoc", label: "Lịch sử xem" },
     { id: "thongke", label: "Thống kê" }
   ];
 
