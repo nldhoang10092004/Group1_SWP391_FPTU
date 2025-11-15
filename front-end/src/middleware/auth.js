@@ -34,8 +34,8 @@ export const loginApi = (emailOrUsername, password) => {
   });
 };
 
-export const loginGoogle = (email) => {
-  return api.post("/login/google", { email });
+export const loginGoogle = (idToken) => {
+  return api.post("/login/google", { idToken });
 };
 
 
