@@ -28,7 +28,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const Home = () => {
-
   // ===== State =====
   const [showAIChat, setShowAIChat] = useState(false);
   const [user, setUser] = useState(null);
@@ -45,6 +44,7 @@ const Home = () => {
   const [courses, setCourses] = useState([]);
   const [attempts, setAttempts] = useState([]);
   const navigate = useNavigate();
+
   const emptyData = {
     user: {
       name: "Student",
@@ -132,15 +132,20 @@ const Home = () => {
 
   const cleanVideoHistoryData = () => {
     try {
-      const historyStr = localStorage.getItem("videoWatchHistory");
+      const userId = localStorage.getItem("userID");
+      const historyKey = userId ? `videoWatchHistory_${userId}` : "videoWatchHistory";
+      const historyStr = localStorage.getItem(historyKey);
       if (!historyStr) return;
+
       const history = JSON.parse(historyStr);
       if (!Array.isArray(history)) return;
+
       const cleanedHistory = history.map(entry => {
         const duration = Number(entry.duration) || 0;
         const watchedMinutes = Number(entry.watchedMinutes) || 0;
         const progress = Number(entry.progress) || 0;
         const finalProgress = progress >= 95 ? 100 : Math.min(progress, 100);
+
         return {
           ...entry,
           duration: Math.round(duration),
@@ -148,10 +153,13 @@ const Home = () => {
           progress: finalProgress,
         };
       });
-      localStorage.setItem("videoWatchHistory", JSON.stringify(cleanedHistory));
+
+      localStorage.setItem(historyKey, JSON.stringify(cleanedHistory));
+      console.log("✅ Cleaned video history data for user:", userId);
       return cleanedHistory;
     } catch (error) {
-      return undefined;
+      console.error("❌ Error cleaning video history:", error);
+      return null;
     }
   };
 
@@ -161,7 +169,6 @@ const Home = () => {
   const calculateStreak = (arr) => {
     if (!arr || arr.length === 0) return 0;
     const getDateStr = (d) => new Date(d).toDateString();
-    // arr có thể là attempts (submittedAt) hoặc video history (lastWatched)
     const uniqueDates = [
       ...new Set(arr.map((x) => getDateStr(x.submittedAt || x.lastWatched)))
     ].sort((a, b) => new Date(b) - new Date(a));
@@ -184,21 +191,20 @@ const Home = () => {
     return streak;
   };
 
-  // ===== Video History (localStorage) =====
+  // ===== Video History (localStorage) - USER SPECIFIC =====
   const loadLessonHistory = () => {
     try {
-      // First, clean the data
-      const cleanedData = cleanVideoHistoryData();
+      cleanVideoHistoryData();
 
-      const historyStr = localStorage.getItem("videoWatchHistory");
+      const userId = localStorage.getItem("userID");
+      const historyKey = userId ? `videoWatchHistory_${userId}` : "videoWatchHistory";
+      const historyStr = localStorage.getItem(historyKey);
+      
       if (historyStr) {
         const history = JSON.parse(historyStr);
         const historyArray = Array.isArray(history) ? history : [];
-
-        // Sort by lastWatched (newest first)
         historyArray.sort((a, b) => new Date(b.lastWatched) - new Date(a.lastWatched));
-
-        console.log("📚 Loaded lesson history:", historyArray);
+        console.log(`📚 Loaded lesson history for user ${userId}:`, historyArray);
         setLessonHistory(historyArray);
       } else {
         setLessonHistory([]);
@@ -211,7 +217,10 @@ const Home = () => {
 
   const loadStatsFromHistory = () => {
     try {
-      const historyStr = localStorage.getItem("videoWatchHistory");
+      const userId = localStorage.getItem("userID");
+      const historyKey = userId ? `videoWatchHistory_${userId}` : "videoWatchHistory";
+      const historyStr = localStorage.getItem(historyKey);
+      
       if (historyStr) {
         const history = JSON.parse(historyStr);
         const calculatedStreak = calculateStreak(history);
@@ -242,7 +251,7 @@ const Home = () => {
             averageScore: `${completionRate}%`
           },
           timeSpent: {
-            time: toHM(weeklyMinutes),   // <<<<<<  dùng helper ở đây
+            time: toHM(weeklyMinutes),
             times: "Tuần này"
           },
           weeklyGoal: {
@@ -261,118 +270,112 @@ const Home = () => {
     }
   };
 
-
   const handleClearHistory = () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử xem video?")) {
-      localStorage.removeItem("videoWatchHistory");
+      const userId = localStorage.getItem("userID");
+      const historyKey = userId ? `videoWatchHistory_${userId}` : "videoWatchHistory";
+      localStorage.removeItem(historyKey);
+      console.log(`🗑️ Cleared history for user: ${userId}`);
       loadLessonHistory();
       loadStatsFromHistory();
     }
   };
 
   // ===== Attempts + Stats từ API (quiz) =====
-const loadAttemptsAndStats = async () => {
-  try {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/attempts`, {
-      headers: getAuthHeaders()
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      const attemptsArray = Array.isArray(data) ? data : [];
-      setAttempts(attemptsArray);
-    } else {
-      setAttempts([]);
-    }
-  } catch (error) {
-    console.error("❌ Error loading attempts:", error);
-    setAttempts([]);
-  }
-};
-
-// 1. Effect chính - Load data khi component mount
-useEffect(() => {
-  const loadData = async () => {
+  const loadAttemptsAndStats = async () => {
     try {
-      setIsLoading(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/attempts`, {
+        headers: getAuthHeaders()
+      });
 
-      const userName = localStorage.getItem("userName") || "Student";
-      const token = localStorage.getItem("accessToken");
-
-      setUser({ ...emptyData.user, name: userName });
-      setStatsData(emptyData.stats);
-
-      if (token) {
-        const membershipData = await checkMembership();
-        setHasMembership(membershipData.hasMembership);
-        setMembershipInfo(membershipData);
-
-        // Lịch sử xem video (localStorage)
-        loadLessonHistory();
-        loadStatsFromHistory();
-
-        // Attempts cho thống kê (API)
-        await loadAttemptsAndStats();
+      if (response.ok) {
+        const data = await response.json();
+        const attemptsArray = Array.isArray(data) ? data : [];
+        setAttempts(attemptsArray);
       } else {
-        setHasMembership(false);
-        setMembershipInfo(null);
-        setLessonHistory([]);
+        setAttempts([]);
       }
     } catch (error) {
-      console.error("Error loading data:", error);
-      setUser(emptyData.user);
-      setStatsData(emptyData.stats);
-      setLessonHistory([]);
-      setHasMembership(false);
-      setMembershipInfo(null);
-    } finally {
-      setIsLoading(false);
+      console.error("❌ Error loading attempts:", error);
+      setAttempts([]);
     }
   };
 
-  loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+  // ===== Effects =====
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
 
-// 2. Load courses khi chuyển tab
-useEffect(() => {
-  if (activeTab === "khoahoc") {
-    setLoadingCourses(true);
-    getCourses()
-      .then((res) => setCourses(res.courses || []))
-      .catch((err) => console.error(err))
-      .finally(() => setLoadingCourses(false));
-  }
-}, [activeTab]);
+        const userName = localStorage.getItem("userName") || "Student";
+        const token = localStorage.getItem("accessToken");
 
-// 3. Auto-refresh khi video history được cập nhật từ CourseDetail
-useEffect(() => {
-  const handleHistoryUpdate = () => {
-    console.log("🔄 Video history updated from CourseDetail!");
-    loadLessonHistory();
-    loadStatsFromHistory();
-  };
+        setUser({ ...emptyData.user, name: userName });
+        setStatsData(emptyData.stats);
 
-  // Lắng nghe event từ CourseDetail
-  window.addEventListener('videoHistoryUpdated', handleHistoryUpdate);
+        if (token) {
+          const membershipData = await checkMembership();
+          setHasMembership(membershipData.hasMembership);
+          setMembershipInfo(membershipData);
 
-  return () => {
-    window.removeEventListener('videoHistoryUpdated', handleHistoryUpdate);
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+          loadLessonHistory();
+          loadStatsFromHistory();
+          await loadAttemptsAndStats();
+        } else {
+          setHasMembership(false);
+          setMembershipInfo(null);
+          setLessonHistory([]);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setUser(emptyData.user);
+        setStatsData(emptyData.stats);
+        setLessonHistory([]);
+        setHasMembership(false);
+        setMembershipInfo(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-// 4. Reload history khi chuyển về tab "baihoc"
-useEffect(() => {
-  if (activeTab === "baihoc") {
-    console.log("🔄 Reloading history for baihoc tab");
-    loadLessonHistory();
-    loadStatsFromHistory();
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [activeTab]);
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // ===== UI data helpers =====
+  useEffect(() => {
+    if (activeTab === "khoahoc") {
+      setLoadingCourses(true);
+      getCourses()
+        .then((res) => setCourses(res.courses || []))
+        .catch((err) => console.error(err))
+        .finally(() => setLoadingCourses(false));
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handleHistoryUpdate = () => {
+      console.log("🔄 Video history updated from CourseDetail!");
+      loadLessonHistory();
+      loadStatsFromHistory();
+    };
+
+    window.addEventListener('videoHistoryUpdated', handleHistoryUpdate);
+    return () => {
+      window.removeEventListener('videoHistoryUpdated', handleHistoryUpdate);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "baihoc") {
+      console.log("🔄 Reloading history for baihoc tab");
+      loadLessonHistory();
+      loadStatsFromHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // ===== UI Helpers =====
   const handleLevelChange = (level) => setSelectedLevel(level);
 
   const tabs = [
@@ -398,7 +401,6 @@ useEffect(() => {
 
   const filteredLessons = getFilteredLessons();
 
-
   // ===== Render =====
   return (
     <div className="home-page">
@@ -412,14 +414,12 @@ useEffect(() => {
           </div>
         ) : (
           <>
-            {/* Welcome */}
             <Row className="welcome-section">
               <Col>
                 <h1>Chào mừng trở lại, {user?.name || "User"}!</h1>
               </Col>
             </Row>
 
-            {/* Stats (quick cards) */}
             <Row className="stats-row">
               <Card className="stat-card">
                 <Card.Body>
@@ -432,7 +432,6 @@ useEffect(() => {
               </Card>
             </Row>
 
-            {/* Tabs */}
             <Row className="lessons-nav">
               <Col>
                 <div className="tab-navigation mb-4">
@@ -449,7 +448,6 @@ useEffect(() => {
               </Col>
             </Row>
 
-            {/* Tab: Lịch sử xem (Video history) */}
             {activeTab === "baihoc" && (
               <div className="lessons-section">
                 {hasMembership ? (
@@ -490,10 +488,7 @@ useEffect(() => {
                         <Row className="g-4">
                           {filteredLessons.map((lesson) => (
                             <Col md={6} lg={4} key={lesson.id}>
-                              <Card
-                                className="h-100 shadow-sm border-0"
-                                style={{ overflow: "hidden", cursor: "pointer" }}
-                              >
+                              <Card className="h-100 shadow-sm border-0" style={{ overflow: "hidden", cursor: "pointer" }}>
                                 <div
                                   style={{
                                     height: "180px",
@@ -502,47 +497,19 @@ useEffect(() => {
                                   }}
                                   onClick={() => navigate(`/course/${lesson.courseID}`)}
                                 >
-                                  <div
-                                    style={{
-                                      position: "absolute",
-                                      top: "50%",
-                                      left: "50%",
-                                      transform: "translate(-50%, -50%)",
-                                      opacity: 0.2
-                                    }}
-                                  >
+                                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.2 }}>
                                     <FontAwesomeIcon icon={faVideo} size="4x" style={{ color: "#fff" }} />
                                   </div>
 
-                                  <div
-                                    className="play-overlay"
-                                    style={{
-                                      position: "absolute",
-                                      top: "50%",
-                                      left: "50%",
-                                      transform: "translate(-50%, -50%)",
-                                      background: "rgba(0,0,0,0.6)",
-                                      borderRadius: "50%",
-                                      width: "60px",
-                                      height: "60px",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      transition: "all 0.3s ease"
-                                    }}
-                                  >
+                                  <div className="play-overlay" style={{
+                                    position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+                                    background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: "60px", height: "60px",
+                                    display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s ease"
+                                  }}>
                                     <FontAwesomeIcon icon={faPlay} size="lg" style={{ color: "#fff", marginLeft: "3px" }} />
                                   </div>
 
-                                  <Badge
-                                    bg={lesson.progress >= 100 ? "success" : "warning"}
-                                    style={{
-                                      position: "absolute",
-                                      top: "12px",
-                                      right: "12px",
-                                      padding: "6px 12px"
-                                    }}
-                                  >
+                                  <Badge bg={lesson.progress >= 100 ? "success" : "warning"} style={{ position: "absolute", top: "12px", right: "12px", padding: "6px 12px" }}>
                                     {lesson.progress >= 100 ? (
                                       <>
                                         <FontAwesomeIcon icon={faCheckCircle} className="me-1" />
@@ -554,34 +521,15 @@ useEffect(() => {
                                   </Badge>
 
                                   {lesson.progress < 100 && (
-                                    <div
-                                      style={{
-                                        position: "absolute",
-                                        bottom: 0,
-                                        left: 0,
-                                        right: 0,
-                                        height: "4px",
-                                        background: "rgba(255,255,255,0.3)"
-                                      }}
-                                    >
-                                      <div
-                                        style={{
-                                          height: "100%",
-                                          width: `${lesson.progress}%`,
-                                          background: "#ffc107",
-                                          transition: "width 0.3s ease"
-                                        }}
-                                      />
+                                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", background: "rgba(255,255,255,0.3)" }}>
+                                      <div style={{ height: "100%", width: `${lesson.progress}%`, background: "#ffc107", transition: "width 0.3s ease" }} />
                                     </div>
                                   )}
                                 </div>
 
                                 <Card.Body>
                                   <div className="d-flex align-items-center gap-2 mb-2">
-                                    <FontAwesomeIcon
-                                      icon={faBookOpen}
-                                      style={{ color: "#667eea", fontSize: "14px" }}
-                                    />
+                                    <FontAwesomeIcon icon={faBookOpen} style={{ color: "#667eea", fontSize: "14px" }} />
                                     <small className="text-muted text-truncate">{lesson.courseName}</small>
                                   </div>
 
@@ -594,7 +542,6 @@ useEffect(() => {
                                     {formatDateTime(lesson.lastWatched)}
                                   </p>
 
-                                  {/* Duration Info */}
                                   <div className="d-flex justify-content-between align-items-center text-muted small mb-2">
                                     <span>
                                       <FontAwesomeIcon icon={faVideo} className="me-1" />
@@ -605,7 +552,6 @@ useEffect(() => {
                                     </span>
                                   </div>
 
-                                  {/* Watched Time */}
                                   <div className="text-muted small mb-3">
                                     <FontAwesomeIcon icon={faClock} className="me-1" />
                                     Đã xem: <strong className={lesson.progress >= 100 ? "text-success" : ""}>
@@ -619,7 +565,6 @@ useEffect(() => {
                                     )}
                                   </div>
 
-                                  {/* Progress Bar (only show if not completed) */}
                                   {lesson.progress < 100 && lesson.progress > 0 && (
                                     <div className="mb-3">
                                       <div className="progress" style={{ height: "6px" }}>
@@ -641,10 +586,7 @@ useEffect(() => {
                                     className="w-100"
                                     onClick={() => navigate(`/course/${lesson.courseID}`)}
                                   >
-                                    <FontAwesomeIcon
-                                      icon={lesson.progress >= 100 ? faCheckCircle : faPlay}
-                                      className="me-2"
-                                    />
+                                    <FontAwesomeIcon icon={lesson.progress >= 100 ? faCheckCircle : faPlay} className="me-2" />
                                     {lesson.progress >= 100 ? "Xem lại" : lesson.progress > 0 ? "Tiếp tục xem" : "Bắt đầu xem"}
                                   </Button>
                                 </Card.Body>
@@ -690,9 +632,6 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Tab: Khóa học */}
-
-
             {activeTab === "khoahoc" && (
               <div className="course-list">
                 {loadingCourses ? (
@@ -712,25 +651,12 @@ useEffect(() => {
                     {courses.map((course) => (
                       <Col md={6} lg={4} key={course.courseID} className="mb-4">
                         <Card className="h-100 shadow-sm border-0" style={{ overflow: "hidden" }}>
-                          {/* Course Header: solid blue, no gradient */}
-                          <div
-                            style={{
-                              height: "120px",
-                              background: "#3b82f6",
-                              position: "relative",
-                              padding: "20px",
-                              borderBottom: '5px solid #ff9800'
-                            }}
-                          >
+                          <div style={{ height: "120px", background: "#3b82f6", position: "relative", padding: "20px", borderBottom: '5px solid #ff9800' }}>
                             <div className="d-flex justify-content-between align-items-start">
                               <h5 className="text-white mb-0" style={{ fontWeight: 600 }}>
                                 {course.courseName}
                               </h5>
-                              <Badge
-                                bg="white"
-                                text="primary"
-                                style={{ fontSize: "12px", padding: "6px 12px", color: '#3b82f6', border: 'none', background: '#fff' }}
-                              >
+                              <Badge bg="white" text="primary" style={{ fontSize: "12px", padding: "6px 12px", color: '#3b82f6', border: 'none', background: '#fff' }}>
                                 Level {course.courseLevel}
                               </Badge>
                             </div>
@@ -741,7 +667,6 @@ useEffect(() => {
                               {course.description || "Mô tả khóa học"}
                             </p>
 
-                            {/* Teacher Info Section */}
                             {course.teacherID && (
                               <div
                                 className="teacher-info-section mb-3 p-3 rounded"
@@ -765,15 +690,7 @@ useEffect(() => {
                                 }}
                               >
                                 <div className="d-flex align-items-center gap-3">
-                                  <div
-                                    style={{
-                                      width: "48px",
-                                      height: "48px",
-                                      borderRadius: "50%",
-                                      background: "#3b82f6",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
+                                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center",
                                       color: "white",
                                       fontWeight: "600",
                                       fontSize: "18px"

@@ -1,5 +1,13 @@
 // videoWatchHelper.js
-// Helper để lưu lịch sử xem video vào localStorage
+// Helper để lưu lịch sử xem video vào localStorage (PHÂN BIỆT THEO USER)
+
+/**
+ * Lấy key localStorage theo user (FIX: Mỗi user có lịch sử riêng)
+ */
+const getUserHistoryKey = () => {
+  const userId = localStorage.getItem("userID");
+  return userId ? `videoWatchHistory_${userId}` : "videoWatchHistory";
+};
 
 /**
  * Cập nhật lịch sử xem video
@@ -29,8 +37,9 @@ export const updateVideoHistory = (videoData, currentTime = 0, duration = 0) => 
       return null;
     }
 
-    // Lấy lịch sử hiện tại
-    const historyStr = localStorage.getItem('videoWatchHistory');
+    // ✅ FIX: Dùng key theo user
+    const historyKey = getUserHistoryKey();
+    const historyStr = localStorage.getItem(historyKey);
     let history = historyStr ? JSON.parse(historyStr) : [];
 
     // Ensure array
@@ -109,8 +118,8 @@ export const updateVideoHistory = (videoData, currentTime = 0, duration = 0) => 
       history.length = 100;
     }
 
-    // Lưu lại localStorage
-    localStorage.setItem('videoWatchHistory', JSON.stringify(history));
+    // ✅ FIX: Lưu với key theo user
+    localStorage.setItem(historyKey, JSON.stringify(history));
     
     return videoEntry;
   } catch (error) {
@@ -131,7 +140,8 @@ export const saveVideoHistory = (videoData, currentTime, duration) => {
  */
 export const getVideoHistory = () => {
   try {
-    const historyStr = localStorage.getItem('videoWatchHistory');
+    const historyKey = getUserHistoryKey(); // ✅ FIX
+    const historyStr = localStorage.getItem(historyKey);
     if (!historyStr) return [];
     
     const history = JSON.parse(historyStr);
@@ -188,7 +198,8 @@ export const markVideoAsCompleted = (lessonID) => {
         lastWatched: new Date().toISOString(),
       };
 
-      localStorage.setItem("videoWatchHistory", JSON.stringify(history));
+      const historyKey = getUserHistoryKey(); // ✅ FIX
+      localStorage.setItem(historyKey, JSON.stringify(history));
       console.log("✅ Marked video as completed:", lessonID);
       return true;
     } else {
@@ -206,7 +217,8 @@ export const markVideoAsCompleted = (lessonID) => {
  */
 export const clearVideoHistory = () => {
   try {
-    localStorage.removeItem('videoWatchHistory');
+    const historyKey = getUserHistoryKey(); // ✅ FIX
+    localStorage.removeItem(historyKey);
     console.log('✅ Đã xóa toàn bộ lịch sử xem video');
     return true;
   } catch (error) {
@@ -226,7 +238,8 @@ export const removeVideoFromHistory = (courseID, lessonID) => {
                 (item.lessonID === lessonID || item.id === lessonID))
     );
     
-    localStorage.setItem('videoWatchHistory', JSON.stringify(newHistory));
+    const historyKey = getUserHistoryKey(); // ✅ FIX
+    localStorage.setItem(historyKey, JSON.stringify(newHistory));
     console.log('✅ Đã xóa video khỏi lịch sử');
     return true;
   } catch (error) {
@@ -266,7 +279,8 @@ export const cleanVideoHistoryData = () => {
     });
 
     // Save cleaned data
-    localStorage.setItem("videoWatchHistory", JSON.stringify(cleanedHistory));
+    const historyKey = getUserHistoryKey(); // ✅ FIX
+    localStorage.setItem(historyKey, JSON.stringify(cleanedHistory));
     console.log("✅ Cleaned video history data:", {
       total: cleanedHistory.length,
       completed: cleanedHistory.filter(v => v.progress >= 100).length
