@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BookLogoModern from "./BookLogoModern";
 import { Container, Row, Col, Modal, Button } from "react-bootstrap";
 import "./Footer.scss";
  
@@ -28,8 +29,9 @@ const Footer = () => {
         <Container>
           <Row>
             <Col lg={4} md={6} className="footer-logo-col">
-              <div className="footer-logo">
-                <span className="logo-icon">📖</span> EnglishMaster
+              <div className="footer-logo d-flex align-items-center">
+                <BookLogoModern size={64} style={{ marginRight: 20 }} />
+                <span className="logo-text" style={{ fontWeight: 700, fontSize: 20, color: '#111', letterSpacing: 1 }}>EnglishMaster</span>
               </div>
               <p>
                 Nền tảng học tiếng Anh với AI tiên tiến, giúp bạn chinh phục mọi

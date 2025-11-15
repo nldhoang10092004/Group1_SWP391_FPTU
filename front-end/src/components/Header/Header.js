@@ -1,6 +1,7 @@
 // src/components/Header/Header.jsx
 
 import React, { useState, useEffect } from "react";
+import BookLogoModern from "./BookLogoModern";
 import axios from "axios";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
@@ -567,8 +568,9 @@ const Header = () => {
 
       <Navbar expand="lg" className="main-header">
         <Container>
-          <Navbar.Brand href="/" className="logo">
-            <span className="logo-icon">📖</span> EnglishMaster
+          <Navbar.Brand href="/" className="logo d-flex align-items-center">
+            <BookLogoModern size={64} style={{ marginRight: 8 }} />
+            <span className="logo-text" style={{ fontWeight: 700, fontSize: 22, color: '#111', letterSpacing: 1 }}>EnglishMaster</span>
           </Navbar.Brand>
 
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
