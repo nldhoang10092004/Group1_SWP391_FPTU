@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
+import AIChat from "../AIChat/AI";
 import "./HomePage.scss";
 import { getAllCoursesWithDetails } from '../../middleware/courseAPI';
 import { useNavigate } from "react-router-dom";
 import { Play, Star, Users, BookOpen, Lock, Zap, Target, Award, MessageCircle, Film, Bot, BrainCircuit, LayoutDashboard } from 'lucide-react';
 
 const HomePage = ({ onShowAuthModal }) => {
+    // AI Chat widget state
+    const [showAIChat, setShowAIChat] = useState(false);
   const [freeVideos, setFreeVideos] = useState([]);
   const [premiumCourses, setPremiumCourses] = useState([]);
   const navigate = useNavigate();
@@ -289,6 +292,41 @@ const HomePage = ({ onShowAuthModal }) => {
           </button>
         </section>
       </main>
+      {/* Floating AI Chat Button */}
+      {!showAIChat && (
+        <button
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            right: "30px",
+            zIndex: 1100,
+            background: "#007aff",
+            color: "#fff",
+            border: "none",
+            borderRadius: "30px",
+            minWidth: "60px",
+            height: "60px",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.5rem",
+            cursor: "pointer",
+            padding: "0 18px",
+            gap: "12px",
+            transition: "background 0.2s"
+          }}
+          onClick={() => setShowAIChat(true)}
+          title="Chat với EMT AI"
+        >
+          <i className="fas fa-robot" style={{marginRight: 8, fontSize: '2rem'}}></i>
+          <span style={{fontWeight: 600, fontSize: '1.1rem'}}>Hỏi AI</span>
+        </button>
+      )}
+      {/* AI Chat Widget */}
+      {showAIChat && (
+        <AIChat isVisible={showAIChat} onClose={() => setShowAIChat(false)} />
+      )}
     </div>
   );
 };

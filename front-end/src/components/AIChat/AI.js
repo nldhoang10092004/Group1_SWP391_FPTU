@@ -1,96 +1,65 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faRobot, faUser, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faRobot, faUser, faSpinner, faTimes, faComments, faBookOpen } from '@fortawesome/free-solid-svg-icons';
 import './AI.scss';
 
-// --- Configuration ---
-// IMPORTANT: For security reasons, it is strongly recommended to NOT store your API key directly in the frontend code.
-// This key will be visible to anyone inspecting your website's code.
-// The best practice is to have a backend server that makes the API call to OpenAI.
-// This frontend would then call your backend, keeping the API key safe.
-// For development purposes, you can place your key here.
-const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY";  // Replace with your actual key, preferably from environment variables  
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
-// This is the "brain" of your AI Agent.
-// It defines its role, personality, and knowledge base.
-const SYSTEM_PROMPT = `
-You are "EMILY - EMT AI SUPPORT", an expert AI assistant for an English learning website. Your personality is friendly, encouraging, and professional.
+// --- Gemini API Config ---
+// Để sử dụng Gemini API, hãy cấu hình API key qua biến môi trường hoặc import từ file cấu hình bảo mật (KHÔNG để key trực tiếp trong code public)
+// Ví dụ: const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+const GEMINI_API_KEY = ""; // Thêm key vào biến môi trường hoặc backend, không commit key thật lên repo!
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
 
-Your primary roles are:
-1.  **English Language Mentor**: 
-    *   Answer any grammar, vocabulary, or usage questions.
-    *   Provide examples, explain nuances, and suggest learning strategies.
-    *   Correct user's English text if they ask for it.
-2.  **Course Advisor**:
-    *   Provide information about the courses available on the website. (You will need to be provided with course data to do this effectively).
-    *   Help users choose the right course based on their level and goals.
-    *   Answer questions about course content and structure.
-3.  **AI Dictionary**:
-    *   Define English words and provide synonyms, antonyms, and example sentences.
-    *   Explain idioms and phrasal verbs.
-4.  **General Website Assistant**:
-    *   Answer questions about website features like "Flashcards", "Speaking Practice", etc.
+const SYSTEM_PROMPT_QA = `Bạn là EMILY - EMT AI SUPPORT, trợ lý AI thân thiện, chuyên trả lời các câu hỏi về tiếng Anh, giải thích ngữ pháp, từ vựng, sửa lỗi, và tư vấn học tập. Luôn trả lời bằng tiếng Việt, chỉ dùng tiếng Anh khi cần ví dụ.`;
+const SYSTEM_PROMPT_DICT = `Bạn là một từ điển tiếng Anh thông minh. Khi người dùng nhập một từ hoặc cụm từ, hãy giải thích nghĩa, từ loại, ví dụ, đồng nghĩa, trái nghĩa, và dịch sang tiếng Việt. Luôn trả lời ngắn gọn, dễ hiểu.`;
 
-Guidelines:
-- **Always respond in Vietnamese.** Only use English when the user explicitly asks for it or when it's necessary for the context (e.g., providing an English example sentence).
-- Keep your responses concise and easy to understand.
-- Use formatting like lists and bold text to improve readability.
-- If you don't know the answer, say so honestly. Do not invent information, especially about course details.
-- Always be polite and supportive.
-`;
 
 const AIChat = ({ isVisible, onClose }) => {
     const [messages, setMessages] = useState([
-        { role: 'assistant', content: "Hello! I'm EMILY - EMT AI SUPPORT. How can I help you with your English learning today?" }
+        { role: 'assistant', content: "Xin chào! Mình là EMILY - EMT AI SUPPORT. Bạn muốn hỏi gì về tiếng Anh hoặc tra từ điển?" }
     ]);
     const [userInput, setUserInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [mode, setMode] = useState('qa'); // 'qa' | 'dict'
     const chatBodyRef = useRef(null);
 
-    // Automatically scroll to the latest message
+    // Tự động cuộn xuống cuối khi có tin nhắn mới
     useEffect(() => {
         if (chatBodyRef.current) {
             chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
         }
     }, [messages]);
 
+    // Gửi tin nhắn tới Gemini API
     const handleSendMessage = async () => {
         if (!userInput.trim() || isLoading) return;
-
         const newMessages = [...messages, { role: 'user', content: userInput }];
         setMessages(newMessages);
         setUserInput('');
         setIsLoading(true);
 
         try {
-            const response = await fetch(OPENAI_API_URL, {
+            const prompt = mode === 'qa' ? SYSTEM_PROMPT_QA : SYSTEM_PROMPT_DICT;
+            const response = await fetch(GEMINI_API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${OPENAI_API_KEY}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: 'gpt-3.5-turbo', // Or 'gpt-4' if you have access
-                    messages: [
-                        { role: 'system', content: SYSTEM_PROMPT },
-                        ...newMessages
+                    contents: [
+                        { parts: [ { text: prompt + "\n" + userInput } ] }
                     ]
                 })
             });
-
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`API Error: ${errorData.error.message}`);
+                // Không show chi tiết lỗi cho user
+                setMessages(prev => [...prev, { role: 'assistant', content: 'Xin lỗi, đã có lỗi. Vui lòng thử lại sau.' }]);
+                setIsLoading(false);
+                return;
             }
-
             const data = await response.json();
-            const assistantMessage = data.choices[0].message.content;
-
+            const assistantMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Không nhận được phản hồi từ AI.';
             setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
         } catch (error) {
-            console.error("Error calling OpenAI API:", error);
-            setMessages(prev => [...prev, { role: 'assistant', content: `Sorry, I have encountered an error: ${error.message}` }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Xin lỗi, đã có lỗi. Vui lòng thử lại sau.' }]);
         } finally {
             setIsLoading(false);
         }
@@ -102,15 +71,35 @@ const AIChat = ({ isVisible, onClose }) => {
         <div className="ai-chat-widget">
             <div className="chat-header">
                 <h3>EMILY - EMT AI SUPPORT</h3>
-                <button onClick={onClose} className="close-btn">
+                <button onClick={onClose} className="close-btn" title="Đóng chat">
                     <FontAwesomeIcon icon={faTimes} />
+                </button>
+            </div>
+            <div className="chat-mode-toggle">
+                <button
+                    className={mode === 'qa' ? 'active' : ''}
+                    onClick={() => setMode('qa')}
+                    disabled={isLoading}
+                >
+                    <FontAwesomeIcon icon={faComments} /> Hỏi đáp
+                </button>
+                <button
+                    className={mode === 'dict' ? 'active' : ''}
+                    onClick={() => setMode('dict')}
+                    disabled={isLoading}
+                >
+                    <FontAwesomeIcon icon={faBookOpen} /> Tra từ điển
                 </button>
             </div>
             <div className="chat-body" ref={chatBodyRef}>
                 {messages.map((msg, index) => (
                     <div key={index} className={`chat-message ${msg.role}`}>
                         <div className="message-icon">
-                            <FontAwesomeIcon icon={msg.role === 'assistant' ? faRobot : faUser} />
+                            {msg.role === 'assistant' ? (
+                                <span role="img" aria-label="EMILY AI" style={{fontSize: '1.5rem', lineHeight: 1}}>👩‍💼</span>
+                            ) : (
+                                <FontAwesomeIcon icon={faUser} />
+                            )}
                         </div>
                         <div className="message-content">
                             <p>{msg.content}</p>
@@ -120,7 +109,7 @@ const AIChat = ({ isVisible, onClose }) => {
                 {isLoading && (
                     <div className="chat-message assistant">
                         <div className="message-icon">
-                            <FontAwesomeIcon icon={faRobot} />
+                            <span role="img" aria-label="EMILY AI" style={{fontSize: '1.5rem', lineHeight: 1}}>👩‍💼</span>
                         </div>
                         <div className="message-content">
                             <FontAwesomeIcon icon={faSpinner} spin />
@@ -134,7 +123,7 @@ const AIChat = ({ isVisible, onClose }) => {
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder="Ask me anything about English..."
+                    placeholder={mode === 'qa' ? "Nhập câu hỏi về tiếng Anh..." : "Nhập từ/cụm từ cần tra..."}
                     disabled={isLoading}
                 />
                 <button onClick={handleSendMessage} disabled={isLoading}>
