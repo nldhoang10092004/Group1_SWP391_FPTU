@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import AIChat from "../AIChat/AI";
 import { Container, Row, Col, Card, ProgressBar, Button, Badge, Modal, Table } from "react-bootstrap";
 import "./Home.scss";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -27,6 +28,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const Home = () => {
+    // AI Chat widget state
+    const [showAIChat, setShowAIChat] = useState(false);
   // ===== State =====
   const [user, setUser] = useState(null);
   const [statsData, setStatsData] = useState(null);
@@ -1100,10 +1103,117 @@ useEffect(() => {
         )}
       </Container>
 
+      {/* Floating AI Chat Button */}
+      {!showAIChat && (
+        <button
+          className="ai-fab-btn ai-fab-round"
+          onClick={() => setShowAIChat(true)}
+          title="Chat với EMT AI"
+        >
+          <span className="ai-fab-label" style={{fontSize: '1.13rem'}}>
+            AI
+            <span className="ai-fab-star" style={{marginLeft: 2, display: 'inline-block', verticalAlign: 'middle'}}>
+              <svg width="15" height="15" viewBox="0 0 15 15" style={{position:'relative', left:'-2px', top:'-2px'}}><polygon points="7.5,1.5 9.3,5.6 14,5.8 10.5,8.6 11.7,12.8 7.5,10.4 3.3,12.8 4.5,8.6 1,5.8 5.7,5.6" fill="#FFD600" stroke="#FFD600" strokeWidth="0.5"/></svg>
+            </span>
+          </span>
+        </button>
+      )}
+
+      <style>{`
+        .ai-fab-btn {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          z-index: 1100;
+          background: linear-gradient(135deg, #007aff 60%, #00c6fb 100%);
+          color: #fff;
+          border: none;
+          border-radius: 50%;
+          width: 56px;
+          height: 56px;
+          min-width: 56px;
+          min-height: 56px;
+          max-width: 56px;
+          max-height: 56px;
+          box-shadow: 0 8px 32px rgba(0,42,120,0.18), 0 2px 8px rgba(0,0,0,0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.13rem;
+          cursor: pointer;
+          padding: 0;
+          transition: box-shadow 0.18s, background 0.18s, transform 0.18s;
+          animation: ai-fab-pop 1.2s cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        .ai-fab-round .ai-fab-label {
+          font-weight: 700;
+          font-size: 1.13rem;
+          letter-spacing: 0.5px;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .ai-fab-btn:hover {
+          background: linear-gradient(135deg, #0056b3 60%, #00aaff 100%);
+          box-shadow: 0 12px 40px rgba(0,42,120,0.22), 0 2px 8px rgba(0,0,0,0.10);
+          transform: translateY(-2px) scale(1.06);
+        }
+        .ai-fab-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2rem;
+          animation: ai-fab-bounce 1.2s infinite alternate;
+        }
+        .ai-fab-label {
+          font-weight: 700;
+          font-size: 1.13rem;
+          letter-spacing: 0.5px;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .ai-fab-star {
+          font-size: 1.1em;
+          font-weight: 700;
+          color: #FFD600;
+          position: relative;
+        }
+        .ai-fab-plus-star {
+          font-size: 1.1em;
+          font-weight: 700;
+          color: #fff;
+          position: relative;
+        }
+        @keyframes ai-fab-pop {
+          0% { transform: scale(0.7); opacity: 0; }
+          60% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes ai-fab-bounce {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-5px); }
+        }
+        @media (max-width: 600px) {
+          .ai-fab-btn { right: 10px; bottom: 10px; min-width: 44px; height: 48px; padding: 0 10px 0 8px; }
+          .ai-fab-label { font-size: 0.98rem; }
+          .ai-fab-icon { font-size: 1.3rem; }
+        }
+      `}</style>
+      {/* AI Chat Widget */}
+      {showAIChat && (
+        <AIChat isVisible={showAIChat} onClose={() => setShowAIChat(false)} />
+      )}
+
       <style>{`
         .play-overlay:hover {
           transform: translate(-50%, -50%) scale(1.15) !important;
           background: rgba(0,0,0,0.8) !important;
+        }
+        .fa-robot {
+          font-family: 'FontAwesome';
         }
       `}</style>
     </div>
