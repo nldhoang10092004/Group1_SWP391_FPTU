@@ -20,6 +20,8 @@ import {
   sendOtpApi,
   loginGoogle,
 } from "../../middleware/auth";
+
+import BookLogoModern from "../Footer/BookLogoModern";
 import "./Header.scss";
 
 const API_BASE = `${process.env.REACT_APP_API_URL}/api`;
@@ -476,7 +478,7 @@ const Header = () => {
       <Navbar expand="lg" className="main-header">
         <Container>
           <Navbar.Brand href="/" className="logo">
-            <span className="logo-icon">📖</span> EnglishMaster
+            <span className="logo-icon"><BookLogoModern size={200} style={{verticalAlign: 'middle'}} /></span> <span style={{color: '#111', fontWeight: 700}}>EnglishMaster</span>
           </Navbar.Brand>
 
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -555,7 +557,7 @@ const Header = () => {
         size="md"
       >
         <Modal.Header closeButton>
-          <Modal.Title>English Master Hub</Modal.Title>
+          <Modal.Title style={{color: '#111', fontWeight: 700}}>English Master Hub</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p className="text-center mb-3 small">

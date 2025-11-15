@@ -165,11 +165,7 @@ const WritingPractice = () => {
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="writing-placeholder">
-              <p>Hãy nhấn “Tạo đề AI” để bắt đầu bài viết.</p>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* Right Section: Feedback */}
