@@ -101,7 +101,6 @@ const handleClose = () => {
         <div className="speaking-main-content">
           <div className="speaking-header-section">
             <div className="speaking-title-group">
-              <span className="speaking-icon-wrapper">🎙️</span>
               <div>
                 <h1 className="speaking-title">Luyện Speaking AI</h1>
                 <p className="speaking-subtitle">Luyện tập và nhận feedback chi tiết từ AI</p>
@@ -115,16 +114,13 @@ const handleClose = () => {
             <div className="prompt-header">
               <h3 className="prompt-title-icon">Đề bài luyện tập</h3>
               <button onClick={handleGeneratePrompt} disabled={loading} className="generate-prompt-btn">
-                ✨ Tạo đề mới
+                Tạo đề mới
               </button>
             </div>
 
             {prompt ? (
               <div className="prompt-card">
-                <div className="prompt-tags">
-                  <span className="prompt-tag tag-advanced">Advanced</span>
-                  <span className="prompt-tag tag-opinion">Opinion & Argument</span>
-                </div>
+                {/* tags removed */}
                 <h3 className="prompt-card-title">{prompt.title}</h3>
                 <p className="prompt-card-content">{prompt.content}</p>
               </div>
@@ -136,21 +132,21 @@ const handleClose = () => {
           {/* Ghi âm + Upload */}
           {prompt && (
             <div className="record-section">
-              <h3 className="record-section-title">🎙️ Ghi âm hoặc tải file</h3>
+              <h3 className="record-section-title">Ghi âm hoặc tải file</h3>
               <div className="record-controls">
                 {!recording ? (
                   <button onClick={handleStartRecording} className="record-btn start-record-btn">
-                    🔴 Bắt đầu ghi âm
+                    Bắt đầu ghi âm
                   </button>
                 ) : (
                   <button onClick={handleStopRecording} className="record-btn stop-record-btn">
-                    ⏹️ Dừng ghi âm
+                    Dừng ghi âm
                   </button>
                 )}
 
                 {/* 📁 Nút tải file lên */}
                 <label className="upload-btn">
-                   Tải file lên
+                  Tải file lên
                   <input
                     type="file"
                     accept="audio/*"
@@ -165,7 +161,7 @@ const handleClose = () => {
               </div>
 
               <button onClick={handleSubmit} disabled={!audioBlob || loading} className="submit-btn">
-                {loading ? "⏳ Đang chấm..." : "📤 Nộp bài"}
+                {loading ? "Đang chấm..." : "Nộp bài"}
               </button>
             </div>
           )}
@@ -187,7 +183,7 @@ const handleClose = () => {
                 </p>
               </div>
               <p className="result-feedback">
-                📝 Feedback: {result.feedback}
+                Feedback: {result.feedback}
               </p>
             </div>
           )}
@@ -195,7 +191,7 @@ const handleClose = () => {
 
         {/* Right Sidebar - Tips */}
         <div className="speaking-sidebar">
-          <h3 className="sidebar-title">💡 Tips hữu ích</h3>
+          <h3 className="sidebar-title">Tips hữu ích</h3>
           <ul className="tips-list">
             {[
               "Nói chậm rãi và rõ ràng",
