@@ -192,12 +192,7 @@ public class AuthController : ControllerBase
 
         SetRefreshCookie(rt, exp);
 
-        string redirectUrl = user.Role switch
-        {
-            "ADMIN" => "http://localhost:3000/admin/dashboard",
-            "TEACHER" => "http://localhost:3000/teacher/dashboard",
-            _ => "http://localhost:3000/home"
-        };
+        string redirectUrl = BuildRedirectUrl(user.Role);
 
         return Ok(new
         {
@@ -273,8 +268,8 @@ public class AuthController : ControllerBase
             AccessToken = access,
             ExpiresIn = int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60,
             Role = user.Role,
-            RedirectUrl = "/home"
-        });
+            RedirectUrl = BuildRedirectUrl(user.Role)
+    });
     }
 
 
@@ -401,6 +396,19 @@ public class AuthController : ControllerBase
     // ---------------------------
     // Helper cookie methods
     // ---------------------------
+
+    private string BuildRedirectUrl(string role)
+    {
+        var baseUrl = _cfg["Frontend:BaseUrl"]?.TrimEnd('/') ?? "http://localhost:3000";
+
+        return role switch
+        {
+            "ADMIN" => $"{baseUrl}/admin/dashboard",
+            "TEACHER" => $"{baseUrl}/teacher/dashboard",
+            _ => $"{baseUrl}/home"
+        };
+    }
+
     private void SetRefreshCookie(string rt, DateTimeOffset exp)
     {
         Response.Cookies.Append("emt_rt", rt, new CookieOptions
