@@ -216,26 +216,40 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginDto dto)
     {
         if (string.IsNullOrEmpty(dto.IdToken))
-            return BadRequest("Missing ID token");
+            return BadRequest(new { message = "Missing ID token" });
 
-        GoogleJsonWebSignature.Payload payload;
+        JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
+        JwtSecurityToken token;
+
         try
         {
-            payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken);
+            token = handler.ReadJwtToken(dto.IdToken);
         }
         catch
         {
-            return Unauthorized("Invalid Google token");
+            return Unauthorized(new { message = "Invalid Google token format" });
         }
 
-        var user = await _dao.GetByEmailAsync(payload.Email ?? $"{payload.Subject}@googleuser.com");
+        var email = token.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+        var sub = token.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        var aud = token.Claims.FirstOrDefault(c => c.Type == "aud")?.Value;
+
+        // OPTIONAL — nhưng nếu m muốn check thì check theo đúng client ID FE đang dùng:
+        if (aud != _cfg["Google:ClientId"])
+            return Unauthorized(new { message = "Invalid Google Client ID" });
+
+        if (string.IsNullOrEmpty(email))
+            email = $"{sub}@googleuser.com";
+
+        var user = await _dao.GetByEmailAsync(email);
+
         if (user == null)
         {
             user = new Account
             {
-                Email = payload.Email ?? $"{payload.Subject}@googleuser.com",
-                Username = (payload.Email ?? payload.Subject).Split('@')[0],
-                GoogleSub = payload.Subject,
+                Email = email,
+                Username = email.Split('@')[0],
+                GoogleSub = sub,
                 Role = "STUDENT"
             };
 
@@ -253,22 +267,16 @@ public class AuthController : ControllerBase
 
         SetRefreshCookie(rt, exp);
 
-        string redirectUrl = user.Role switch
-        {
-            "ADMIN" => "http://localhost:3000/admin/dashboard",
-            "TEACHER" => "http://localhost:3000/teacher/dashboard",
-            _ => "http://localhost:3000/home"
-        };
-
         return Ok(new
         {
             AccountID = user.AccountID,
             AccessToken = access,
             ExpiresIn = int.Parse(_cfg["Jwt:AccessTokenMinutes"]!) * 60,
             Role = user.Role,
-            RedirectUrl = redirectUrl
+            RedirectUrl = "/home"
         });
     }
+
 
     // ---------------------------
     // REFRESH TOKEN
