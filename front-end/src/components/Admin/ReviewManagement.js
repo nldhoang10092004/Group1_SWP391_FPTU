@@ -54,11 +54,13 @@ export function ReviewManagement() {
   };
 
   const renderStars = (rating) => {
+    const filledStars = Math.round(Number(rating));
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
         size={16}
-        className={i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}
+        className="text-yellow-400"
+        fill={i < filledStars ? "#facc15" : "#e5e7eb"} // Using hex codes for yellow-400 and gray-200
       />
     ));
   };

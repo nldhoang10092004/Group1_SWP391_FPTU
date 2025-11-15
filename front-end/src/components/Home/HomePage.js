@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
+import AIChat from "../AIChat/AI";
 import "./HomePage.scss";
 import { getAllCoursesWithDetails } from '../../middleware/courseAPI';
 import { useNavigate } from "react-router-dom";
 import { Play, Star, Users, BookOpen, Lock, Zap, Target, Award, MessageCircle, Film, Bot, BrainCircuit, LayoutDashboard } from 'lucide-react';
 
 const HomePage = ({ onShowAuthModal }) => {
+    // AI Chat widget state
+    const [showAIChat, setShowAIChat] = useState(false);
   const [freeVideos, setFreeVideos] = useState([]);
   const [premiumCourses, setPremiumCourses] = useState([]);
   const navigate = useNavigate();
@@ -213,26 +216,35 @@ const HomePage = ({ onShowAuthModal }) => {
         </section>
 
         {/* Premium Content Section */}
-        <section className="content-section">
+        <section className="content-section" id="courses">
           <div className="section-header">
-            <h2>Nội dung premium</h2>
-            <span className="section-tag premium">Membership required</span>
+            <div className="section-title">
+              <h2>Khóa học Premium</h2>
+              <span className="section-tag premium">Membership</span>
+            </div>
+            <button className="view-all-button" onClick={() => navigate('/courses')}>
+              Xem tất cả &rarr;
+            </button>
           </div>
-          <div className="card-grid">
+          <div className="card-grid course-card-grid">
             {premiumCourses.map(course => (
-              <div key={course.id} className="course-card-new">
-                <div className="card-content">
+              <div key={course.id} className="course-card-new" onClick={() => navigate(`/course-detail/${course.id}`)}>
+                <div className="course-card-header">
                   <h4>{course.title}</h4>
+                  <span className={`level-tag ${course.level.toLowerCase().replace(' ', '-')}`}>{course.level}</span>
+                </div>
+                <div className="card-content">
                   <p>{course.description}</p>
                   <div className="card-meta">
                     <span><BookOpen size={14} /> {course.lessons} bài học</span>
                     <span><Users size={14} /> {course.students} học viên</span>
                   </div>
-                  <span className={`level-tag ${course.level.toLowerCase().replace(' ', '-')}`}>{course.level}</span>
                 </div>
-                <button className="unlock-button" onClick={() => handleAuthAction('register')}>
-                  <Lock size={16} /> Mở khóa với membership
-                </button>
+                <div className="card-footer">
+                  <button className="unlock-button" onClick={(e) => { e.stopPropagation(); handleAuthAction('register'); }}>
+                    <Lock size={16} /> Mở khóa ngay
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -280,6 +292,41 @@ const HomePage = ({ onShowAuthModal }) => {
           </button>
         </section>
       </main>
+      {/* Floating AI Chat Button */}
+      {!showAIChat && (
+        <button
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            right: "30px",
+            zIndex: 1100,
+            background: "#007aff",
+            color: "#fff",
+            border: "none",
+            borderRadius: "30px",
+            minWidth: "60px",
+            height: "60px",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.5rem",
+            cursor: "pointer",
+            padding: "0 18px",
+            gap: "12px",
+            transition: "background 0.2s"
+          }}
+          onClick={() => setShowAIChat(true)}
+          title="Chat với EMT AI"
+        >
+          <i className="fas fa-robot" style={{marginRight: 8, fontSize: '2rem'}}></i>
+          <span style={{fontWeight: 600, fontSize: '1.1rem'}}>Hỏi AI</span>
+        </button>
+      )}
+      {/* AI Chat Widget */}
+      {showAIChat && (
+        <AIChat isVisible={showAIChat} onClose={() => setShowAIChat(false)} />
+      )}
     </div>
   );
 };
